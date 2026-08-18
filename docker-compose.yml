@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: soul_postgres
+    environment:
+      POSTGRES_USER: soul
+      POSTGRES_PASSWORD: soul
+      POSTGRES_DB: soul
+    ports:
+      - "54329:5432"
+    volumes:
+      - soul_pgdata:/var/lib/postgresql/data
+volumes:
+  soul_pgdata:

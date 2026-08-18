@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soul screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0C0C0B; --s1:#161615; --s2:#1F1F1D; --s3:#292926;
+  --bd:#2E2E2A; --bd2:#3D3D38;
+  --tx:#F2F0EC; --tx2:#A5A29A; --tx3:#6E6B64;
+  --clay:#D85A30; --clay-d:#7A3018; --clay-l:#F0997B;
+  --amber:#EF9F27; --amber-d:#7E540F;
+  --violet:#7F77DD; --moss:#639922; --moss-d:#38610F;
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased;padding:56px 32px 80px}
+.head{max-width:1400px;margin:0 auto 56px}
+.head h1{font-family:var(--serif);font-size:44px;font-weight:400;letter-spacing:-0.01em}
+.head p{color:var(--tx2);font-size:15px;margin-top:8px;max-width:52ch;line-height:1.6}
+.grid{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:44px 36px;align-items:flex-start}
+.cell{width:320px}
+.cap{display:flex;align-items:baseline;gap:9px;margin-bottom:14px}
+.cap .n{font-family:var(--serif);font-size:15px;color:var(--clay);min-width:18px}
+.cap .t{font-size:14px;color:var(--tx)}
+.cap .s{font-size:13px;color:var(--tx3)}
+
+.phone{width:320px;height:668px;background:var(--s1);border:1px solid var(--bd);border-radius:30px;padding:26px 22px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.grow{flex:1}
+.voice{font-family:var(--serif);font-weight:400;line-height:1.35;letter-spacing:-0.01em}
+.h1{font-size:26px}
+.h2{font-size:21px}
+.h3{font-size:18px}
+.lead{font-size:15px;line-height:1.65;color:var(--tx)}
+.sec{font-size:14px;line-height:1.6;color:var(--tx2)}
+.mut{font-size:12px;color:var(--tx3);letter-spacing:0.02em}
+.ttl{font-size:16px;font-weight:400;color:var(--tx)}
+.mb6{margin-bottom:6px}.mb10{margin-bottom:10px}.mb14{margin-bottom:14px}
+.mb18{margin-bottom:18px}.mb24{margin-bottom:24px}.mb32{margin-bottom:32px}
+.mt10{margin-top:10px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.rule{height:1px;background:var(--bd);margin:18px 0}
+
+.btn{display:block;width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--bd2);
+  background:transparent;color:var(--tx);font-family:var(--sans);font-size:15px;font-weight:300;
+  text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--s3);border-color:var(--tx3)}
+.btn:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+.btn.fill{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.btn.fill:hover{background:#fff}
+.btn.left{text-align:left}
+.btn.ghost{border-color:transparent;color:var(--tx3);font-size:13px;padding:8px}
+.row{display:flex;gap:8px}
+.row .btn{flex:1;font-size:14px;padding:12px 8px}
+.stack{display:flex;flex-direction:column;gap:9px}
+
+.card{background:var(--s2);border:1px solid var(--bd);border-radius:16px;padding:18px}
+.inset{background:var(--s2);border-radius:12px;padding:14px}
+.quote{border-left:2px solid var(--bd2);padding-left:14px}
+.field{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:12px;
+  padding:13px 14px;color:var(--tx);font-family:var(--sans);font-size:15px;font-weight:300}
+.field::placeholder{color:var(--tx3)}
+.field:focus{outline:none;border-color:var(--bd2)}
+
+.prog{display:flex;gap:5px}
+.prog i{flex:1;height:2px;border-radius:1px;background:var(--bd)}
+.prog i.on{background:var(--clay)}
+
+.mic{width:72px;height:72px;border-radius:36px;border:1px solid var(--clay);background:rgba(216,90,48,.10);
+  display:flex;align-items:center;justify-content:center;margin:0 auto;cursor:pointer;transition:background .2s}
+.mic:hover{background:rgba(216,90,48,.20)}
+.mic span{display:block;width:15px;height:24px;border-radius:8px;background:var(--clay)}
+.mic-l{position:relative;width:1px;height:9px;background:var(--clay);margin:0 auto}
+.pulse{position:absolute;inset:-10px;border-radius:46px;border:1px solid rgba(216,90,48,.28)}
+
+.dots{display:flex;justify-content:space-between}
+.dots .d{text-align:center}
+.dots .d b{display:block;font-size:11px;font-weight:400;color:var(--tx3);margin-bottom:7px}
+.dots .d i{display:block;width:30px;height:30px;border-radius:15px;background:var(--s3)}
+.dots .d i.today{background:transparent;border:1px dashed var(--bd2)}
+
+.leg{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+.leg div{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--tx)}
+.leg i{width:8px;height:8px;border-radius:4px;flex:none}
+.leg b{margin-left:auto;font-weight:400;color:var(--tx3)}
+
+.strip{display:flex;gap:4px}
+.strip i{flex:1;height:9px;border-radius:5px;background:var(--s3)}
+
+.pat{margin-bottom:20px}
+.pat .nm{font-size:15px;color:var(--tx);margin-bottom:3px}
+.pat .sub{font-size:12px;color:var(--tx3);margin-bottom:9px}
+
+.tl{display:flex;gap:13px}
+.tl .spine{display:flex;flex-direction:column;align-items:center;padding-top:6px}
+.tl .spine i{width:10px;height:10px;border-radius:5px;flex:none}
+.tl .spine b{width:1px;flex:1;background:var(--bd);display:block}
+.tl .body{flex:1}
+.tl .item{padding-bottom:20px}
+.tl .item .w{font-family:var(--serif);font-size:17px;line-height:1.45;color:var(--tx)}
+.tl .item .g{font-size:12px;color:var(--tx3);margin-top:4px}
+
+.tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:11px;
+  background:rgba(216,90,48,.14);color:var(--clay-l);letter-spacing:0.02em}
+.tag.ok{background:rgba(99,153,34,.14);color:#9BC663}
+
+footer{max-width:1400px;margin:72px auto 0;color:var(--tx3);font-size:13px;line-height:1.7}
+@media (max-width:720px){body{padding:32px 18px 60px}.head h1{font-size:32px}.grid{gap:36px 24px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Soul</h1>
+  <p>Every screen in flow order. First run, then a session, then what comes back later.</p>
+</div>
+
+<div class="grid">
+
+<!-- 1 CONSENT -->
+<div class="cell">
+  <div class="cap"><span class="n">1</span><span class="t">Consent</span><span class="s">first open</span></div>
+  <div class="phone">
+    <div class="voice h1 mb24">Before we start</div>
+    <div class="lead mb24">This is a place to think out loud. It reflects back what you say. It does not diagnose, treat, or give advice.</div>
+    <div class="rule"></div>
+    <div class="sec mb18">What you write stays yours. You can delete any of it, any time.</div>
+    <div class="sec mb18">Nothing is shared with anyone unless you choose to share it.</div>
+    <div class="sec">If something serious comes up, we point you to real people who can help.</div>
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="btn fill">I understand</button>
+      <button class="btn">Read the full terms</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2 QUESTION -->
+<div class="cell">
+  <div class="cap"><span class="n">2</span><span class="t">One question</span><span class="s">a baseline</span></div>
+  <div class="phone">
+    <div class="prog mb32"><i class="on"></i><i></i><i></i></div>
+    <div class="voice h2 mb32">Certain situations tend to trigger the same reaction in me.</div>
+    <div class="stack">
+      <button class="btn left">Strongly agree</button>
+      <button class="btn left">Somewhat agree</button>
+      <button class="btn left">Not sure</button>
+      <button class="btn left">Disagree</button>
+    </div>
+    <div class="grow"></div>
+    <button class="btn ghost">Skip</button>
+  </div>
+</div>
+
+<!-- 3 FIRST CAPTURE -->
+<div class="cell">
+  <div class="cap"><span class="n">3</span><span class="t">Tell it something</span><span class="s">mic or type</span></div>
+  <div class="phone">
+    <div class="mut mb18">to begin</div>
+    <div class="voice h1 mb14">What is going on with you lately?</div>
+    <div class="sec mb24">Anything. A few words is enough.</div>
+    <input class="field" placeholder="Type it here" aria-label="Write what is going on">
+    <div class="grow"></div>
+    <div class="mic mb14"><span></span></div>
+    <div class="mic-l"></div>
+    <div class="mut" style="text-align:center;margin-top:12px">hold to speak</div>
+    <button class="btn ghost mt16">Skip for now</button>
+  </div>
+</div>
+
+<!-- 4 HOME -->
+<div class="cell">
+  <div class="cap"><span class="n">4</span><span class="t">Home</span><span class="s">the hub</span></div>
+  <div class="phone" style="padding:22px 18px">
+    <div class="card mb14" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline" class="mb10">
+        <span class="ttl">This week</span><span class="mut">12 moments</span>
+      </div>
+      <div style="display:flex;justify-content:center;margin:2px 0 14px">
+        <svg width="126" height="126" viewBox="0 0 140 140" role="img" aria-label="Twelve moments across four themes">
+          <circle cx="70" cy="70" r="52" fill="none" stroke="#292926" stroke-width="13"/>
+          <circle cx="70" cy="70" r="52" fill="none" stroke="#D85A30" stroke-width="13" stroke-dasharray="109 218" transform="rotate(-90 70 70)"/>
+          <circle cx="70" cy="70" r="52" fill="none" stroke="#EF9F27" stroke-width="13" stroke-dasharray="82 245" stroke-dashoffset="-109" transform="rotate(-90 70 70)"/>
+          <circle cx="70" cy="70" r="52" fill="none" stroke="#7F77DD" stroke-width="13" stroke-dasharray="54 273" stroke-dashoffset="-191" transform="rotate(-90 70 70)"/>
+          <circle cx="70" cy="70" r="52" fill="none" stroke="#639922" stroke-width="13" stroke-dasharray="82 245" stroke-dashoffset="-245" transform="rotate(-90 70 70)"/>
+        </svg>
+      </div>
+      <div class="leg">
+        <div><i style="background:#D85A30"></i>Self doubt<b>4</b></div>
+        <div><i style="background:#EF9F27"></i>Overwhelm<b>3</b></div>
+        <div><i style="background:#7F77DD"></i>Comparison<b>2</b></div>
+        <div><i style="background:#639922"></i>Compassion<b>3</b></div>
+      </div>
+    </div>
+
+    <div class="card mb14" style="padding:14px 16px">
+      <div class="mut mb10">tap a day</div>
+      <div class="dots">
+        <div class="d"><b>M</b><i></i></div>
+        <div class="d"><b>T</b><i style="background:#D85A30"></i></div>
+        <div class="d"><b>W</b><i style="background:#7A3018"></i></div>
+        <div class="d"><b>T</b><i style="background:#EF9F27"></i></div>
+        <div class="d"><b>F</b><i style="background:#639922"></i></div>
+        <div class="d"><b>S</b><i></i></div>
+        <div class="d"><b>S</b><i class="today"></i></div>
+      </div>
+    </div>
+
+    <div class="card mb14" style="padding:16px">
+      <div class="mut mb6">you were holding this</div>
+      <div class="voice h3 mb14">Talk to him directly before Friday</div>
+      <div class="row"><button class="btn">I did</button><button class="btn">Not yet</button><button class="btn">Changed</button></div>
+    </div>
+
+    <div class="card mb14" style="padding:14px 16px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:15px">What keeps returning</div>
+        <div class="mut mt10" style="margin-top:3px">3 patterns, one still forming</div>
+      </div>
+      <span style="color:var(--tx3);font-size:18px">&rsaquo;</span>
+    </div>
+
+    <div class="grow"></div>
+    <button class="btn fill" style="padding:15px">Something on your mind</button>
+  </div>
+</div>
+
+<!-- 5 BEAT ONE -->
+<div class="cell">
+  <div class="cap"><span class="n">5</span><span class="t">One line back</span><span class="s">under 3 seconds</span></div>
+  <div class="phone">
+    <div style="display:flex;justify-content:space-between" class="mb18">
+      <span class="mut">you spoke for 41 seconds</span><span class="mut">6:14 PM</span>
+    </div>
+    <div class="quote mb32">
+      <div class="sec">I almost quit today. He took credit for the whole thing in front of everyone and I typed out a resignation email and just sat there and didn't send it.</div>
+    </div>
+    <div class="voice h2">You wrote the email and you didn't send it. That gap is worth a minute.</div>
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="btn fill">Look closer</button>
+      <button class="btn">I am done</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6 MIRROR -->
+<div class="cell">
+  <div class="cap"><span class="n">6</span><span class="t">The Mirror</span><span class="s">only if asked</span></div>
+  <div class="phone">
+    <div class="mut mb6">what may be pulling against itself</div>
+    <div class="lead mb18">Wanting to be seen for the work, and wanting to stay somewhere that just didn't see you.</div>
+    <div class="mut mb6">what might sit underneath</div>
+    <div class="lead mb18">This may have landed as being erased rather than being annoyed. Does that fit?</div>
+    <div class="inset mb18">
+      <div class="mut mb6">one question</div>
+      <div class="lead">What stopped you from sending it?</div>
+    </div>
+    <div class="rule"></div>
+    <div class="sec mb10">Is there something you might do about this?</div>
+    <input class="field mb14" value="Talk to him directly before Friday" aria-label="What you might do">
+    <div class="row"><button class="btn fill">Hold it</button><button class="btn">Nothing yet</button></div>
+  </div>
+</div>
+
+<!-- 7 DAY -->
+<div class="cell">
+  <div class="cap"><span class="n">7</span><span class="t">One day</span><span class="s">from the days strip</span></div>
+  <div class="phone">
+    <div style="display:flex;align-items:center;gap:10px" class="mb6">
+      <span style="color:var(--tx3)">&lsaquo;</span><span class="ttl">Tuesday</span>
+    </div>
+    <div class="mut mb18" style="padding-left:22px">four moments, in order</div>
+    <div class="tl">
+      <div class="spine">
+        <i style="background:#7F77DD"></i><b></b>
+        <i style="background:#EF9F27"></i><b></b>
+        <i style="background:#D85A30"></i><b></b>
+        <i style="background:#639922"></i>
+      </div>
+      <div class="body">
+        <div class="item" style="padding-bottom:15px"><div class="w">Took the extra project without thinking</div><div class="g">overwhelm</div><div class="tag" style="margin-top:7px">you noticed this one</div></div>
+        <div class="item" style="padding-bottom:15px"><div class="w">A tense call after lunch</div><div class="g">shorter answers than usual</div></div>
+        <div class="item" style="padding-bottom:15px"><div class="w">He took credit and I went quiet</div><div class="g">self doubt</div></div>
+        <div class="item" style="padding-bottom:0"><div class="w">Told my sister and felt lighter</div><div class="g">compassion</div></div>
+      </div>
+    </div>
+    <div class="grow"></div>
+    <div class="inset mb14"><div class="lead">The first one is a point you have changed before. Does that look like where the day turned?</div></div>
+    <div class="row"><button class="btn fill">Yes</button><button class="btn">Not really</button></div>
+  </div>
+</div>
+
+<!-- 8 OUTCOME -->
+<div class="cell">
+  <div class="cap"><span class="n">8</span><span class="t">How it went</span><span class="s">days later</span></div>
+  <div class="phone">
+    <div class="mut mb6">you were holding this</div>
+    <div class="voice h3 mb24" style="color:var(--tx2)">Talk to him directly before Friday</div>
+    <div class="rule"></div>
+    <div class="lead mb14">You did it. What happened?</div>
+    <input class="field mb24" value="Caught him after standup. Awkward but fine." aria-label="What happened">
+    <div class="lead mb14">And afterwards?</div>
+    <div class="row mb24"><button class="btn">Lighter</button><button class="btn">Same</button><button class="btn">Worse</button></div>
+    <div class="inset"><div class="lead">That is twice now that saying it directly ended lighter than holding it.</div></div>
+    <div class="grow"></div>
+    <button class="btn fill">Done</button>
+  </div>
+</div>
+
+<!-- 9 PATTERN PROPOSED -->
+<div class="cell">
+  <div class="cap"><span class="n">9</span><span class="t">Does this fit?</span><span class="s">inside a later reflection</span></div>
+  <div class="phone">
+    <div class="mut mb18">seven weeks later</div>
+    <div class="quote mb24"><div class="sec">My brother talked over my idea at dinner again and I just went quiet for the rest of the night.</div></div>
+    <div class="card" style="background:rgba(216,90,48,.10);border-color:rgba(216,90,48,.35)">
+      <div class="lead mb18" style="color:var(--clay-l)">This feels close to something you wrote in June, about the meeting. Both times you had something to say and held it. Does that connection fit for you?</div>
+      <div class="row"><button class="btn fill">It fits</button><button class="btn">Not the same</button></div>
+    </div>
+    <div class="grow"></div>
+    <button class="btn ghost">Ask me later</button>
+  </div>
+</div>
+
+<!-- 10 WHAT KEEPS RETURNING -->
+<div class="cell">
+  <div class="cap"><span class="n">10</span><span class="t">What keeps returning</span><span class="s">from home</span></div>
+  <div class="phone">
+    <div class="ttl mb6">What keeps returning</div>
+    <div class="mut mb24">from 34 reflections since June</div>
+
+    <div class="pat">
+      <div class="nm">Going quiet when not credited</div>
+      <div class="sub">3 times, most recently last week</div>
+      <div class="strip">
+        <i></i><i style="background:#D85A30"></i><i></i><i></i><i></i><i style="background:#D85A30"></i><i></i><i></i><i></i><i style="background:#D85A30"></i><i></i><i></i>
+      </div>
+    </div>
+
+    <div class="pat">
+      <div class="nm">Saying yes when already full</div>
+      <div class="sub">5 times</div>
+      <div class="strip">
+        <i style="background:#EF9F27"></i><i></i><i style="background:#EF9F27"></i><i></i><i style="background:#EF9F27"></i><i></i><i></i><i style="background:#EF9F27"></i><i></i><i></i><i style="background:#EF9F27"></i><i></i>
+      </div>
+    </div>
+
+    <div class="pat">
+      <div class="nm">Steadier after you name it out loud</div>
+      <div class="sub">4 times</div>
+      <div class="strip">
+        <i></i><i></i><i style="background:#639922"></i><i></i><i></i><i style="background:#639922"></i><i></i><i style="background:#639922"></i><i></i><i></i><i style="background:#639922"></i><i></i>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+    <div class="nm" style="color:var(--tx2)">Something around your brother</div>
+    <div class="sub" style="color:var(--tx3);font-size:12px;margin:3px 0 14px">seen twice, not enough to say yet</div>
+    <button class="btn">Take a look</button>
+    <div class="grow"></div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  Screens 1 to 3 are first run, once. Screen 4 is home, and every other screen is reached from it.
+</footer>
+
+</body>
+</html>

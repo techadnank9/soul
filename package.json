@@ -1,0 +1,10 @@
+{
+  "name": "soul",
+  "private": true,
+  "workspaces": ["db", "api"],
+  "scripts": {
+    "db:generate": "npm run generate -w @soul/db",
+    "db:migrate": "npm run migrate -w @soul/db",
+    "db:test": "npm run test -w @soul/db"
+  }
+}
