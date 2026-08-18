@@ -44,16 +44,20 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
   └─ services/reflection/submit.ts    ← the orchestrator, read this one
        │
        ├─ 1. consent/gate.ts
-       │     checkConsent(studentId, 'third_party_processing')
+       │     checkConsent(session, 'third_party_processing')
        │     FAILS → entry stored unprocessed, returns held state, STOP
        │
-       ├─ 2. safety/classify.ts
-       │     classify(text) → gateway.call('safety', ...)
-       │     writes safety_flags row always, hit or miss
-       │     HIT → returns help screen payload, STOP. No generation happens.
-       │
-       ├─ 3. entries/store.ts
+       ├─ 2. entries/store.ts
        │     insert entry, return entryId
+       │     Storage comes before classification because a safety_flags row
+       │     carries entry_id and cannot be written for an entry that does not
+       │     exist yet. Nothing is generated here and nothing is sent out.
+       │
+       ├─ 3. safety/classify.ts
+       │     classify(text, session, entryId) → gateway.call('safety', ...)
+       │     writes safety_flags row always, hit or miss
+       │     classifier unreachable → treated as high risk, not as a pass
+       │     HIT → returns help screen payload, STOP. No generation happens.
        │
        ├─ 4. generate/beatOne.ts
        │     buildBeatOnePrompt(entry)      ← current entry only, minimal history
@@ -61,7 +65,8 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        │     writes generations row with prompt_version, model_version
        │
        └─ 5. jobs/enqueue.ts
-             enqueue('tag_entry', { entryId })   ← async, nobody waits
+             enqueue('tag_entry', { entryId })    ← async, nobody waits
+             enqueue('embed_entry', { entryId })  ← async, lands with task 8
 ```
 
 Two things to notice. Consent and safety come before storage and generation, so
@@ -162,8 +167,10 @@ services/reflection/mirror.ts
 
 ...student answers...
 
-services/patterns/confirm.ts   → confirmed_patterns row
-services/patterns/reject.ts    → pattern_rejections row, never offered again
+services/patterns/answer.ts    → one entry point, three answers
+     fits         → confirmed_patterns row, needs three supporting entries
+     not the same → pattern_rejections row, never offered again
+     later        → back to pending, offered again another time
 ```
 
 A confirmed pattern immediately becomes part of `buildContext`, which is how the

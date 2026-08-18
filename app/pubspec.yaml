@@ -1,0 +1,30 @@
+name: soul
+description: A reflection app for students.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+# No analytics package, no crash reporting package, no font loader that fetches
+# at runtime. COPPA treats persistent identifiers as personal information and
+# the app store kids policies restrict third party data collection. Every
+# dependency added here is also a sub processor named in a district agreement.
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: InstrumentSerif
+      fonts:
+        - asset: assets/fonts/InstrumentSerif-Regular.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf

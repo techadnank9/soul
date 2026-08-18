@@ -511,3 +511,96 @@ training set, and we have no entries yet.
 
 Reverses if: the embedding provider changes dimension, which is a column type
 change and a rebuild rather than a schema redesign.
+
+---
+
+### 029. Task 0 is skipped, and both risks stay open
+Aug 2026, Adnan
+
+Decision: build the client without running either task 0 experiment. There is no
+iPhone or Android hardware available, and no student audio.
+
+Why: waiting on hardware stops the project. The plan put task 0 first because
+both halves can invalidate a decision already made, not because the app cannot
+be written without them.
+
+What this costs: the keyboard behaviour on screen 6 is now verified in the iOS
+simulator only. A simulator types with the Mac keyboard, so it cannot show the
+software keyboard covering the card, the scroll fighting the inset, or the lag
+on a mid range Android. Decision 010, Flutter for the client, therefore rests on
+an untested assumption. Decision 017, Deepgram over Whisper, rests on published
+error rates rather than on measured meaning changes in our own age range.
+
+Reverses if: hardware arrives. Both experiments should run before any student
+uses this, and the transcription comparison must run before task 3 is trusted.
+
+---
+
+### 030. The entry is stored before the safety classifier runs
+Aug 2026, Claude
+
+Decision: the submit path is consent, store, classify, generate. FLOW.md had
+classify before store.
+
+Why: safety_flags carries entry_id and is written on every entry, hit or miss.
+A row cannot reference an entry that does not exist, so classification cannot
+come first without either dropping the flag on blocked entries or inventing an
+id before the insert. Storing first keeps the flag on every entry.
+
+The invariant is unchanged. No generation happens before classify returns, and
+storage is not generation. Nothing leaves the building between the two.
+
+Reverses if: entry ids are generated in the application rather than by the
+database, which would let the flag be written first. Not worth it.
+
+---
+
+### 031. A classifier that cannot answer is treated as high risk
+Aug 2026, Claude
+
+Decision: when the safety call fails on every provider, the entry is flagged
+high, the help screen is shown, and the flag records why.
+
+Why: the alternative is generating a reflection on an entry nobody has checked,
+which is the single outcome the safety path exists to prevent. Failing open on
+a timeout would make our safety guarantee conditional on provider uptime.
+
+What it costs: a provider outage shows the help screen to students who did not
+need it. That is the direction task 4 already says to bias in.
+
+Reverses if: the false positive cost turns out to be higher than expected,
+which needs measuring rather than guessing.
+
+---
+
+### 032. Hono for HTTP, plain fetch for every provider
+Aug 2026, Claude
+
+Decision: the API uses Hono. Model and transcription providers are called with
+fetch, with no vendor SDKs.
+
+Why: three provider SDKs would be three dependency trees, three release
+cadences and three more names in a district data agreement, to save a function
+that posts JSON and reads a string back. Hono earns its place because routing
+and request parsing by hand is where boundary bugs live.
+
+Rejected: Express, larger and typed worse. The Node standard library alone,
+which would mean writing the routing this depends on.
+
+Reverses if: a provider ships something that only its SDK can reach, such as a
+streaming protocol we need for beat one.
+
+---
+
+### 033. Pattern answers go through one function, not three
+Aug 2026, Claude
+
+Decision: services/patterns/answer.ts handles fits, not the same, and later.
+FLOW.md named confirm.ts and reject.ts.
+
+Why: all three read the same candidate row, all three write a status back to
+it, and there is a third answer FLOW.md did not have. Splitting them meant the
+same lookup in three files.
+
+Reverses if: the counsellor console needs to confirm on a student's behalf,
+which would be a different entry point with different authorisation.
