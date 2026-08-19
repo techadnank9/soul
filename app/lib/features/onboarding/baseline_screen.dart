@@ -37,6 +37,14 @@ class _BaselineScreenState extends State<BaselineScreen> {
 
   BaselineQuestion get _question => baseline[_index];
 
+  /// How to answer this one, when the control is not obvious on sight.
+  String? get _hint => switch (_question.style) {
+        Answering.orb => 'Move the light toward what fits',
+        Answering.scale => 'Drag to where it sits',
+        Answering.blank => 'Finish the sentence',
+        _ => null,
+      };
+
   Future<void> _choose(int option) async {
     if (_leaving) return;
     setState(() => _pressed = option);
@@ -104,23 +112,33 @@ class _BaselineScreenState extends State<BaselineScreen> {
                       style: SoulType.muted),
                 ],
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 28),
               AnimatedOpacity(
                 opacity: _leaving ? 0 : 1,
                 duration: const Duration(milliseconds: 140),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AnimatedOpacity(
-                      opacity: showSection ? 1 : 0.35,
-                      duration: const Duration(milliseconds: 250),
-                      child: Label(_question.section.toLowerCase()),
-                    ),
-                    const SizedBox(height: 10),
+                    _SectionMark(section: _question.section, show: showSection),
+                    const SizedBox(height: 30),
                     Text(
                       _question.text,
-                      style: SoulType.heading.copyWith(fontSize: 28),
+                      textAlign: TextAlign.center,
+                      style: SoulType.heading.copyWith(fontSize: 27),
                     ),
+                    if (_hint != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _hint!,
+                        textAlign: TextAlign.center,
+                        style: SoulType.secondary.copyWith(
+                          fontFamily: SoulType.serif,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 16,
+                          color: SoulColors.text3,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -132,7 +150,13 @@ class _BaselineScreenState extends State<BaselineScreen> {
                   child: KeyedSubtree(
                     key: ValueKey(_index),
                     child: switch (_question.style) {
-                      Answering.tiles => TileChoices(
+                      Answering.orb => OrbField(
+                          options: _question.options,
+                          chosen: _pressed,
+                          onChoose: _choose,
+                        ),
+                      Answering.blank => BlankSentence(
+                          lead: _question.lead ?? '',
                           options: _question.options,
                           chosen: _pressed,
                           onChoose: _choose,
@@ -145,6 +169,7 @@ class _BaselineScreenState extends State<BaselineScreen> {
                       Answering.scale => ScaleChoice(
                           options: _question.options,
                           chosen: _pressed,
+                          ends: _question.ends,
                           onChoose: _choose,
                         ),
                       Answering.words => WordChoices(
@@ -195,3 +220,46 @@ class _Progress extends StatelessWidget {
   }
 }
 
+
+/// The section a question belongs to, as a mark and a name.
+///
+/// It fades rather than disappearing between questions in the same section, so
+/// moving from one part of the set to another is felt without being announced.
+class _SectionMark extends StatelessWidget {
+  const _SectionMark({required this.section, required this.show});
+
+  final String section;
+  final bool show;
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = sectionMarks[section] ?? (Icons.circle_outlined, SoulColors.clay);
+
+    return AnimatedOpacity(
+      opacity: show ? 1 : 0.4,
+      duration: const Duration(milliseconds: 300),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(color: mark.$2, shape: BoxShape.circle),
+            child: Icon(mark.$1, size: 15, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            section.toUpperCase(),
+            style: TextStyle(
+              fontFamily: SoulType.sans,
+              fontSize: 11,
+              letterSpacing: 1.4,
+              fontWeight: FontWeight.w500,
+              color: mark.$2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

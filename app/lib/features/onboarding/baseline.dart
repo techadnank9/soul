@@ -16,7 +16,7 @@ import '../../theme/soul_theme.dart';
 /// the options decides the shape of the answer: long phrases read better in a
 /// list, an agreement question is a scale you drag, single words want to be
 /// picked up rather than ticked.
-enum Answering { tiles, list, scale, words }
+enum Answering { orb, list, scale, blank, words }
 
 class BaselineQuestion {
   const BaselineQuestion({
@@ -24,13 +24,32 @@ class BaselineQuestion {
     required this.text,
     required this.options,
     required this.style,
+    this.lead,
+    this.ends,
   });
 
   final String section;
   final String text;
   final List<String> options;
   final Answering style;
+
+  /// For a fill in the blank question, the sentence the chosen words complete.
+  /// The blank is written as an underscore run.
+  final String? lead;
+
+  /// For a scale, the words at either end.
+  final (String, String)? ends;
 }
+
+/// Each section carries a mark and a colour, so a student can see they have
+/// moved from one part of the set to another without being told.
+const sectionMarks = <String, (IconData, Color)>{
+  'Decision timing': (Icons.schedule, SoulColors.clay),
+  'Responsibility and agency': (Icons.flag_outlined, SoulColors.amber),
+  'Emotion and action': (Icons.waves, SoulColors.violet),
+  'Patterns and repetition': (Icons.replay, SoulColors.moss),
+  'Readiness': (Icons.arrow_outward, SoulColors.clay),
+};
 
 const baselineVersion = 'set-b-v1';
 
@@ -44,7 +63,7 @@ const baseline = <BaselineQuestion>[
       'Ask others what they think',
       'Pause and think it through',
     ],
-    style: Answering.tiles,
+    style: Answering.orb,
   ),
   BaselineQuestion(
     section: 'Decision timing',
@@ -77,7 +96,7 @@ const baseline = <BaselineQuestion>[
       'Avoiding mistakes',
       'Taking responsibility even without certainty',
     ],
-    style: Answering.tiles,
+    style: Answering.orb,
   ),
   BaselineQuestion(
     section: 'Emotion and action',
@@ -88,7 +107,7 @@ const baseline = <BaselineQuestion>[
       'Prompt me to seek reassurance',
       'Help me notice what matters',
     ],
-    style: Answering.tiles,
+    style: Answering.orb,
   ),
   BaselineQuestion(
     section: 'Emotion and action',
@@ -106,6 +125,7 @@ const baseline = <BaselineQuestion>[
     text: 'I have faced similar decisions before',
     options: ['Strongly agree', 'Somewhat agree', 'Not sure', 'Disagree'],
     style: Answering.scale,
+    ends: ('Not at all', 'Every time'),
   ),
   BaselineQuestion(
     section: 'Patterns and repetition',
@@ -116,7 +136,8 @@ const baseline = <BaselineQuestion>[
       'Outcomes surprise me',
       'I avoid reflecting on them',
     ],
-    style: Answering.list,
+    style: Answering.blank,
+    lead: 'Looking back, I ______.',
   ),
   BaselineQuestion(
     section: 'Readiness',
@@ -127,7 +148,7 @@ const baseline = <BaselineQuestion>[
       'Gather more information',
       'Wait before deciding',
     ],
-    style: Answering.tiles,
+    style: Answering.orb,
   ),
   BaselineQuestion(
     section: 'Readiness',

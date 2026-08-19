@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
+import '../../theme/widgets.dart';
 import 'baseline.dart';
 
 /// The four ways to answer.
@@ -30,9 +31,14 @@ class Enter extends StatelessWidget {
   }
 }
 
-/// Two by two colour tiles. The opener, and the loudest of the four.
-class TileChoices extends StatelessWidget {
-  const TileChoices({
+/// A field you drag a light across.
+///
+/// Four choices sit in the corners. The light follows the finger, the nearest
+/// choice lights up, and letting go chooses it. Answering becomes a movement
+/// toward something rather than a tick in a box, which is the whole reason for
+/// building it this way.
+class OrbField extends StatefulWidget {
+  const OrbField({
     super.key,
     required this.options,
     required this.chosen,
@@ -44,50 +50,133 @@ class TileChoices extends StatelessWidget {
   final ValueChanged<int> onChoose;
 
   @override
+  State<OrbField> createState() => _OrbFieldState();
+}
+
+class _OrbFieldState extends State<OrbField> {
+  Offset _at = const Offset(0.5, 0.5);
+  int? _near;
+  bool _moved = false;
+
+  static const _corners = [
+    Offset(0.16, 0.18),
+    Offset(0.84, 0.18),
+    Offset(0.16, 0.82),
+    Offset(0.84, 0.82),
+  ];
+
+  void _move(Offset local, Size size) {
+    final at = Offset(
+      (local.dx / size.width).clamp(0.08, 0.92),
+      (local.dy / size.height).clamp(0.08, 0.92),
+    );
+
+    var nearest = 0;
+    var best = double.infinity;
+    for (var i = 0; i < _corners.length; i++) {
+      final d = (at - _corners[i]).distance;
+      if (d < best) {
+        best = d;
+        nearest = i;
+      }
+    }
+
+    setState(() {
+      _at = at;
+      _moved = true;
+      // Only counts as leaning somewhere once the light has actually left the
+      // middle. Sitting in the centre is not an answer.
+      _near = best < 0.34 ? nearest : null;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var row = 0; row < 2; row++) ...[
-          if (row > 0) const SizedBox(height: 12),
-          Expanded(
-            child: Row(
+    return LayoutBuilder(
+      builder: (context, box) {
+        final size = Size(box.maxWidth, box.maxHeight);
+        final colour =
+            _near == null ? SoulColors.border2 : baselineColours[_near!];
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanUpdate: (d) => _move(d.localPosition, size),
+          onPanEnd: (_) {
+            if (_near != null) widget.onChoose(_near!);
+          },
+          onTapDown: (d) => _move(d.localPosition, size),
+          onTapUp: (_) {
+            if (_near != null) widget.onChoose(_near!);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: SoulColors.s2,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Stack(
               children: [
-                for (var column = 0; column < 2; column++) ...[
-                  if (column > 0) const SizedBox(width: 12),
-                  Expanded(
-                    child: Enter(
-                      index: row * 2 + column,
-                      child: _Pressable(
-                        onTap: () => onChoose(row * 2 + column),
-                        chosen: chosen == row * 2 + column,
-                        dimmed: chosen != null && chosen != row * 2 + column,
-                        colour: baselineColours[row * 2 + column],
-                        child: Stack(
-                          children: [
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Text(
-                                options[row * 2 + column],
-                                style: _onColour,
-                              ),
-                            ),
-                            if (chosen == row * 2 + column)
-                              const Align(
-                                alignment: Alignment.topRight,
-                                child: Icon(Icons.check,
-                                    size: 20, color: Colors.white),
-                              ),
-                          ],
+                for (var i = 0; i < widget.options.length; i++)
+                  Align(
+                    alignment: Alignment(
+                      _corners[i].dx * 2 - 1,
+                      _corners[i].dy * 2 - 1,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 180),
+                        style: TextStyle(
+                          fontFamily: SoulType.sans,
+                          fontSize: _near == i ? 16 : 14,
+                          fontWeight:
+                              _near == i ? FontWeight.w600 : FontWeight.w400,
+                          color: _near == i
+                              ? baselineColours[i]
+                              : SoulColors.text3,
+                        ),
+                        textAlign: TextAlign.center,
+                        child: SizedBox(
+                          width: size.width * 0.36,
+                          child: Text(
+                            widget.options[i],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ],
+                AnimatedPositioned(
+                  duration: Duration(milliseconds: _moved ? 60 : 300),
+                  curve: Curves.easeOut,
+                  left: _at.dx * size.width - 34,
+                  top: _at.dy * size.height - 34,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Color.lerp(colour, Colors.white, 0.55)!,
+                          colour,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colour.withValues(alpha: 0.45),
+                          blurRadius: 28,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        ],
-      ],
+        );
+      },
     );
   }
 }
@@ -173,11 +262,15 @@ class ScaleChoice extends StatefulWidget {
     required this.options,
     required this.chosen,
     required this.onChoose,
+    this.ends,
   });
 
   final List<String> options;
   final int? chosen;
   final ValueChanged<int> onChoose;
+
+  /// Words at either end, when the option names themselves read badly there.
+  final (String, String)? ends;
 
   @override
   State<ScaleChoice> createState() => _ScaleChoiceState();
@@ -222,10 +315,12 @@ class _ScaleChoiceState extends State<ScaleChoice> {
             Enter(
               index: 1,
               child: GestureDetector(
+                // Moving and choosing are separate. Committing on release
+                // meant a student could not adjust, and when the release did
+                // not register the screen became a dead end with no way on.
+                onPanUpdate: (d) => _moveTo(d.localPosition.dx, width),
                 onHorizontalDragUpdate: (d) => _moveTo(d.localPosition.dx, width),
-                onHorizontalDragEnd: (_) => widget.onChoose(_at),
                 onTapDown: (d) => _moveTo(d.localPosition.dx, width),
-                onTapUp: (_) => widget.onChoose(_at),
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   height: 76,
@@ -297,9 +392,27 @@ class _ScaleChoiceState extends State<ScaleChoice> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(widget.options.first, style: SoulType.muted),
-                  Text(widget.options.last, style: SoulType.muted),
+                  Text(widget.ends?.$1 ?? widget.options.first,
+                      style: SoulType.muted),
+                  Text(widget.ends?.$2 ?? widget.options.last,
+                      style: SoulType.muted),
                 ],
+              ),
+            ),
+            const SizedBox(height: 36),
+            AnimatedOpacity(
+              opacity: _touched ? 1 : 0,
+              duration: const Duration(milliseconds: 220),
+              child: IgnorePointer(
+                ignoring: !_touched,
+                child: SizedBox(
+                  width: 180,
+                  child: SoulButton(
+                    'That is it',
+                    kind: SoulButtonKind.filled,
+                    onPressed: () => widget.onChoose(_at),
+                  ),
+                ),
               ),
             ),
           ],
@@ -440,6 +553,89 @@ class _PressableState extends State<_Pressable> {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+/// A sentence with a hole in it.
+///
+/// The words that could fill it are scattered rather than stacked, and the
+/// chosen one drops into the blank. Reading the finished sentence back is the
+/// answer, which is closer to how someone would actually say it.
+class BlankSentence extends StatelessWidget {
+  const BlankSentence({
+    super.key,
+    required this.lead,
+    required this.options,
+    required this.chosen,
+    required this.onChoose,
+  });
+
+  final String lead;
+  final List<String> options;
+  final int? chosen;
+  final ValueChanged<int> onChoose;
+
+  /// Scattered, but the same scatter every time. Random placement would move
+  /// the words under the finger between builds.
+  static const _offsets = [
+    Offset(-0.34, 0),
+    Offset(0.30, 0),
+    Offset(-0.26, 0),
+    Offset(0.34, 0),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = chosen == null
+        ? lead
+        : lead.replaceAll(RegExp('_+'), options[chosen!]);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Enter(
+          index: 0,
+          child: Text(
+            filled,
+            textAlign: TextAlign.center,
+            style: SoulType.heading.copyWith(
+              fontSize: 24,
+              color: chosen == null ? SoulColors.text3 : SoulColors.text,
+            ),
+          ),
+        ),
+        const SizedBox(height: 40),
+        for (var i = 0; i < options.length; i++)
+          Enter(
+            index: i + 1,
+            child: Align(
+              alignment: Alignment(_offsets[i % _offsets.length].dx, 0),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: GestureDetector(
+                  onTap: () => onChoose(i),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: chosen == null || chosen == i ? 1 : 0.3,
+                    child: Text(
+                      options[i],
+                      style: TextStyle(
+                        fontFamily: SoulType.serif,
+                        fontSize: 20,
+                        fontStyle: FontStyle.italic,
+                        color: chosen == i
+                            ? baselineColours[i]
+                            : SoulColors.text2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

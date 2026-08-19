@@ -975,3 +975,47 @@ seek reassurance".
 
 Reverses if: the set proves too long. Ten is already at the edge for a first
 run, and every question is skippable for that reason.
+
+---
+
+### 050. Each question gets its own way of answering, and answering is movement
+Aug 2026, Adnan and Claude
+
+Decision: five ways to answer rather than one grid. A field where a light is
+dragged toward the choice that fits, a list that floods with colour, a scale
+that is dragged and then confirmed, a sentence with a hole in it, and single
+words. Each question carries its section as a coloured mark.
+
+Why: a reference app was shared, and the thing worth taking from it was not the
+palette. It was that every question had its own metaphor and that the answer was
+something you moved rather than something you ticked. Ours uses our own warm
+palette and our own serif. The reference framing and controls were not copied.
+
+Where the pleasure is allowed to live: the interaction. Options arrive
+staggered, the light follows the finger, the nearest choice lights up, the scale
+labels itself as it moves. Nothing praises the student and nothing tells them
+what a choice means, because CONTEXT.md forbids it and the clinical guidance is
+direct that telling a young person what their answers say about them primes
+narratives that may not be true.
+
+Reverses if: the drag proves hard for anyone using VoiceOver or with limited
+motor control, in which case every dragged control needs a tapped equivalent.
+That is an accessibility gap and it is open.
+
+---
+
+### 051. Moving and choosing are separate on the scale
+Aug 2026, Claude
+
+Decision: dragging the scale sets where it sits. A confirm button commits it.
+
+Why: committing on release was a dead end. Found by dragging it in the running
+app: the label moved, the colour changed, and the screen never advanced,
+because the drag end callback did not fire. A student would have sat on
+question seven of ten with no way forward and no idea why.
+
+It is also the better design. A slider you cannot adjust before committing is a
+slider that punishes exploring it, which is the opposite of what this control is
+for.
+
+Reverses if: nothing.
