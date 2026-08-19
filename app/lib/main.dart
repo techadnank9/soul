@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'api/client.dart';
+import 'api/models.dart' as api;
+
 import 'data/sample.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/capture/confirm_transcript.dart';
@@ -16,6 +19,7 @@ import 'features/patterns/pattern_prompt_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
 import 'theme/soul_theme.dart';
+import 'theme/widgets.dart';
 
 /// The client shell.
 ///
@@ -207,7 +211,12 @@ class _HomeState extends State<Home> {
   }
 }
 
-/// One pass through the loop. Screens 5, 6, and the pattern question.
+/// One pass through the loop, against the API.
+///
+/// Screens 5, 6 and the pattern question. Nothing here is sample text any
+/// more. The line a student reads is generated, the safety classifier has
+/// already run before it arrives, and a blocked entry never reaches this
+/// screen at all.
 class Session extends StatefulWidget {
   const Session({
     super.key,
@@ -229,46 +238,209 @@ class Session extends StatefulWidget {
   State<Session> createState() => _SessionState();
 }
 
-enum _Beat { confirm, one, mirror, pattern }
+enum _Beat { confirm, waiting, one, mirror, help, failed }
 
 class _SessionState extends State<Session> {
-  late _Beat _beat = widget.spoken ? _Beat.confirm : _Beat.one;
+  final _api = SoulApi.fromEnvironment();
+
+  late _Beat _beat = widget.spoken ? _Beat.confirm : _Beat.waiting;
+
+  String? _entryId;
+  String? _line;
+  api.HelpNeeded? _help;
+  api.MirrorResult? _mirror;
+  bool _loadingMirror = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.spoken) _submit();
+  }
+
+  Future<void> _submit() async {
+    setState(() => _beat = _Beat.waiting);
+    try {
+      final result = await _api.submit(
+        text: widget.transcript,
+        spoken: widget.spoken,
+      );
+      if (!mounted) return;
+
+      switch (result) {
+        case api.Reflected(:final entryId, :final line):
+          setState(() {
+            _entryId = entryId;
+            _line = line;
+            _beat = _Beat.one;
+          });
+        case api.HelpNeeded help:
+          setState(() {
+            _help = help;
+            _beat = _Beat.help;
+          });
+        case api.Held():
+          // Stored, nothing sent. The student is told plainly rather than
+          // shown a reflection that was never generated.
+          setState(() => _beat = _Beat.failed);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _beat = _Beat.failed);
+    }
+  }
+
+  Future<void> _lookCloser() async {
+    setState(() => _loadingMirror = true);
+    try {
+      final mirror = await _api.mirror(_entryId!);
+      if (!mounted) return;
+      setState(() {
+        _mirror = mirror;
+        _loadingMirror = false;
+        _beat = _Beat.mirror;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingMirror = false);
+    }
+  }
+
+  Future<void> _hold(String chosen) async {
+    if (chosen.isNotEmpty && _entryId != null) {
+      try {
+        await _api.hold(
+          entryId: _entryId!,
+          chosen: chosen,
+          offered: _mirror?.offered,
+        );
+      } catch (_) {
+        // The decision is the student's, not ours. Losing it to a dropped
+        // connection is bad, and blocking them behind an error is worse.
+      }
+    }
+    widget.onFinished();
+  }
 
   @override
   Widget build(BuildContext context) {
     return switch (_beat) {
       _Beat.confirm => ConfirmTranscript(
           transcript: widget.transcript,
-          onSend: () => setState(() => _beat = _Beat.one),
+          onSend: _submit,
           onDiscard: () => Navigator.of(context).pop(),
         ),
+      _Beat.waiting => const _Waiting(note: 'reading what you said'),
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,
-          line: Sample.beatOne,
+          line: _line!,
           spokenSeconds: widget.spoken ? 41 : null,
-          timeOfDay: '6:14 PM',
-          onLookCloser: () => setState(() => _beat = _Beat.mirror),
+          timeOfDay: TimeOfDay.now().format(context),
+          loadingCloser: _loadingMirror,
+          onLookCloser: _lookCloser,
           onDone: widget.onFinished,
         ),
       _Beat.mirror => MirrorScreen(
-          tension: Sample.tension,
-          underneath: Sample.underneath,
-          question: Sample.question,
-          offered: Sample.heldDecision,
-          onHold: (_) => setState(() => _beat = _Beat.pattern),
+          tension: _mirror!.tension,
+          underneath: _mirror!.underneath,
+          question: _mirror!.question,
+          offered: _mirror!.offered ?? '',
+          onHold: _hold,
           onNothingYet: widget.onFinished,
         ),
-      _Beat.pattern => PatternPromptScreen(
-          when: 'seven weeks later',
-          entry: 'My brother talked over my idea at dinner again and I just '
-              'went quiet for the rest of the night.',
-          proposal: 'This feels close to something you wrote in June, about '
-              'the meeting. Both times you had something to say and held it. '
-              'Does that connection fit for you?',
-          onFits: widget.onFinished,
-          onNotTheSame: widget.onFinished,
-          onLater: widget.onFinished,
-        ),
+      _Beat.help => HelpScreen(help: _help!, onDone: widget.onFinished),
+      _Beat.failed => _Failed(onDone: widget.onFinished),
     };
+  }
+}
+
+/// While the models are working. It says what is happening rather than
+/// spinning at nothing.
+class _Waiting extends StatelessWidget {
+  const _Waiting({required this.note});
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    return Screen(
+      body: [
+        const SizedBox(height: 120),
+        Center(
+          child: Column(
+            children: [
+              const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: SoulColors.clay,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Label(note),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The entry was saved and nothing else happened. Said plainly.
+class _Failed extends StatelessWidget {
+  const _Failed({required this.onDone});
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Screen(
+      body: const [
+        Text('That is saved', style: SoulType.heading),
+        SizedBox(height: 14),
+        Text(
+          'We could not read it back to you just now. What you wrote is kept '
+          'and nothing is lost.',
+          style: SoulType.secondary,
+        ),
+      ],
+      footer: SoulButton('Done',
+          kind: SoulButtonKind.filled, onPressed: onDone),
+    );
+  }
+}
+
+/// What a blocked entry shows. The wording comes from the server, so it can be
+/// changed without a store release.
+class HelpScreen extends StatelessWidget {
+  const HelpScreen({super.key, required this.help, required this.onDone});
+
+  final api.HelpNeeded help;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Screen(
+      body: [
+        Text(help.heading, style: SoulType.heading),
+        const SizedBox(height: 16),
+        Text(help.body, style: SoulType.lead),
+        const SizedBox(height: 24),
+        for (final contact in help.contacts) ...[
+          SoulCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  contact.label,
+                  style: SoulType.lead.copyWith(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 4),
+                Text(contact.detail, style: SoulType.secondary),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
+      footer: SoulButton('Done',
+          kind: SoulButtonKind.filled, onPressed: onDone),
+    );
   }
 }

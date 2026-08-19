@@ -852,3 +852,49 @@ output that passes the schema and the voice rules.
 
 Reverses if: the quality difference between low and medium is large on the task
 7 fixture set, which is the place to measure it.
+
+---
+
+### 045. Better models, bigger budgets
+Aug 2026, Adnan
+
+Decision: beat one, the Mirror and the tagger all run on gpt-5. Safety stays on
+gpt-5-mini but moves from minimal to low reasoning. Budgets and timeouts raised
+throughout: safety 2000 at 15s, beat one 2000 at 20s, the Mirror 8000 at medium
+reasoning and 120s, the tagger 3000 at medium.
+
+Why: founder call, and task 7 is explicit that a generic first line kills the
+product, so beat one is worth the full model even on the latency path. Safety
+stays on the smaller model because it blocks every write and a slow classifier
+is a slow product, but low reasoning is worth a few hundred milliseconds for
+the call that decides whether a student in trouble is seen.
+
+What to watch: beat one on gpt-5 has not been measured against the three second
+target. It came back quickly by hand but that is not a measurement.
+
+---
+
+### 046. The Mirror bled context from the previous entry
+Aug 2026, Claude
+
+Not a decision. A quality problem found by using the app, recorded before it is
+forgotten.
+
+A student wrote about staying up until two on a group project. The Mirror asked
+"What stopped you from sending it?" and offered "send it to myself to keep a
+record". Neither belongs to that entry. Both belong to the previous one, about
+a message that was typed and never sent.
+
+The context builder is working as designed. History goes in as a stable prefix
+and the model is meant to know the whole person. What happened is that it
+weighted a recent entry over the current one, which is the specific failure
+mode decision 014 accepted when it put full history on the Mirror call.
+
+This is what the task 7 fixture set is for, and it argues for extending that
+set to cover the Mirror rather than only beat one. Candidate fixes, none tried:
+separate the current entry more sharply in the prompt, cap recent entries below
+eight, or say plainly in the prompt that the question must come from the
+current entry alone.
+
+Do not fix this by removing history. The product is built on the model knowing
+the person.

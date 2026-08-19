@@ -48,24 +48,27 @@ const config: Record<Purpose, PurposeConfig> = {
     // Reasoning tokens come out of this budget, so it has to cover the
     // thinking as well as the answer. Two hundred was all thinking and no
     // reply, which failed closed and showed every student the help screen.
-    maxTokens: 900,
-    timeoutMs: 8000,
+    maxTokens: 2000,
+    timeoutMs: 15_000,
     json: true,
-    reasoning: 'minimal',
+    // Low rather than minimal. This call decides whether a student in trouble
+    // is seen, and it is worth a few hundred milliseconds to let it think.
+    reasoning: 'low',
   },
   beat_one: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      openai: 'gpt-5-mini',
-      gemini: 'gemini-2.5-flash',
-      openrouter: 'openai/gpt-5-mini',
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
     },
     temperature: 0.6,
-    maxTokens: 800,
-    timeoutMs: 12_000,
+    maxTokens: 2000,
+    timeoutMs: 20_000,
     json: false,
-    // Under three seconds is the whole point of this screen, so the model
-    // thinks as little as it is allowed to.
+    // The full model, still thinking as little as it is allowed to. Task 7
+    // says a generic first line kills the product, so this is the one place
+    // worth spending on quality even though it is on the latency path.
     reasoning: 'minimal',
   },
   mirror: {
@@ -76,27 +79,27 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5',
     },
     temperature: 0.7,
-    maxTokens: 4000,
-    timeoutMs: 60_000,
+    maxTokens: 8000,
+    timeoutMs: 120_000,
     json: true,
-    // The Mirror is asked for, so it may take longer than beat one. It may not
-    // take a minute. Medium reasoning ran past forty five seconds on a short
-    // entry, which is a blank screen for a student who has just asked to look
-    // closer.
-    reasoning: 'low',
+    // Medium. This is the call the product is judged on, and the student asked
+    // for it, so it is allowed to take its time. The client shows that it is
+    // working rather than a blank screen.
+    reasoning: 'medium',
   },
   tagger: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      openai: 'gpt-5-mini',
-      gemini: 'gemini-2.5-flash',
-      openrouter: 'openai/gpt-5-mini',
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
     },
     temperature: 0,
-    maxTokens: 1200,
-    timeoutMs: 25_000,
+    maxTokens: 3000,
+    timeoutMs: 60_000,
     json: true,
-    reasoning: 'low',
+    // Everything downstream is built on these tags, and nobody is waiting.
+    reasoning: 'medium',
   },
 }
 

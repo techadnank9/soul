@@ -17,6 +17,7 @@ class BeatOneScreen extends StatelessWidget {
     this.spokenSeconds,
     required this.onLookCloser,
     required this.onDone,
+    this.loadingCloser = false,
   });
 
   final String transcript;
@@ -28,6 +29,10 @@ class BeatOneScreen extends StatelessWidget {
   final String timeOfDay;
   final VoidCallback onLookCloser;
   final VoidCallback onDone;
+
+  /// The Mirror is a slow call. While it runs the button says so rather than
+  /// sitting there looking broken.
+  final bool loadingCloser;
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +65,11 @@ class BeatOneScreen extends StatelessWidget {
       ],
       footer: Column(
         children: [
-          SoulButton('Look closer',
-              kind: SoulButtonKind.filled, onPressed: onLookCloser),
+          SoulButton(
+            loadingCloser ? 'Looking' : 'Look closer',
+            kind: SoulButtonKind.filled,
+            onPressed: loadingCloser ? null : onLookCloser,
+          ),
           const SizedBox(height: 9),
           SoulButton('I am done', onPressed: onDone),
         ],
