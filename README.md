@@ -52,13 +52,13 @@ runs before either, blocking, on every entry.
 
 | Layer | Choice |
 | --- | --- |
-| App | Flutter, iOS and Android |
+| App | Flutter, iOS and Android. One runtime dependency, `record`, for the microphone |
 | Transcription | Deepgram, audio deleted immediately, never stored |
 | API | TypeScript and Node |
-| Database | Postgres on Supabase, pgvector, row level security |
+| Database | Postgres 17 with pgvector, row level security. Supabase in production, local Postgres in development |
 | Schema | Drizzle |
 | Jobs | Durable, Postgres backed |
-| Models | OpenAI primary, Gemini second, OpenRouter fallback |
+| Models | OpenAI primary, Gemini second, OpenRouter fallback. gpt-5 for beat one, the Mirror and the tagger, gpt-5-mini for safety |
 | Observability | Prompt and model version stored on every generated row |
 
 ## Rules the code has to hold
@@ -80,12 +80,12 @@ runs before either, blocking, on every entry.
 | File | What it holds |
 | --- | --- |
 | CLAUDE.md | Instructions for AI assistants working here |
-| BUILD_PLAN.md | Ordered tasks, start at task 0 |
+| BUILD_PLAN.md | Ordered tasks, and which ones are actually done |
 | DECISIONS.md | Every decision, why, what would reverse it |
 | FLOW.md | Execution paths, call order, invariants |
 | CONTEXT.md | Clinical constraints and the voice rules |
 | SCHEMA.md | The data model |
-| docs/screens.html | All ten screens, open in a browser |
+| docs/screens.html | The original ten screens, open in a browser |
 | docs/architecture.svg | System architecture |
 | docs/user-flow.svg | The product across three time horizons |
 | docs/staff-roles-later.md | Counsellor and district admin, deferred |
@@ -103,8 +103,28 @@ runs before either, blocking, on every entry.
 
 ## Status
 
-Nothing is built yet. Screens are designed, architecture is settled, the build
-plan starts at task 0.
+The loop runs end to end on real models, against a real database, on an iPhone.
+
+| Task | State |
+| --- | --- |
+| 0 Two experiments | **Not done.** Needs real devices and forty recordings of real students. Nothing here substitutes for it. |
+| 1 Schema | Done. Eighteen tables, row level security forced, tenancy test passing. |
+| 2 API skeleton | Done. |
+| 3 Transcription | Built and proven with real speech. Audio is deleted after every attempt. |
+| 4 Safety classifier | Done. Blocking, written on every entry, fails closed. |
+| 5 Consent gate | Done. With consent revoked an entry saves and nothing goes out. |
+| 6 Capture and beat one | Built. The under three seconds target has not been measured on school wifi. |
+| 7 Make beat one good | **Not started.** The one the plan says decides whether the product works. |
+| 8 Mirror and decision | Built. |
+| 9 Tagging | Built. The fifty entry hand check has not been done. |
+| 10 Check backs | Job runner built. Not yet exercised across a redeploy. |
+| 11 Home with empty states | Done, day one version first. |
+| 12 Pattern candidates | Query built. Not yet seen with real tags behind it. |
+| 13 Day view | Built on sample data. |
+
+What is real: entries, the consent gate, the safety path, beat one, the Mirror,
+decisions, transcription. What is still sample data: the week ring, the day
+view, the patterns list.
 
 ## Running it locally
 

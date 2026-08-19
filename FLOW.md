@@ -10,17 +10,18 @@ change the path, change this file in the same commit.
 
 ## Entry points
 
-There are only four ways anything starts running.
+There are only six ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
-| Student holds the mic | Human | `app/lib/features/capture/capture_screen.dart` |
-| Student taps send | Human | `app/lib/features/capture/confirm_transcript.dart` |
+| Student taps the mic, then taps stop | Human | `app/lib/features/capture/capture_screen.dart` |
+| Student taps send on the transcript | Human | `app/lib/features/capture/confirm_transcript.dart` |
+| Student answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
 | Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/pattern_sweep.ts` |
 
-Everything else in the system is called by one of these four.
+Everything else in the system is called by one of these six.
 
 ---
 
@@ -30,11 +31,17 @@ This is the path that matters. Read it in order.
 
 ```
 capture_screen.dart
-  └─ records audio
+  └─ tap to start, tap to stop. Not hold, so the phone can be set down.
+  └─ records wav, sixteen kilohertz mono, to the system temp directory
+  └─ waits for the file size to settle before reading it
+     an unfinalised container reaches the provider as corrupt audio
   └─ POST /transcribe  → services/transcribe/run.ts
   │     ├─ consent/gate.ts   ← checked here too, before audio leaves
   │     ├─ provider call (Deepgram, config driven)
   │     └─ audio deleted immediately, never persisted
+  │        the client deletes its temp file too, success or failure
+  └─ a typed entry skips all of the above and the confirm step with it.
+     There is nothing to confirm about words a student typed themselves.
   └─ shows the transcript, student sends or discards
   └─ writes to local queue (survives connection loss)
   └─ POST /entries
@@ -178,6 +185,28 @@ loop closes and why the product gets better the longer someone uses it.
 
 ---
 
+---
+
+## Flow 0: first run
+
+```
+baseline_screen.dart
+  └─ ten questions, each with its own control
+  └─ POST /baseline           → routes/baseline.ts
+        one row per answered question, unique on student and question
+        skipped questions have no row. Absence is the record of a skip.
+  └─ nothing is scored and nothing is shown back
+
+capture_screen.dart          ← the first entry, same screen as every later one
+```
+
+Consent has no screen. It is recorded by the district at rostering and read by
+`consent/gate.ts`. `routes/consent.ts` records and reads it, and writes an
+audit row, but no student ever sees it. See decision 048 for what that removed
+and what has to come back.
+
+---
+
 ## The model gateway
 
 Every model call in the system goes through one file: `api/src/gateway/call.ts`.
@@ -247,4 +276,11 @@ improves.
 8. Nothing is written to `confirmed_patterns` without a student confirmation and
    at least three supporting entry ids.
 9. Audio is never persisted. It is deleted the moment a transcript returns.
-10. No entry is submitted without the student having seen the transcript.
+10. No entry is submitted without the student having seen the transcript. A
+    typed entry has nothing to confirm and skips the step; a spoken one never
+    does.
+11. A transcript never lands in the typing field. It goes to the confirm step,
+    send or discard, because it is the permanent record and the text the safety
+    classifier reads.
+12. Consent has no student facing screen. It is recorded at rostering and read
+    by the gate.

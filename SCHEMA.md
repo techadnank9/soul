@@ -3,8 +3,8 @@
 Postgres. Drizzle for definitions and migrations. Every table carries student,
 school and district identifiers and is protected by row level security.
 
-This is the shape, not the final DDL. Task 1 in BUILD_PLAN.md is writing it
-properly.
+Eighteen tables. This document and `db/src/schema.ts` are kept in step; the
+schema file is the one the database is built from.
 
 ## Tenancy
 
@@ -15,6 +15,20 @@ them later means a migration on live student data.
 Row level security policies scope every read and write to the session's student.
 Application code is not the only guard. Test it by trying to read another
 student's row and failing.
+
+---
+
+## baseline_answers
+`id`, `student_id`, `school_id`, `district_id`, `set_version`, `question_index`,
+`choice_index`, `created_at`
+
+The ten question baseline from first run. One row per answered question, unique
+on student and question within a version, so answering again replaces rather
+than duplicates. Nothing is scored and nothing is shown back. `set_version`
+exists because the question set will change and old answers must not be read as
+answers to new questions.
+
+Skipped questions have no row. Absence is the record of a skip.
 
 ---
 

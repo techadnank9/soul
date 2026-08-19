@@ -4,7 +4,13 @@ Ordered. Each task states what gets built, how, and what has to be true before
 moving on. The order is not arbitrary: everything before task 6 exists to make
 task 6 possible, and task 6 is the one that decides whether the product works.
 
-Start at task 0. Do not start a task without being asked.
+Do not start a task without being asked.
+
+**Current state is in README.md.** The short version: tasks 1 through 6 and 8
+through 13 are built, task 0 was never done, and task 7 has not started. The
+order was not followed. Task 0 needs hardware and real students, and the rest
+was built around it rather than after it. That is a real gap, not a completed
+step, and decisions 010 and 017 still rest on it.
 
 ---
 
@@ -29,6 +35,11 @@ so the transcript is the permanent record and the input to the safety classifier
 
 Done when: text entry feels right on both platforms, and you have a measured
 meaning change rate for both providers on real student audio.
+
+**Still open.** Neither half has been done. The keyboard has only been typed
+into on a simulator, which uses a hardware keyboard and cannot show what the
+software one does to the layout. No student audio has been recorded or compared,
+and the machine used for development has no microphone at all.
 
 ---
 
@@ -138,6 +149,10 @@ Done when: 15 of 20 lines name something specific that only that entry contained
 
 **If this cannot be reached, stop. Nothing downstream fixes a generic first
 line.**
+
+**Not started.** Everything downstream of this is built, which means the risk
+this task exists to catch has not been caught. The prompt in `prompts/beat_one.v1.md`
+has never been measured against real entries.
 
 ---
 

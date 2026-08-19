@@ -10,7 +10,19 @@ student speaks for thirty seconds, gets one short line back, and can go deeper
 if they want. Over months, recurring themes are offered back as patterns the
 student confirms or rejects.
 
-Nothing is built yet. BUILD_PLAN.md is the ordered task list. Start at task 0.
+The loop runs end to end. A student can speak or type, the entry passes the
+consent gate and the safety classifier, a real model writes beat one, the Mirror
+runs on request, and decisions are stored. BUILD_PLAN.md has the task list and
+README.md has the current state of each one.
+
+Two things are worth knowing before you touch anything:
+
+**Task 0 was never done.** The keyboard test on real devices and the forty clip
+transcription comparison both need hardware and real students. Decisions 010 and
+017 rest on them and are still unverified.
+
+**Task 7 has not started.** It is the one the plan says decides whether the
+product works, and no amount of code substitutes for it.
 
 ## Read these before writing code
 
@@ -21,7 +33,7 @@ Nothing is built yet. BUILD_PLAN.md is the ordered task list. Start at task 0.
 | CONTEXT.md | Clinical constraints and the voice rules |
 | SCHEMA.md | The data model |
 | BUILD_PLAN.md | Ordered tasks with done conditions |
-| docs/screens.html | All ten screens, open in a browser |
+| docs/screens.html | The original ten screens, open in a browser |
 | docs/architecture.svg | System architecture |
 | docs/user-flow.svg | The three time horizons of the product |
 
@@ -86,6 +98,20 @@ signal and they stop us repeating a wrong guess.
 
 **Empty states get built before populated ones.** Every mockup shows a full week
 of data. No student has that on day one.
+
+## How to run it
+
+Postgres and the API in one terminal, the app in another. README.md has the
+commands. The client reads `SOUL_API` and `SOUL_STUDENT` at build time, so a
+debug build points at a laptop and a release build cannot point anywhere by
+accident.
+
+Two test students exist: `student_with_consent` and `student_no_consent`. The
+second one is how you check the gate without editing code.
+
+The iOS simulator has no microphone unless the Mac has one. Voice paths have to
+be checked against a real device or a plugged in mic; the simulator returns an
+empty buffer and the app correctly reports that nothing came through.
 
 ## Working style
 

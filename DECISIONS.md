@@ -1086,7 +1086,7 @@ by seeing it, and that is a weaker claim.
 
 ---
 
-### 049. record for microphone capture, wav rather than aac
+### 054. record for microphone capture, wav rather than aac
 Aug 2026, Claude, with Adnan approving the dependency
 
 Decision: the client uses the record package to capture audio, writes wav at
