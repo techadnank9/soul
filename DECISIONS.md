@@ -648,3 +648,41 @@ do not drift.
 
 Reverses if: contrast testing against the district accessibility review finds
 the steps too close. They can widen without changing the structure.
+
+---
+
+### 036. Colour carries the interface, not decoration
+Aug 2026, Adnan and Claude
+
+Decision: the four theme colours appear as bars, tinted counts and filled day
+tiles rather than as small dots. The open decision sits in a clay tinted card.
+
+Why: looked at what comparable apps actually do in the store rather than
+reasoning about it. How We Feel, an emotional wellbeing journal with an Editors'
+Choice award, a 4.9 rating and a 9 plus age rating, is dark and does not read as
+empty, because saturated colour fills its surfaces. Stoic is light and stark
+black and white. Day One is light and photo led.
+
+The conclusion is that dark is fine for this audience, and the thing our version
+was missing was not lightness. We had four theme colours and were showing them
+as eight pixel dots.
+
+The restraint still holds in the copy. Nothing here adds a word, an
+encouragement or an emoji.
+
+Reverses if: colour starts reading as gamification. The line is that colour
+describes what is already there and never rewards.
+
+---
+
+### 037. A scrolling body reserves room for its footer
+Aug 2026, Claude
+
+Decision: Screen adds the footer height to the scroll padding.
+
+Why: the footer floats over the scroll view, and once home grew taller the
+patterns card ended up underneath the button and could not be read or tapped.
+Found by looking at the running app, not by reading the code.
+
+Reverses if: the footer becomes part of the scroll, which would let it scroll
+away and lose the always available invitation.

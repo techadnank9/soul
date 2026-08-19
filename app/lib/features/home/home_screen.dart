@@ -78,22 +78,48 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 14),
               for (final theme in Sample.themes)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       Container(
-                        width: 8,
-                        height: 8,
+                        width: 4,
+                        height: 22,
                         decoration: BoxDecoration(
                           color: theme.color,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(theme.name, style: SoulType.secondary),
+                        child: Text(
+                          theme.name,
+                          style: SoulType.secondary.copyWith(
+                            color: SoulColors.text,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
-                      Text('${theme.count}', style: SoulType.muted),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          // The count sits in its own theme colour at low
+                          // opacity, so the week reads as four coloured groups
+                          // rather than as a list with dots beside it.
+                          color: theme.color.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Text(
+                          '${theme.count}',
+                          style: TextStyle(
+                            fontFamily: SoulType.sans,
+                            fontSize: 12,
+                            color: theme.color,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -134,6 +160,8 @@ class HomeScreen extends StatelessWidget {
         if (heldDecision != null) ...[
           const SizedBox(height: 14),
           SoulCard(
+            background: const Color(0x14D85A30),
+            borderColor: const Color(0x3DD85A30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -213,15 +241,32 @@ class _DayDot extends StatelessWidget {
           Text(letter, style: SoulType.muted),
           const SizedBox(height: 8),
           Container(
-            width: 10,
-            height: 10,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
-              color: color ?? SoulColors.s3,
+              color: (color ?? SoulColors.s3).withValues(
+                alpha: color == null ? 1 : 0.22,
+              ),
               shape: BoxShape.circle,
-              border: today
-                  ? Border.all(color: SoulColors.text3, width: 1)
-                  : null,
+              border: Border.all(
+                color: today
+                    ? SoulColors.text3
+                    : (color ?? Colors.transparent).withValues(alpha: 0.55),
+                width: today ? 1 : 1.5,
+              ),
             ),
+            child: color == null
+                ? null
+                : Center(
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),

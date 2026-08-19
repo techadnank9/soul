@@ -243,6 +243,9 @@ class SoulField extends StatelessWidget {
 
 /// A screen body. Scrolls, pads for the keyboard by hand, and dismisses the
 /// keyboard on a tap outside the field.
+/// Height reserved under a scrolling body for the footer that floats over it.
+const double _footerRoom = 62;
+
 class Screen extends StatelessWidget {
   const Screen({
     super.key,
@@ -272,8 +275,13 @@ class Screen extends StatelessWidget {
                 child: SingleChildScrollView(
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
+                  // The footer sits outside the scroll view, so the scroll
+                  // has to reserve room for it or the last card ends up
+                  // underneath the button.
                   padding: padding.copyWith(
-                    bottom: padding.bottom + bottomInset,
+                    bottom: padding.bottom +
+                        bottomInset +
+                        (footer != null && bottomInset == 0 ? _footerRoom : 0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
