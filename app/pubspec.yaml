@@ -9,6 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Microphone capture. Flutter has no audio recording in the standard library,
+  # so this is the one runtime dependency the client carries. It records to a
+  # file we delete the moment the upload returns, and it collects nothing
+  # itself.
+  record: ^6.1.2
 
 dev_dependencies:
   flutter_test:

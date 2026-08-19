@@ -41,7 +41,12 @@ export async function transcribe(
     body: audio as unknown as BodyInit,
   })
 
-  if (!response.ok) throw new Error(`deepgram returned ${response.status}`)
+  if (!response.ok) {
+    // The status alone does not say what was wrong with the audio, and that is
+    // the thing worth knowing when a student's recording fails.
+    const detail = await response.text().catch(() => '')
+    throw new Error(`deepgram returned ${response.status}: ${detail.slice(0, 300)}`)
+  }
 
   const data = (await response.json()) as any
   const text: string =

@@ -122,6 +122,18 @@ class _FirstRunState extends State<FirstRun> {
   /// Skipping first run lands on home as the mockups show it, with a week of
   /// sample data behind it. The day one empty version is what a real new
   /// account gets, and it is reached by passing zero.
+  void _openSession(BuildContext context, String text, {required bool spoken}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Session(
+          transcript: text,
+          spoken: spoken,
+          onFinished: () => _toHome(context, moments: 1),
+        ),
+      ),
+    );
+  }
+
   void _toHome(BuildContext context, {int moments = 12}) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Home(momentsThisWeek: moments)),
@@ -148,14 +160,8 @@ class _FirstRunState extends State<FirstRun> {
         ),
       _ => CaptureScreen(
           onSkip: () => _toHome(context),
-          onSubmitted: (text) => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => Session(
-                transcript: text,
-                onFinished: () => _toHome(context, moments: 1),
-              ),
-            ),
-          ),
+          onSubmitted: (text) => _openSession(context, text, spoken: false),
+          onTranscribed: (text) => _openSession(context, text, spoken: true),
         ),
     };
   }
@@ -184,6 +190,21 @@ class _HomeState extends State<Home> {
     );
   }
 
+  void _openSession(BuildContext context, String text, {required bool spoken}) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (session) => Session(
+          transcript: text,
+          spoken: spoken,
+          onFinished: () {
+            Navigator.of(session).popUntil((route) => route.isFirst);
+            setState(() => _moments++);
+          },
+        ),
+      ),
+    );
+  }
+
   void _openCapture(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -195,17 +216,8 @@ class _HomeState extends State<Home> {
           // say anything has to be an ordinary thing to do, not a thing you
           // have to back out of.
           onSkip: () => Navigator.of(capture).pop(),
-          onSubmitted: (text) => Navigator.of(capture).pushReplacement(
-            MaterialPageRoute(
-              builder: (session) => Session(
-                transcript: text,
-                onFinished: () {
-                  Navigator.of(session).popUntil((route) => route.isFirst);
-                  setState(() => _moments++);
-                },
-              ),
-            ),
-          ),
+          onSubmitted: (text) => _openSession(capture, text, spoken: false),
+          onTranscribed: (text) => _openSession(capture, text, spoken: true),
         ),
       ),
     );

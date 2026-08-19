@@ -19,6 +19,9 @@ transcription.post('/transcribe', async (c) => {
 
   if (audio.byteLength === 0) return c.json({ error: 'no audio' }, 400)
 
+  // Size and type only. Never the audio itself, and never the transcript.
+  console.log(`transcribe: ${audio.byteLength} bytes, ${contentType}`)
+
   try {
     const { text } = await transcribe(audio, contentType, c.get('session'))
     if (!text) return c.json({ error: 'nothing was heard' }, 422)

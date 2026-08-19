@@ -1083,3 +1083,27 @@ nobody is looking at costs battery for nothing.
 Not verified visually. Screenshots are taken after the finger lifts, so every
 frame that can be captured is the idle state. Confirmed by reading it back, not
 by seeing it, and that is a weaker claim.
+
+---
+
+### 049. record for microphone capture, wav rather than aac
+Aug 2026, Claude, with Adnan approving the dependency
+
+Decision: the client uses the record package to capture audio, writes wav at
+sixteen kilohertz mono, and deletes the file the moment the upload returns.
+
+Why: Flutter has no microphone capture in the standard library, so this is
+unavoidable if voice is a path at all. It is the only runtime dependency the
+client carries.
+
+Wav rather than aac because an aac container is finalised when recording stops,
+and a short clip can reach the provider before that has happened. Deepgram
+rejected those as corrupt audio. Wav is written straight through. Sixteen
+kilohertz mono is what speech recognition wants anyway, so the file is barely
+larger than the compressed one.
+
+The transcript never lands in the typing field. It goes to the confirm screen,
+send or discard, per decision 019.
+
+Reverses if: a first party capture API appears, or upload size on school wifi
+turns out to matter more than the container reliability.

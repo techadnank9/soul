@@ -47,6 +47,23 @@ class SoulApi {
     return jsonDecode(text) as Map<String, dynamic>;
   }
 
+  /// Audio in, text out. The bytes are sent and forgotten; the server deletes
+  /// them the moment the provider returns a transcript.
+  Future<String> transcribe(List<int> audio, String contentType) async {
+    final request = await _client.postUrl(Uri.parse('$baseUrl/transcribe'));
+    request.headers.set('content-type', contentType);
+    request.headers.set('authorization', 'Bearer $token');
+    request.add(audio);
+
+    final response = await request.close();
+    final text = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode >= 400) {
+      throw SoulApiException(response.statusCode, text);
+    }
+    return (jsonDecode(text) as Map<String, dynamic>)['text'] as String;
+  }
+
   Future<SubmitResult> submit({
     required String text,
     required bool spoken,
