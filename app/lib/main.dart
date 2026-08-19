@@ -7,6 +7,7 @@ import 'features/capture/capture_screen.dart';
 import 'features/capture/confirm_transcript.dart';
 import 'features/day/day_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/consent_screen.dart';
 import 'features/onboarding/question_screen.dart';
@@ -158,60 +159,47 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late int _moments = widget.momentsThisWeek;
-  String? _held = Sample.heldDecision;
+  final String _held = Sample.heldDecision;
 
   @override
   Widget build(BuildContext context) {
+    if (_moments > 0) {
+      return AppShell(
+        momentsThisWeek: _moments,
+        onCapture: () => _openCapture(context),
+      );
+    }
     return HomeScreen(
       momentsThisWeek: _moments,
       heldDecision: _moments == 0 ? null : _held,
-      onCapture: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (capture) => CaptureScreen(
-            opener: 'right now',
-            prompt: 'What just happened?',
-            note: 'Thirty seconds is plenty.',
-            // A way out that costs nothing. Opening the app and deciding not
-            // to say anything has to be an ordinary thing to do, not a thing
-            // you have to back out of.
-            onSkip: () => Navigator.of(capture).pop(),
-            onSubmitted: (text) => Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => Session(
-                  transcript: text,
-                  onFinished: () {
-                    Navigator.of(context).popUntil((r) => r.isFirst);
-                    setState(() => _moments++);
-                  },
-                ),
+      onCapture: () => _openCapture(context),
+      onOpenDay: (_) {},
+      onOpenPatterns: () {},
+      onOutcome: () {},
+    );
+  }
+
+  void _openCapture(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (capture) => CaptureScreen(
+          opener: 'right now',
+          prompt: 'What just happened?',
+          note: 'Thirty seconds is plenty.',
+          // A way out that costs nothing. Opening the app and deciding not to
+          // say anything has to be an ordinary thing to do, not a thing you
+          // have to back out of.
+          onSkip: () => Navigator.of(capture).pop(),
+          onSubmitted: (text) => Navigator.of(capture).pushReplacement(
+            MaterialPageRoute(
+              builder: (session) => Session(
+                transcript: text,
+                onFinished: () {
+                  Navigator.of(session).popUntil((route) => route.isFirst);
+                  setState(() => _moments++);
+                },
               ),
             ),
-          ),
-        ),
-      ),
-      onOpenDay: (day) => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => DayScreen(
-            day: day,
-            onBack: () => Navigator.of(context).pop(),
-          ),
-        ),
-      ),
-      onOpenPatterns: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const PatternsScreen(reflectionCount: 34),
-        ),
-      ),
-      onOutcome: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OutcomeScreen(
-            decision: _held ?? Sample.heldDecision,
-            observation: 'That is twice now that saying it directly ended '
-                'lighter than holding it.',
-            onDone: () {
-              Navigator.of(context).pop();
-              setState(() => _held = null);
-            },
           ),
         ),
       ),

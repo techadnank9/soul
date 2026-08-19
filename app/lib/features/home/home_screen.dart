@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../data/sample.dart';
 import '../../theme/soul_theme.dart';
@@ -18,6 +17,7 @@ class HomeScreen extends StatelessWidget {
     required this.onOpenPatterns,
     required this.onOutcome,
     this.heldDecision,
+    this.showFooter = true,
   });
 
   final int momentsThisWeek;
@@ -27,6 +27,10 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onOpenPatterns;
   final VoidCallback onOutcome;
 
+  /// The tab shell carries its own capture button, so home hides its footer
+  /// when it is inside one and keeps it when it stands alone.
+  final bool showFooter;
+
   bool get _empty => momentsThisWeek == 0;
 
   @override
@@ -34,12 +38,14 @@ class HomeScreen extends StatelessWidget {
     return Screen(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       body: _empty ? _dayOne() : _populated(),
-      footer: SoulButton(
-        'Something on your mind',
-        kind: SoulButtonKind.filled,
-        height: 50,
-        onPressed: onCapture,
-      ),
+      footer: showFooter
+          ? SoulButton(
+              'Something on your mind',
+              kind: SoulButtonKind.filled,
+              height: 56,
+              onPressed: onCapture,
+            )
+          : null,
     );
   }
 
@@ -55,76 +61,36 @@ class HomeScreen extends StatelessWidget {
       ];
 
   List<Widget> _populated() => [
-        SoulCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  const Text('This week',
-                      style: TextStyle(
-                        fontFamily: SoulType.sans,
-                        fontSize: 16,
-                        color: SoulColors.text,
-                      )),
-                  Label('$momentsThisWeek moments'),
-                ],
-              ),
-              const SizedBox(height: 10),
-              const Center(child: _ThemeRing(size: 126)),
-              const SizedBox(height: 14),
-              for (final theme in Sample.themes)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: theme.color,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          theme.name,
-                          style: SoulType.secondary.copyWith(
-                            color: SoulColors.text,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          // The count sits in its own theme colour at low
-                          // opacity, so the week reads as four coloured groups
-                          // rather than as a list with dots beside it.
-                          color: theme.color.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: Text(
-                          '${theme.count}',
-                          style: TextStyle(
-                            fontFamily: SoulType.sans,
-                            fontSize: 12,
-                            color: theme.color,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const Text('This week', style: SoulType.heading),
+              Label('$momentsThisWeek moments'),
             ],
           ),
+        ),
+        // Four tiles, one per theme, sized to the screen rather than to a
+        // legend. The colour is the content here, not a key to a chart.
+        Row(
+          children: [
+            for (var i = 0; i < 2; i++) ...[
+              if (i > 0) const SizedBox(width: 12),
+              Expanded(child: _ThemeTile(theme: Sample.themes[i])),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            for (var i = 2; i < 4; i++) ...[
+              if (i > 2) const SizedBox(width: 12),
+              Expanded(child: _ThemeTile(theme: Sample.themes[i])),
+            ],
+          ],
         ),
         const SizedBox(height: 14),
         SoulCard(
@@ -274,59 +240,45 @@ class _DayDot extends StatelessWidget {
   }
 }
 
-/// The week as one ring. Counts only, no judgement, no score.
-class _ThemeRing extends StatelessWidget {
-  const _ThemeRing({required this.size});
-  final double size;
+/// One theme, as a filled tile. Large enough that the colour is the surface
+/// rather than a mark beside a word.
+class _ThemeTile extends StatelessWidget {
+  const _ThemeTile({required this.theme});
+  final ThemeSlice theme;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(painter: _RingPainter(Sample.themes)),
+    return Container(
+      height: 108,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.color,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${theme.count}',
+            style: const TextStyle(
+              fontFamily: SoulType.serif,
+              fontSize: 34,
+              height: 1,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            theme.name,
+            style: const TextStyle(
+              fontFamily: SoulType.sans,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
-}
-
-class _RingPainter extends CustomPainter {
-  _RingPainter(this.slices);
-  final List<ThemeSlice> slices;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final total = slices.fold<int>(0, (sum, s) => sum + s.count);
-    if (total == 0) return;
-
-    final stroke = size.width * 0.104;
-    final rect = Rect.fromCircle(
-      center: Offset(size.width / 2, size.height / 2),
-      radius: (size.width - stroke) / 2,
-    );
-
-    final track = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..color = SoulColors.s3;
-    canvas.drawCircle(rect.center, rect.width / 2, track);
-
-    var start = -math.pi / 2;
-    for (final slice in slices) {
-      final sweep = (slice.count / total) * math.pi * 2;
-      canvas.drawArc(
-        rect,
-        start,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..color = slice.color,
-      );
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RingPainter old) => old.slices != slices;
 }

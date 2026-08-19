@@ -3,32 +3,35 @@ import 'package:flutter/material.dart';
 /// The palette and type scale from docs/screens.html. Every value here has a
 /// counterpart in that file. Change both together.
 abstract final class SoulColors {
-  /// An elevation scale, not a set of near identical blacks.
+  /// Warm and light, with colour doing the work.
   ///
-  /// The first version sat at four percent lightness with cards three percent
-  /// above it, so nothing separated and the whole app read as one flat sheet.
-  /// The base is now around seven percent with real steps above it. Every
-  /// surface keeps a warm undertone, because the accents are clay and amber and
-  /// a cool grey underneath them reads as cheap.
-  static const bg = Color(0xFF121110);
-  static const s1 = Color(0xFF1B1A18);
-  static const s2 = Color(0xFF232120);
-  static const s3 = Color(0xFF2E2B28);
-  static const border = Color(0xFF322F2B);
-  static const border2 = Color(0xFF454039);
+  /// The first two versions were near black and read as empty. The reference is
+  /// Headspace: a cream ground, large saturated tiles as the primary surface,
+  /// and generous rounding. Warmth in the surfaces, restraint in the words.
+  static const bg = Color(0xFFFFF6EC);
+  static const s1 = Color(0xFFFFFFFF);
+  static const s2 = Color(0xFFFBEEE0);
+  static const s3 = Color(0xFFF3E4D3);
+  static const border = Color(0xFFEEE0CF);
+  static const border2 = Color(0xFFDECBB4);
 
-  /// A one pixel warm highlight along the top of a raised surface. On a dark
-  /// interface shadows do almost nothing, so light does the lifting instead.
+  static const text = Color(0xFF201B15);
+  static const text2 = Color(0xFF6B6055);
+  static const text3 = Color(0xFF9C9084);
+
+  /// The four theme colours. Saturated enough to fill a tile, dark enough that
+  /// white sits on them at an accessible contrast.
+  static const clay = Color(0xFFEA5F17);
+  static const clayDark = Color(0xFFB8460D);
+  static const clayLight = Color(0xFFFFF0E6);
+  static const amber = Color(0xFFE59200);
+  static const violet = Color(0xFF5B4FD1);
+  static const moss = Color(0xFF3F8B2E);
+
+  /// A soft warm shadow. On a light interface this is what lifts a card, and it
+  /// is warm rather than grey so it does not read as dirt.
+  static const shade = Color(0x14A0693A);
   static const lift = Color(0x0DFFFFFF);
-  static const text = Color(0xFFF2F0EC);
-  static const text2 = Color(0xFFA5A29A);
-  static const text3 = Color(0xFF6E6B64);
-  static const clay = Color(0xFFD85A30);
-  static const clayDark = Color(0xFF7A3018);
-  static const clayLight = Color(0xFFF0997B);
-  static const amber = Color(0xFFEF9F27);
-  static const violet = Color(0xFF7F77DD);
-  static const moss = Color(0xFF639922);
 }
 
 abstract final class SoulType {
@@ -40,25 +43,25 @@ abstract final class SoulType {
   /// measured against.
   static const lead = TextStyle(
     fontFamily: sans,
-    fontSize: 15,
-    height: 1.65,
-    fontWeight: FontWeight.w300,
+    fontSize: 16,
+    height: 1.6,
+    fontWeight: FontWeight.w400,
     color: SoulColors.text,
   );
 
   static const secondary = TextStyle(
     fontFamily: sans,
-    fontSize: 14,
-    height: 1.6,
-    fontWeight: FontWeight.w300,
+    fontSize: 15,
+    height: 1.55,
+    fontWeight: FontWeight.w400,
     color: SoulColors.text2,
   );
 
   static const muted = TextStyle(
     fontFamily: sans,
-    fontSize: 12,
-    letterSpacing: 0.24,
-    fontWeight: FontWeight.w300,
+    fontSize: 13,
+    letterSpacing: 0.1,
+    fontWeight: FontWeight.w400,
     color: SoulColors.text3,
   );
 
@@ -71,9 +74,9 @@ abstract final class SoulType {
 
   static const heading = TextStyle(
     fontFamily: serif,
-    fontSize: 26,
-    height: 1.35,
-    letterSpacing: -0.26,
+    fontSize: 32,
+    height: 1.2,
+    letterSpacing: -0.5,
     color: SoulColors.text,
   );
 }
@@ -81,17 +84,17 @@ abstract final class SoulType {
 ThemeData soulTheme() {
   return ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     scaffoldBackgroundColor: SoulColors.bg,
     fontFamily: SoulType.sans,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: const ColorScheme.light(
       surface: SoulColors.bg,
       primary: SoulColors.clay,
-      onPrimary: SoulColors.text,
+      onPrimary: Colors.white,
     ),
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: SoulColors.clay,
-      selectionColor: Color(0x33D85A30),
+      selectionColor: Color(0x33EA5F17),
       selectionHandleColor: SoulColors.clay,
     ),
   );

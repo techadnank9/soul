@@ -686,3 +686,32 @@ Found by looking at the running app, not by reading the code.
 
 Reverses if: the footer becomes part of the scroll, which would let it scroll
 away and lose the always available invitation.
+
+---
+
+### 038. The visual direction is Headspace, and there is a tab bar
+Aug 2026, Adnan
+
+Decision: warm cream ground, white cards with soft warm shadows, the four theme
+colours as large filled tiles, pill buttons in clay, and a three destination tab
+bar with capture floating clear of it.
+
+Why: founder call, with Headspace named as the reference. Two darker versions
+read as dull and empty. The category is split, Stoic and Day One are light,
+How We Feel is dark and vivid, and Headspace is the warm and light end of it.
+
+The tab bar is a change to the navigation, not a fix. docs/screens.html says
+home is the hub and everything is reached from it. Moving between the week, a
+day and the patterns is the most common thing a returning student does, and
+pushing and popping to reach them made the product feel deeper than it is.
+
+Capture is not a destination. It is an action, so it floats rather than sitting
+in the bar, and it is the only thing on that surface a student is encouraged to
+do.
+
+What this does not change: the words. CONTEXT.md still governs every string.
+Warmer surfaces are not permission for encouragement, exclamation marks or
+praise. The visual register got friendlier and the voice did not move.
+
+Reverses if: the warmth starts reading as a wellness product that cheers you on,
+which is the thing the clinical guidance is most direct about avoiding.

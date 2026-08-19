@@ -43,21 +43,22 @@ class SoulCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        // A hair lighter at the top than the bottom. On a dark interface a
-        // shadow does almost nothing, so the lift has to come from light.
-        gradient: background == null
-            ? const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF1F1D1B), SoulColors.s1],
-              )
+        color: background ?? SoulColors.s1,
+        border: borderColor != null ? Border.all(color: borderColor!) : null,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: background == null
+            ? const [
+                BoxShadow(
+                  color: SoulColors.shade,
+                  blurRadius: 18,
+                  offset: Offset(0, 6),
+                ),
+              ]
             : null,
-        color: background,
-        border: Border.all(color: borderColor ?? SoulColors.border),
-        borderRadius: BorderRadius.circular(18),
       ),
       child: child,
     );
+
     if (onTap == null) return card;
     return InkWell(
       onTap: onTap,
@@ -81,8 +82,7 @@ class Inset extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: SoulColors.s2,
-        border: Border.all(color: SoulColors.border),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +106,7 @@ class Quote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: const BoxDecoration(
-        border: Border(left: BorderSide(color: SoulColors.clay, width: 2)),
+        border: Border(left: BorderSide(color: SoulColors.clay, width: 3)),
       ),
       child: Text(text, style: SoulType.secondary),
     );
@@ -122,7 +122,7 @@ class SoulButton extends StatelessWidget {
     required this.onPressed,
     this.kind = SoulButtonKind.outline,
     this.alignLeft = false,
-    this.height = 46,
+    this.height = 54,
   });
 
   final String label;
@@ -144,12 +144,12 @@ class SoulButton extends StatelessWidget {
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(horizontal: alignLeft ? 16 : 8),
           alignment: alignLeft ? Alignment.centerLeft : Alignment.center,
-          backgroundColor: filled ? SoulColors.text : Colors.transparent,
+          backgroundColor: filled ? SoulColors.clay : Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(999),
             side: BorderSide(
               color: switch (kind) {
-                SoulButtonKind.filled => SoulColors.text,
+                SoulButtonKind.filled => SoulColors.clay,
                 SoulButtonKind.outline => SoulColors.border2,
                 SoulButtonKind.ghost => Colors.transparent,
               },
@@ -160,10 +160,10 @@ class SoulButton extends StatelessWidget {
           label,
           style: TextStyle(
             fontFamily: SoulType.sans,
-            fontSize: ghost ? 13 : 15,
-            fontWeight: FontWeight.w300,
+            fontSize: ghost ? 14 : 16,
+            fontWeight: filled ? FontWeight.w500 : FontWeight.w400,
             color: switch (kind) {
-              SoulButtonKind.filled => SoulColors.bg,
+              SoulButtonKind.filled => Colors.white,
               SoulButtonKind.outline => SoulColors.text,
               SoulButtonKind.ghost => SoulColors.text3,
             },
@@ -224,17 +224,17 @@ class SoulField extends StatelessWidget {
       decoration: InputDecoration(
         isDense: true,
         filled: true,
-        fillColor: SoulColors.s2,
+        fillColor: SoulColors.s1,
         hintText: hint,
         hintStyle: SoulType.field.copyWith(color: SoulColors.text3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: SoulColors.border2),
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: SoulColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: SoulColors.clay, width: 1.5),
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: SoulColors.clay, width: 2),
         ),
       ),
     );
@@ -244,7 +244,7 @@ class SoulField extends StatelessWidget {
 /// A screen body. Scrolls, pads for the keyboard by hand, and dismisses the
 /// keyboard on a tap outside the field.
 /// Height reserved under a scrolling body for the footer that floats over it.
-const double _footerRoom = 62;
+const double _footerRoom = 68;
 
 class Screen extends StatelessWidget {
   const Screen({
