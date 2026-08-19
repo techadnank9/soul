@@ -215,3 +215,11 @@ yet, and it is the decision that determines whether students trust this at all.
 **What a counsellor sees.** A flag and a timestamp, or the student's actual
 words. Every capability given to an adult makes the promise to the student
 smaller.
+
+**A student with no consent on file is never classified.** The consent gate
+sits in front of every outbound call, and the safety classifier is an outbound
+call, so an entry from a student whose consent is missing is stored and never
+read by anything. No flag exists, so nothing surfaces to anyone. This affects
+new, unrostered and transferring students, who are not obviously the safest
+group to leave unread. Found by running the submit path, see decision 042.
+There is no answer yet and it needs one before any student uses this.

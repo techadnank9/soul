@@ -105,3 +105,23 @@ runs before either, blocking, on every entry.
 
 Nothing is built yet. Screens are designed, architecture is settled, the build
 plan starts at task 0.
+
+## Running it locally
+
+Postgres 17 with pgvector, no containers needed.
+
+```
+brew install postgresql@17 pgvector
+brew services start postgresql@17
+createdb soul
+export DATABASE_URL="postgres://$(whoami)@localhost:5432/soul"
+
+npm install
+npm run db:migrate -w @soul/db      # schema, then row level security
+npm run seed:prompts -w @soul/api   # /prompts into the database
+npm run db:test                     # the tenancy test
+npm start -w @soul/api
+```
+
+Without provider keys the safety classifier cannot answer, so every entry
+returns the help screen. That is the designed behaviour, not a failure.

@@ -771,3 +771,35 @@ they had typed. Same family as the confirm step running for typed input. The
 app was describing something that did not happen.
 
 Reverses if: nothing.
+
+---
+
+### 042. Open question: a held entry is never classified
+Aug 2026, Claude
+
+Not a decision. A gap found by running the submit path against a real database,
+recorded so it is not lost.
+
+The consent gate blocks every outbound call. The safety classifier is an
+outbound call. So an entry from a student with no consent on file is stored
+unprocessed and never read by anything, no safety_flags row is written, and
+nothing surfaces to any adult, ever.
+
+Verified: student_no_consent returned held, the entry exists, and safety_flags
+has no row for it.
+
+This is what FLOW.md asks for and it is also in tension with CONTEXT.md, which
+says a published crisis protocol is required and not a design preference. It
+affects new, unrostered and transferring students.
+
+Three options, none of them mine to choose:
+
+  1. An on device word list, no network and so no consent needed. Crude, high
+     false positive rate, but nobody writes something urgent into a void.
+  2. Treat safety classification as outside third party processing under the
+     educational purpose exception. A legal question for whoever holds the
+     district agreements.
+  3. Refuse the entry rather than store it, and say the app is not ready for
+     this student. Honest, and a closed door for someone who may need one open.
+
+Needs an answer before any student uses this.
