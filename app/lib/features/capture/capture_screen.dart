@@ -85,10 +85,10 @@ class _CaptureScreenState extends State<CaptureScreen>
           controller: _controller,
           hint: 'Type it here',
         ),
-        // The mic sits low and centred, with room around it. It is the
-        // thing most students will reach for, and it should not look like an
-        // afterthought under the typing field.
-        const SizedBox(height: 90),
+        // The mic sits low, down where a thumb rests, with room around it. It
+        // is the thing most students will reach for, and it should not look
+        // like an afterthought under the typing field.
+        const SizedBox(height: 200),
         Center(
           child: Column(
             children: [
