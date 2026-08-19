@@ -15,6 +15,13 @@ export type ProviderCall = {
   temperature: number
   maxTokens: number
   json: boolean
+  /**
+   * How much thinking a reasoning model should do before answering. Reasoning
+   * tokens are billed and counted against the same budget as the reply, so a
+   * model left to think freely can spend the whole allowance and return
+   * nothing at all.
+   */
+  reasoning: 'minimal' | 'low' | 'medium' | 'high'
   signal: AbortSignal
 }
 
@@ -40,6 +47,20 @@ async function postJson(url: string, key: string, body: unknown, signal: AbortSi
   return response.json() as Promise<any>
 }
 
+/**
+ * The gpt-5 family accepts only the default temperature and rejects any other
+ * value outright. Sending one fails the call, which on the safety path means
+ * failing closed and showing every student the help screen. Omit it there and
+ * let the model default.
+ */
+function acceptsTemperature(model: string): boolean {
+  return !isReasoning(model)
+}
+
+function isReasoning(model: string): boolean {
+  return model.includes('gpt-5')
+}
+
 async function openaiShaped(
   url: string,
   key: string,
@@ -50,7 +71,8 @@ async function openaiShaped(
     key,
     {
       model: call.model,
-      temperature: call.temperature,
+      ...(acceptsTemperature(call.model) ? { temperature: call.temperature } : {}),
+      ...(isReasoning(call.model) ? { reasoning_effort: call.reasoning } : {}),
       max_completion_tokens: call.maxTokens,
       ...(call.json ? { response_format: { type: 'json_object' } } : {}),
       messages: [

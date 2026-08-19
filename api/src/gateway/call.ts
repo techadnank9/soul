@@ -25,6 +25,7 @@ type PurposeConfig = {
   maxTokens: number
   timeoutMs: number
   json: boolean
+  reasoning: 'minimal' | 'low' | 'medium' | 'high'
 }
 
 /**
@@ -44,9 +45,13 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5-mini',
     },
     temperature: 0,
-    maxTokens: 200,
-    timeoutMs: 4000,
+    // Reasoning tokens come out of this budget, so it has to cover the
+    // thinking as well as the answer. Two hundred was all thinking and no
+    // reply, which failed closed and showed every student the help screen.
+    maxTokens: 900,
+    timeoutMs: 8000,
     json: true,
+    reasoning: 'minimal',
   },
   beat_one: {
     order: ['openai', 'gemini', 'openrouter'],
@@ -56,9 +61,12 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5-mini',
     },
     temperature: 0.6,
-    maxTokens: 120,
-    timeoutMs: 6000,
+    maxTokens: 800,
+    timeoutMs: 12_000,
     json: false,
+    // Under three seconds is the whole point of this screen, so the model
+    // thinks as little as it is allowed to.
+    reasoning: 'minimal',
   },
   mirror: {
     order: ['openai', 'gemini', 'openrouter'],
@@ -68,9 +76,14 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5',
     },
     temperature: 0.7,
-    maxTokens: 700,
-    timeoutMs: 20_000,
+    maxTokens: 4000,
+    timeoutMs: 60_000,
     json: true,
+    // The Mirror is asked for, so it may take longer than beat one. It may not
+    // take a minute. Medium reasoning ran past forty five seconds on a short
+    // entry, which is a blank screen for a student who has just asked to look
+    // closer.
+    reasoning: 'low',
   },
   tagger: {
     order: ['openai', 'gemini', 'openrouter'],
@@ -80,9 +93,10 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5-mini',
     },
     temperature: 0,
-    maxTokens: 300,
-    timeoutMs: 15_000,
+    maxTokens: 1200,
+    timeoutMs: 25_000,
     json: true,
+    reasoning: 'low',
   },
 }
 
@@ -155,6 +169,7 @@ export async function call<T>(
         temperature: settings.temperature,
         maxTokens: settings.maxTokens,
         json: settings.json,
+        reasoning: settings.reasoning,
         signal: controller.signal,
       }
 

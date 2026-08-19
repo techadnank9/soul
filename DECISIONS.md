@@ -803,3 +803,52 @@ Three options, none of them mine to choose:
      this student. Honest, and a closed door for someone who may need one open.
 
 Needs an answer before any student uses this.
+
+---
+
+### 043. Reasoning models need a different call shape
+Aug 2026, Claude
+
+Decision: the gateway omits temperature for gpt-5 models, sends reasoning_effort
+instead, and every token budget was raised to cover reasoning as well as the
+reply.
+
+Why: found by running it. Two separate failures, both of which showed every
+student the help screen.
+
+First, gpt-5 rejects any temperature other than the default. The safety
+classifier asked for zero, every call four hundred'd, and the system failed
+closed exactly as designed. The design was right and the request was wrong.
+
+Second, reasoning tokens are billed against the same budget as the reply. The
+classifier had two hundred tokens, spent all two hundred thinking, and returned
+an empty string with finish_reason length. A model that thinks itself out of an
+answer looks identical to a model that is down.
+
+Budgets are now safety 900 at minimal reasoning, beat one 800 at minimal,
+tagger 1200 at low, Mirror 4000 at low.
+
+What this costs: the safety classifier can no longer run at temperature zero,
+so the same transcript may not produce the same verdict twice. That matters for
+an audit trail and it is not recoverable on this model family. Worth measuring
+before it matters. gpt-4.1-mini would accept temperature zero if determinism
+turns out to be worth more than the newer model.
+
+Reverses if: a measured disagreement rate on repeated classification of the same
+entry is high enough to undermine the flag record.
+
+---
+
+### 044. The Mirror thinks less than it wants to
+Aug 2026, Claude
+
+Decision: the Mirror runs at low reasoning with a sixty second ceiling.
+
+Why: at medium it ran past forty five seconds on a short entry and was cut off.
+The Mirror is asked for, so it may take longer than beat one, but a student who
+taps look closer and waits a minute in front of a blank screen has been failed
+whatever arrives afterwards. At low it returns in about eleven seconds with
+output that passes the schema and the voice rules.
+
+Reverses if: the quality difference between low and medium is large on the task
+7 fixture set, which is the place to measure it.
