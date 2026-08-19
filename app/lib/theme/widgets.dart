@@ -43,9 +43,18 @@ class SoulCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: background ?? SoulColors.s1,
+        // A hair lighter at the top than the bottom. On a dark interface a
+        // shadow does almost nothing, so the lift has to come from light.
+        gradient: background == null
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF1F1D1B), SoulColors.s1],
+              )
+            : null,
+        color: background,
         border: Border.all(color: borderColor ?? SoulColors.border),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: child,
     );
@@ -97,7 +106,7 @@ class Quote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: const BoxDecoration(
-        border: Border(left: BorderSide(color: SoulColors.border2, width: 2)),
+        border: Border(left: BorderSide(color: SoulColors.clay, width: 2)),
       ),
       child: Text(text, style: SoulType.secondary),
     );
@@ -220,12 +229,12 @@ class SoulField extends StatelessWidget {
         hintStyle: SoulType.field.copyWith(color: SoulColors.text3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: SoulColors.border),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: SoulColors.border2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: SoulColors.border2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: SoulColors.clay, width: 1.5),
         ),
       ),
     );

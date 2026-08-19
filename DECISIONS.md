@@ -624,3 +624,27 @@ with what they say.
 
 Reverses if: nothing. This is the weaker version of what the clinical guidance
 asks for.
+
+---
+
+### 035. The surface palette is an elevation scale, not a set of near blacks
+Aug 2026, Adnan and Claude
+
+Decision: the base moves from #0C0C0B to #121110 and the surfaces above it are
+spaced far enough apart to be seen. Cards carry a faint top highlight, the
+quote rule and the focused field carry clay.
+
+Why: the first palette sat at about four percent lightness with cards three
+percent above it, so nothing separated and the app read as one flat black
+sheet. The published guidance on dark interfaces is consistent: a pure black
+base destroys hierarchy and causes text to bloom, and depth on a dark surface
+comes from stepped lightness rather than from shadow.
+
+The warm undertone is deliberate. The accents are clay and amber, and a cool
+grey underneath them reads as cheap.
+
+docs/screens.html was updated in the same change so the designs and the client
+do not drift.
+
+Reverses if: contrast testing against the district accessibility review finds
+the steps too close. They can widen without changing the structure.

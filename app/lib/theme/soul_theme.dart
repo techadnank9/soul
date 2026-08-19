@@ -3,12 +3,23 @@ import 'package:flutter/material.dart';
 /// The palette and type scale from docs/screens.html. Every value here has a
 /// counterpart in that file. Change both together.
 abstract final class SoulColors {
-  static const bg = Color(0xFF0C0C0B);
-  static const s1 = Color(0xFF161615);
-  static const s2 = Color(0xFF1F1F1D);
-  static const s3 = Color(0xFF292926);
-  static const border = Color(0xFF2E2E2A);
-  static const border2 = Color(0xFF3D3D38);
+  /// An elevation scale, not a set of near identical blacks.
+  ///
+  /// The first version sat at four percent lightness with cards three percent
+  /// above it, so nothing separated and the whole app read as one flat sheet.
+  /// The base is now around seven percent with real steps above it. Every
+  /// surface keeps a warm undertone, because the accents are clay and amber and
+  /// a cool grey underneath them reads as cheap.
+  static const bg = Color(0xFF121110);
+  static const s1 = Color(0xFF1B1A18);
+  static const s2 = Color(0xFF232120);
+  static const s3 = Color(0xFF2E2B28);
+  static const border = Color(0xFF322F2B);
+  static const border2 = Color(0xFF454039);
+
+  /// A one pixel warm highlight along the top of a raised surface. On a dark
+  /// interface shadows do almost nothing, so light does the lifting instead.
+  static const lift = Color(0x0DFFFFFF);
   static const text = Color(0xFFF2F0EC);
   static const text2 = Color(0xFFA5A29A);
   static const text3 = Color(0xFF6E6B64);
