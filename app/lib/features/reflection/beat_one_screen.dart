@@ -13,15 +13,18 @@ class BeatOneScreen extends StatelessWidget {
     super.key,
     required this.transcript,
     required this.line,
-    required this.spokenSeconds,
     required this.timeOfDay,
+    this.spokenSeconds,
     required this.onLookCloser,
     required this.onDone,
   });
 
   final String transcript;
   final String line;
-  final int spokenSeconds;
+  /// Only set when the entry came from the mic. A typed entry was not spoken,
+  /// and telling a student how long they spoke for when they did not speak is
+  /// the app describing something that did not happen.
+  final int? spokenSeconds;
   final String timeOfDay;
   final VoidCallback onLookCloser;
   final VoidCallback onDone;
@@ -33,7 +36,11 @@ class BeatOneScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Label('you spoke for $spokenSeconds seconds'),
+            Label(
+              spokenSeconds == null
+                  ? 'in your words'
+                  : 'you spoke for $spokenSeconds seconds',
+            ),
             Label(timeOfDay),
           ],
         ),

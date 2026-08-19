@@ -34,14 +34,14 @@ class PatternPromptScreen extends StatelessWidget {
         Quote(entry),
         const SizedBox(height: 24),
         SoulCard(
-          background: const Color(0x1AD85A30),
-          borderColor: const Color(0x59D85A30),
+          background: SoulColors.clayLight,
+          borderColor: const Color(0x33EA5F17),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 proposal,
-                style: SoulType.lead.copyWith(color: SoulColors.clayLight),
+                style: SoulType.lead.copyWith(color: SoulColors.clayDark),
               ),
               const SizedBox(height: 18),
               ButtonRow(

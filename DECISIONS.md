@@ -738,3 +738,36 @@ student is looking at their own words as they write them.
 Found by typing into the running app, not by reading the code.
 
 Reverses if: nothing.
+
+---
+
+### 040. The light theme broke text that was coloured for the dark one
+Aug 2026, Claude
+
+Decision: every colour that was chosen against a dark ground has been rechecked
+against the light one. clayLight is now a background rather than a text colour,
+and text on a tinted card uses clayDark.
+
+Why: after the palette flip the pattern proposal was cream text on a cream card
+and could not be read at all. Three files still carried hexes from the old
+palette. Caught by looking at the running app.
+
+The lesson worth keeping: a palette swap is not a token change. Any colour that
+was picked for contrast against the old ground has to be rechecked, and the
+compiler cannot tell you which ones.
+
+Reverses if: nothing.
+
+---
+
+### 041. A typed entry was never spoken
+Aug 2026, Claude
+
+Decision: beat one says how long the student spoke only when they used the mic.
+A typed entry reads "in your words".
+
+Why: the screen told a student they had spoken for forty one seconds over text
+they had typed. Same family as the confirm step running for typed input. The
+app was describing something that did not happen.
+
+Reverses if: nothing.

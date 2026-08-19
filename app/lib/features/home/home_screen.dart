@@ -126,8 +126,8 @@ class HomeScreen extends StatelessWidget {
         if (heldDecision != null) ...[
           const SizedBox(height: 14),
           SoulCard(
-            background: const Color(0x14D85A30),
-            borderColor: const Color(0x3DD85A30),
+            background: SoulColors.clayLight,
+            borderColor: const Color(0x33EA5F17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -245,7 +245,7 @@ class _SessionState extends State<Session> {
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,
           line: Sample.beatOne,
-          spokenSeconds: 41,
+          spokenSeconds: widget.spoken ? 41 : null,
           timeOfDay: '6:14 PM',
           onLookCloser: () => setState(() => _beat = _Beat.mirror),
           onDone: widget.onFinished,
