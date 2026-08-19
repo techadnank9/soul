@@ -7,8 +7,17 @@ import '../../theme/widgets.dart';
 /// Autonomy is the reason the skip is there. A student who is here because an
 /// adult sent them needs a way through that is not answering.
 class QuestionScreen extends StatelessWidget {
-  const QuestionScreen({super.key, required this.onAnswered});
+  const QuestionScreen({
+    super.key,
+    required this.onAnswered,
+    required this.onSkip,
+  });
+
   final VoidCallback onAnswered;
+
+  /// Skip leaves first run entirely and lands on home. A skip that moves you
+  /// to the next question is not a skip, it is a slower question.
+  final VoidCallback onSkip;
 
   static const _answers = [
     'Strongly agree',
@@ -39,7 +48,7 @@ class QuestionScreen extends StatelessWidget {
         ],
       ],
       footer: SoulButton('Skip',
-          kind: SoulButtonKind.ghost, onPressed: onAnswered),
+          kind: SoulButtonKind.ghost, onPressed: onSkip),
     );
   }
 }

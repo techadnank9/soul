@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'data/sample.dart';
@@ -23,6 +25,69 @@ import 'theme/soul_theme.dart';
 /// needs the API.
 void main() => runApp(const SoulApp());
 
+/// A way to open one screen directly, for reviewing them without walking the
+/// whole flow. Set SOUL_SCREEN in the environment. Unset, the app starts where
+/// a student starts.
+///
+/// This exists so screens can be looked at side by side during design review.
+/// It reads an environment variable rather than a compiled constant so one
+/// build can show every screen.
+Widget? _requestedScreen() {
+  final name = Platform.environment['SOUL_SCREEN'];
+  if (name == null || name.isEmpty) return null;
+
+  void nothing() {}
+
+  return switch (name) {
+    'consent' => ConsentScreen(onContinue: nothing),
+    'question' => QuestionScreen(onAnswered: nothing, onSkip: nothing),
+    'capture' => CaptureScreen(onSubmitted: (_) {}, onSkip: nothing),
+    'confirm' => ConfirmTranscript(
+        transcript: Sample.transcript,
+        onSend: nothing,
+        onDiscard: nothing,
+      ),
+    'home_empty' => Home(momentsThisWeek: 0),
+    'home' => const Home(),
+    'beat_one' => BeatOneScreen(
+        transcript: Sample.transcript,
+        line: Sample.beatOne,
+        spokenSeconds: 41,
+        timeOfDay: '6:14 PM',
+        onLookCloser: nothing,
+        onDone: nothing,
+      ),
+    'mirror' => MirrorScreen(
+        tension: Sample.tension,
+        underneath: Sample.underneath,
+        question: Sample.question,
+        offered: Sample.heldDecision,
+        onHold: (_) {},
+        onNothingYet: nothing,
+      ),
+    'day' => DayScreen(day: 'Tuesday', onBack: nothing),
+    'outcome' => OutcomeScreen(
+        decision: Sample.heldDecision,
+        observation: 'That is twice now that saying it directly ended lighter '
+            'than holding it.',
+        onDone: nothing,
+      ),
+    'pattern' => PatternPromptScreen(
+        when: 'seven weeks later',
+        entry: 'My brother talked over my idea at dinner again and I just went '
+            'quiet for the rest of the night.',
+        proposal: 'This feels close to something you wrote in June, about the '
+            'meeting. Both times you had something to say and held it. Does '
+            'that connection fit for you?',
+        onFits: nothing,
+        onNotTheSame: nothing,
+        onLater: nothing,
+      ),
+    'patterns' => const PatternsScreen(reflectionCount: 34),
+    _ => null,
+  };
+}
+
 class SoulApp extends StatelessWidget {
   const SoulApp({super.key});
 
@@ -32,7 +97,7 @@ class SoulApp extends StatelessWidget {
       title: 'Soul',
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
-      home: const FirstRun(),
+      home: _requestedScreen() ?? const FirstRun(),
     );
   }
 }
@@ -50,7 +115,10 @@ class _FirstRunState extends State<FirstRun> {
 
   void _next() => setState(() => _step++);
 
-  void _toHome(BuildContext context, {int moments = 0}) {
+  /// Skipping first run lands on home as the mockups show it, with a week of
+  /// sample data behind it. The day one empty version is what a real new
+  /// account gets, and it is reached by passing zero.
+  void _toHome(BuildContext context, {int moments = 12}) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Home(momentsThisWeek: moments)),
     );
@@ -60,7 +128,10 @@ class _FirstRunState extends State<FirstRun> {
   Widget build(BuildContext context) {
     return switch (_step) {
       0 => ConsentScreen(onContinue: _next),
-      1 => QuestionScreen(onAnswered: _next),
+      1 => QuestionScreen(
+          onAnswered: _next,
+          onSkip: () => _toHome(context),
+        ),
       _ => CaptureScreen(
           onSkip: () => _toHome(context),
           onSubmitted: (text) => Navigator.of(context).push(
@@ -96,10 +167,14 @@ class _HomeState extends State<Home> {
       heldDecision: _moments == 0 ? null : _held,
       onCapture: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => CaptureScreen(
+          builder: (capture) => CaptureScreen(
             opener: 'right now',
             prompt: 'What just happened?',
             note: 'Thirty seconds is plenty.',
+            // A way out that costs nothing. Opening the app and deciding not
+            // to say anything has to be an ordinary thing to do, not a thing
+            // you have to back out of.
+            onSkip: () => Navigator.of(capture).pop(),
             onSubmitted: (text) => Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => Session(

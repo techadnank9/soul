@@ -604,3 +604,23 @@ same lookup in three files.
 
 Reverses if: the counsellor console needs to confirm on a student's behalf,
 which would be a different entry point with different authorisation.
+
+---
+
+### 034. Skip leaves first run, it does not advance it
+Aug 2026, Adnan
+
+Decision: Skip on the one question goes straight to home. Skip is also
+available on the capture screen reached from home, which had none.
+
+Why: a skip that moves you to the next screen in the same sequence is not a
+skip. CONTEXT.md is direct that autonomy improves engagement, especially when
+an adult initiated the involvement, and a student who wants out needs one tap
+rather than three.
+
+Consent has no skip and will not get one. A student can decline to answer
+anything, but they cannot be given the product without having seen what it does
+with what they say.
+
+Reverses if: nothing. This is the weaker version of what the clinical guidance
+asks for.
