@@ -1057,3 +1057,29 @@ has not been done.
 Reverses if: the accessibility review says a set answered ten different ways
 cannot be made conformant. Then the answer is fewer controls, chosen well, not
 a grid for everything.
+
+---
+
+### 053. The mic sits low and centred, and shows waves while held
+Aug 2026, Adnan
+
+Decision: the mic moves down into the middle of the screen with room around it,
+and while it is held it fills with colour, grows, and shows a waveform either
+side. The label changes from hold to speak to listening.
+
+Why: founder call, and it corrects a real signal problem. The mic sat directly
+under the typing field, which made the primary path look like an afterthought
+attached to the secondary one. Decision 020 says typing is an equal path, not a
+lesser one, and equal cuts both ways.
+
+Not driven by the microphone yet. The bars run off a sine wave because there is
+no recording until task 3. When there is, the amplitude replaces the sine and
+nothing else about this changes. Until then the waves say the app is listening,
+which is true, rather than showing a level, which would be a lie.
+
+The animation runs only while the mic is held. An idle screen animating a thing
+nobody is looking at costs battery for nothing.
+
+Not verified visually. Screenshots are taken after the finger lifts, so every
+frame that can be captured is the idle state. Confirmed by reading it back, not
+by seeing it, and that is a weaker claim.
