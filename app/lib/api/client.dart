@@ -81,6 +81,17 @@ class SoulApi {
     return json['decisionId'] as String;
   }
 
+  /// The baseline set. Skipped questions are simply absent.
+  Future<void> baseline(String setVersion, List<int?> answers) async {
+    final chosen = <Map<String, int>>[
+      for (var i = 0; i < answers.length; i++)
+        if (answers[i] != null)
+          {'questionIndex': i, 'choiceIndex': answers[i]!},
+    ];
+    if (chosen.isEmpty) return;
+    await _post('/baseline', {'setVersion': setVersion, 'answers': chosen});
+  }
+
   Future<void> answerPattern(String candidateId, String answer) async {
     await _post('/patterns/answer', {
       'candidateId': candidateId,

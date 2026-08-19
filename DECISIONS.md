@@ -919,3 +919,59 @@ everyone else. That is the same failure as an empty screen looking broken.
 
 Reverses if: students get stuck inside the flow with no way out. The answer then
 is a way out inside the flow, not a tab bar under it.
+
+---
+
+### 048. The consent screen is removed for now
+Aug 2026, Adnan
+
+Decision: screen 1 is gone. First run opens on the baseline set.
+
+Why: founder call. It is defensible, because the screen's central line was not
+true. It said "Nothing is shared with anyone unless you choose to share it"
+while a crisis protocol exists that is legally required in California and New
+York and involves telling adults. A promise broken the first time it matters is
+worse than a narrower promise kept.
+
+Legal consent is unaffected. It comes from the district under the educational
+purpose exception, is recorded against the student at rostering, and the
+consent gate still blocks every outbound call without it.
+
+What was lost is clinical, not legal: the scope and confidentiality framing
+Sofia asks for at the start, which she says determines what a young person is
+willing to say. It should come back when the escalation policy exists and it
+can state what is private, what must be shared for safety, and how adults are
+updated. Until then it would be guessing.
+
+Reverses if: the escalation policy is written, which it must be before any
+student uses this.
+
+---
+
+### 049. The baseline set is ten questions, and each is answered differently
+Aug 2026, Adnan and Claude
+
+Decision: Set B, ten questions across five sections, asked once at first run.
+Stored in baseline_answers, one row per answered question, skipped ones absent.
+Nothing is scored and nothing is shown back to the student.
+
+Four ways to answer rather than one: colour tiles for short options, a list
+that floods with colour when chosen for longer ones, a scale you drag for the
+one question whose options run in an order, and single words for the last.
+
+Why four: ten screens of identical tiles is a form with paint on it. The shape
+of the options decides the shape of the answer.
+
+Where the playfulness lives: the interaction, not the words. Options arrive
+staggered, tiles press in under the finger, the chosen one settles larger while
+the others fall back, and the set advances itself. Nothing on any of these
+screens praises the student or tells them what an answer means, because
+CONTEXT.md forbids it and the clinical guidance is direct that telling a young
+person what their answers say about them primes narratives that may not be
+true.
+
+Fixed one typo in the source: "Prompt me seek reassurance" reads "Prompt me to
+seek reassurance".
+
+Reverses if: the set proves too long. Ten is already at the edge for a first
+run, and every question is skippable for that reason.

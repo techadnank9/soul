@@ -50,6 +50,7 @@ declare t text;
 begin
   foreach t in array array[
     'districts','schools','students','entries','kept_lines','tags',
+    'baseline_answers',
     'entry_embeddings','decisions','outcomes','pattern_candidates',
     'confirmed_patterns','pattern_rejections','safety_flags','generations',
     'prompts','jobs','audit_log'
@@ -69,6 +70,7 @@ declare t text;
 begin
   foreach t in array array[
     'entries','kept_lines','tags','entry_embeddings','decisions','outcomes',
+    'baseline_answers',
     'pattern_candidates','confirmed_patterns','pattern_rejections',
     'safety_flags','generations'
   ]

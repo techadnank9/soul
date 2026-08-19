@@ -119,6 +119,34 @@ export const keptLines = pgTable(
   (t) => [index('kept_lines_student_created_idx').on(t.studentId, t.createdAt.desc())],
 )
 
+/**
+ * The baseline set, asked once at first run.
+ *
+ * One row per answered question. Skipped questions have no row, so a partly
+ * answered set is a real thing rather than a set of nulls. Nothing here is
+ * scored and nothing is shown back to the student.
+ */
+export const baselineAnswers = pgTable(
+  'baseline_answers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    setVersion: text('set_version').notNull(),
+    questionIndex: smallint('question_index').notNull(),
+    choiceIndex: smallint('choice_index').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    uniqueIndex('baseline_answers_student_question_idx').on(
+      t.studentId,
+      t.setVersion,
+      t.questionIndex,
+    ),
+  ],
+)
+
 /* ---------------------------------------------------------------- tags -- */
 
 /**

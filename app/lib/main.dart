@@ -11,8 +11,8 @@ import 'features/capture/confirm_transcript.dart';
 import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
-import 'features/onboarding/consent_screen.dart';
-import 'features/onboarding/question_screen.dart';
+import 'features/onboarding/baseline.dart';
+import 'features/onboarding/baseline_screen.dart';
 import 'features/outcome/outcome_screen.dart';
 import 'features/patterns/pattern_prompt_screen.dart';
 import 'features/patterns/patterns_screen.dart';
@@ -43,8 +43,7 @@ Widget? _requestedScreen() {
   void nothing() {}
 
   return switch (name) {
-    'consent' => ConsentScreen(onContinue: nothing),
-    'question' => QuestionScreen(onAnswered: nothing, onSkip: nothing),
+    'baseline' => BaselineScreen(onFinished: (_) {}, onSkip: nothing),
     'capture' => CaptureScreen(onSubmitted: (_) {}, onSkip: nothing),
     'confirm' => ConfirmTranscript(
         transcript: Sample.transcript,
@@ -115,6 +114,7 @@ class FirstRun extends StatefulWidget {
 }
 
 class _FirstRunState extends State<FirstRun> {
+  final _api = SoulApi.fromEnvironment();
   int _step = 0;
 
   void _next() => setState(() => _step++);
@@ -131,10 +131,20 @@ class _FirstRunState extends State<FirstRun> {
   @override
   Widget build(BuildContext context) {
     return switch (_step) {
-      0 => ConsentScreen(onContinue: _next),
-      1 => QuestionScreen(
-          onAnswered: _next,
+      // The consent screen was removed. Consent is recorded by the district at
+      // rostering, so nothing here gates on it. What was lost is the scope and
+      // confidentiality framing the clinical guidance asks for, and it should
+      // come back once the escalation policy exists and it can say something
+      // true. See decision 048.
+      0 => BaselineScreen(
           onSkip: () => _toHome(context),
+          onFinished: (answers) {
+            // Nothing is scored and nothing is shown back. The answers are a
+            // baseline for later, not a result for now. Stored in the
+            // background, because a student should never wait on this.
+            _api.baseline(baselineVersion, answers).ignore();
+            _next();
+          },
         ),
       _ => CaptureScreen(
           onSkip: () => _toHome(context),

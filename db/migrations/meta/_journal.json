@@ -8,6 +8,13 @@
       "when": 1787087797169,
       "tag": "0000_tiresome_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787142972748,
+      "tag": "0001_typical_talon",
+      "breakpoints": true
     }
   ]
 }

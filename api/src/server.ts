@@ -4,6 +4,7 @@ import { env } from './env.js'
 import { resolveSession, type Session } from './session.js'
 import { entries } from './routes/entries.js'
 import { transcription } from './routes/transcribe.js'
+import { consent } from './routes/consent.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -30,6 +31,7 @@ app.use('*', async (c, next) => {
 
 app.route('/', entries)
 app.route('/', transcription)
+app.route('/', consent)
 
 app.onError((error, c) => {
   console.error(error)
