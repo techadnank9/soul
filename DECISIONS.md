@@ -898,3 +898,24 @@ current entry alone.
 
 Do not fix this by removing history. The product is built on the model knowing
 the person.
+
+---
+
+### 047. The tab bar is on every place, and on no flow
+Aug 2026, Adnan and Claude
+
+Decision: all three destinations carry the tab bar, including home on day one.
+The reflection flow, capture through confirm, beat one, the Mirror and the
+pattern question, is pushed over the top and covers it.
+
+Why: a place is somewhere you can leave and come back to. A reflection in
+progress is not. Decision 001 says every path ends with the student acting,
+deciding or talking to a human, and three escape hatches along the bottom of a
+half finished reflection works against that.
+
+What was actually broken: home on day one was rendered outside the shell and had
+no tab bar at all, so a new student got a different navigation model from
+everyone else. That is the same failure as an empty screen looking broken.
+
+Reverses if: students get stuck inside the flow with no way out. The answer then
+is a way out inside the flow, not a tab bar under it.

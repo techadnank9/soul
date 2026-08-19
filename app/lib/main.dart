@@ -9,7 +9,6 @@ import 'data/sample.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/capture/confirm_transcript.dart';
 import 'features/day/day_screen.dart';
-import 'features/home/home_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/consent_screen.dart';
@@ -163,23 +162,15 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late int _moments = widget.momentsThisWeek;
-  final String _held = Sample.heldDecision;
 
   @override
   Widget build(BuildContext context) {
-    if (_moments > 0) {
-      return AppShell(
-        momentsThisWeek: _moments,
-        onCapture: () => _openCapture(context),
-      );
-    }
-    return HomeScreen(
+    // Always the shell, including on day one. A new student getting a
+    // different navigation model from everyone else is the same problem as an
+    // empty screen looking broken.
+    return AppShell(
       momentsThisWeek: _moments,
-      heldDecision: _moments == 0 ? null : _held,
       onCapture: () => _openCapture(context),
-      onOpenDay: (_) {},
-      onOpenPatterns: () {},
-      onOutcome: () {},
     );
   }
 

@@ -21,6 +21,8 @@ class AppShell extends StatefulWidget {
   final VoidCallback onCapture;
   final int momentsThisWeek;
 
+  bool get _dayOne => momentsThisWeek == 0;
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -39,7 +41,9 @@ class _AppShellState extends State<AppShell> {
             children: [
               HomeScreen(
                 momentsThisWeek: widget.momentsThisWeek,
-                heldDecision: Sample.heldDecision,
+                // Nothing is being held on day one, because nothing has been
+                // decided yet.
+                heldDecision: widget._dayOne ? null : Sample.heldDecision,
                 showFooter: false,
                 onCapture: widget.onCapture,
                 onOpenDay: (_) => setState(() => _tab = 1),

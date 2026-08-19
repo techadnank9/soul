@@ -109,7 +109,7 @@ class _TimelineItem extends StatelessWidget {
                       padding:
                           const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
-                        color: SoulColors.clayDark,
+                        color: SoulColors.clayLight,
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: Text(
