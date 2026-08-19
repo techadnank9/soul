@@ -16,7 +16,12 @@ import '../../theme/soul_theme.dart';
 /// the options decides the shape of the answer: long phrases read better in a
 /// list, an agreement question is a scale you drag, single words want to be
 /// picked up rather than ticked.
-enum Answering { orb, list, scale, blank, words }
+/// One per question. Ten questions, ten of these, no repeats.
+///
+/// The point is not variety for its own sake. Each control says something about
+/// the question: a light you move toward a corner for a leaning, a stack for
+/// competing beliefs, ripples for what emotion does, a dial for a direction.
+enum Answering { orb, list, constellation, stack, ripples, deck, scale, blank, dial, words }
 
 class BaselineQuestion {
   const BaselineQuestion({
@@ -85,7 +90,7 @@ const baseline = <BaselineQuestion>[
       'Circumstances to change',
       'My own clarity to increase',
     ],
-    style: Answering.list,
+    style: Answering.constellation,
   ),
   BaselineQuestion(
     section: 'Responsibility and agency',
@@ -96,7 +101,7 @@ const baseline = <BaselineQuestion>[
       'Avoiding mistakes',
       'Taking responsibility even without certainty',
     ],
-    style: Answering.orb,
+    style: Answering.stack,
   ),
   BaselineQuestion(
     section: 'Emotion and action',
@@ -107,7 +112,7 @@ const baseline = <BaselineQuestion>[
       'Prompt me to seek reassurance',
       'Help me notice what matters',
     ],
-    style: Answering.orb,
+    style: Answering.ripples,
   ),
   BaselineQuestion(
     section: 'Emotion and action',
@@ -118,7 +123,7 @@ const baseline = <BaselineQuestion>[
       'Question myself',
       'Avoid thinking about it',
     ],
-    style: Answering.list,
+    style: Answering.deck,
   ),
   BaselineQuestion(
     section: 'Patterns and repetition',
@@ -148,7 +153,7 @@ const baseline = <BaselineQuestion>[
       'Gather more information',
       'Wait before deciding',
     ],
-    style: Answering.orb,
+    style: Answering.dial,
   ),
   BaselineQuestion(
     section: 'Readiness',

@@ -1019,3 +1019,41 @@ slider that punishes exploring it, which is the opposite of what this control is
 for.
 
 Reverses if: nothing.
+
+---
+
+### 052. Ten questions, ten controls, no repeats
+Aug 2026, Adnan
+
+Decision: every question in the baseline set is answered a different way.
+
+  1  a light dragged across a field toward the corner that fits
+  2  a list that floods with colour when chosen
+  3  a night sky where the choices are stars
+  4  a stack of cards, one pulled to the front
+  5  ripples spreading out, the wider the stronger
+  6  a deck swiped through one card at a time
+  7  a scale dragged, then confirmed
+  8  a sentence with a hole in it
+  9  a dial turned toward a direction
+  10 single words, picked up
+
+Why: the first attempt built four controls and reused two of them across seven
+questions, which is the same monotony the founder had already rejected once,
+with better paint on it.
+
+The control is chosen to say something about the question. A stack for
+competing beliefs. Ripples for what emotion does, because that is what it feels
+like. A dial for readiness, because readiness is a direction rather than an item
+in a list. A night sky for what someone waits for, because waiting reads better
+against something quiet.
+
+Cost, and it is real: ten controls is ten things to maintain, ten things to test
+on a small screen, and ten things to make reachable with VoiceOver. The
+accessibility gap in decision 050 is now ten times larger. Every dragged and
+swiped control needs a tapped equivalent before a district review, and that work
+has not been done.
+
+Reverses if: the accessibility review says a set answered ten different ways
+cannot be made conformant. Then the answer is fewer controls, chosen well, not
+a grid for everything.

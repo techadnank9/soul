@@ -3,6 +3,7 @@ import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import 'baseline.dart';
 import 'baseline_answering.dart';
+import 'baseline_more.dart';
 
 /// The baseline set, asked one question at a time.
 ///
@@ -42,6 +43,10 @@ class _BaselineScreenState extends State<BaselineScreen> {
         Answering.orb => 'Move the light toward what fits',
         Answering.scale => 'Drag to where it sits',
         Answering.blank => 'Finish the sentence',
+        Answering.constellation => 'Pick the one you wait for',
+        Answering.stack => 'Bring one to the front',
+        Answering.deck => 'Swipe through, tap what fits',
+        Answering.dial => 'Turn it toward what you are ready for',
         _ => null,
       };
 
@@ -170,6 +175,31 @@ class _BaselineScreenState extends State<BaselineScreen> {
                           options: _question.options,
                           chosen: _pressed,
                           ends: _question.ends,
+                          onChoose: _choose,
+                        ),
+                      Answering.constellation => Constellation(
+                          options: _question.options,
+                          chosen: _pressed,
+                          onChoose: _choose,
+                        ),
+                      Answering.stack => CardStack(
+                          options: _question.options,
+                          chosen: _pressed,
+                          onChoose: _choose,
+                        ),
+                      Answering.ripples => Ripples(
+                          options: _question.options,
+                          chosen: _pressed,
+                          onChoose: _choose,
+                        ),
+                      Answering.deck => SwipeDeck(
+                          options: _question.options,
+                          chosen: _pressed,
+                          onChoose: _choose,
+                        ),
+                      Answering.dial => Dial(
+                          options: _question.options,
+                          chosen: _pressed,
                           onChoose: _choose,
                         ),
                       Answering.words => WordChoices(
