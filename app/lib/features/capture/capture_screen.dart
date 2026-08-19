@@ -36,7 +36,18 @@ class _CaptureScreenState extends State<CaptureScreen> {
   bool _holding = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Without this the send button never appears, because nothing tells the
+    // screen that the field now has something in it.
+    _controller.addListener(_onChanged);
+  }
+
+  void _onChanged() => setState(() {});
+
+  @override
   void dispose() {
+    _controller.removeListener(_onChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -96,14 +107,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
         ),
       ],
       footer: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (typing)
             SoulButton('Send', kind: SoulButtonKind.filled, onPressed: _send),
-          if (widget.onSkip != null) ...[
-            const SizedBox(height: 4),
+          if (!typing && widget.onSkip != null)
             SoulButton('Skip for now',
                 kind: SoulButtonKind.ghost, onPressed: widget.onSkip),
-          ],
         ],
       ),
     );

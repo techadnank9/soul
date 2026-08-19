@@ -715,3 +715,26 @@ praise. The visual register got friendlier and the voice did not move.
 
 Reverses if: the warmth starts reading as a wellness product that cheers you on,
 which is the thing the clinical guidance is most direct about avoiding.
+
+---
+
+### 039. The confirm step is for speech only
+Aug 2026, Claude
+
+Decision: a typed entry goes straight to beat one. Only a spoken entry shows
+the transcript for send or discard.
+
+Why: the confirm step exists because transcription can be wrong, and it is
+wrong most often for exactly the students this product is meant to serve. A
+student who typed their own words has nothing to confirm. Showing them "this is
+what we heard" over text they wrote themselves reads as the app not having
+listened, and it is a screen of friction between having something to say and
+being answered.
+
+Invariant 10 in FLOW.md, that no entry is submitted without the student having
+seen the transcript, is unaffected. A typed entry is not a transcript. The
+student is looking at their own words as they write them.
+
+Found by typing into the running app, not by reading the code.
+
+Reverses if: nothing.

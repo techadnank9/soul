@@ -213,10 +213,17 @@ class Session extends StatefulWidget {
     super.key,
     required this.transcript,
     required this.onFinished,
+    this.spoken = false,
   });
 
   final String transcript;
   final VoidCallback onFinished;
+
+  /// Whether this came from the mic. The confirm step exists because
+  /// transcription can be wrong, and recognition on children's voices is
+  /// weakest of all. A student who typed their own words has nothing to
+  /// confirm, and asking them to is friction that says we were not listening.
+  final bool spoken;
 
   @override
   State<Session> createState() => _SessionState();
@@ -225,7 +232,7 @@ class Session extends StatefulWidget {
 enum _Beat { confirm, one, mirror, pattern }
 
 class _SessionState extends State<Session> {
-  _Beat _beat = _Beat.confirm;
+  late _Beat _beat = widget.spoken ? _Beat.confirm : _Beat.one;
 
   @override
   Widget build(BuildContext context) {

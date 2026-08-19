@@ -281,7 +281,7 @@ class Screen extends StatelessWidget {
                   padding: padding.copyWith(
                     bottom: padding.bottom +
                         bottomInset +
-                        (footer != null && bottomInset == 0 ? _footerRoom : 0),
+                        (footer != null ? _footerRoom : 0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,13 +289,16 @@ class Screen extends StatelessWidget {
                   ),
                 ),
               ),
-              if (footer != null && bottomInset == 0)
+              // The footer stays put when the keyboard opens, lifted above
+              // it. Hiding it was how the send button disappeared at the exact
+              // moment a student had something to send.
+              if (footer != null)
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     padding.left,
                     0,
                     padding.right,
-                    padding.bottom,
+                    padding.bottom + bottomInset,
                   ),
                   child: footer,
                 ),
