@@ -22,7 +22,7 @@ class CaptureScreen extends StatefulWidget {
     super.key,
     required this.onSubmitted,
     this.onTranscribed,
-    this.onSkip,
+    this.onClose,
     this.prompt = 'What is going on with you lately?',
     this.note = 'Anything. A few words is enough.',
     this.opener = 'to begin',
@@ -36,7 +36,12 @@ class CaptureScreen extends StatefulWidget {
   /// the confirm screen, because send or discard belongs to the flow rather
   /// than to this screen.
   final ValueChanged<String>? onTranscribed;
-  final VoidCallback? onSkip;
+
+  /// Closes the screen. Not a skip and not an answer: it is the way out for
+  /// somebody who opened this and decided not to say anything, which has to
+  /// stay an ordinary thing to do rather than something to back out of.
+  final VoidCallback? onClose;
+
   final String prompt;
   final String note;
   final String opener;
@@ -100,6 +105,9 @@ class _CaptureScreenState extends State<CaptureScreen>
     }
 
     if (!await _recorder.hasPermission()) {
+      // The permission sheet can sit there for as long as the student leaves
+      // it, and the screen can be closed underneath it.
+      if (!mounted) return;
       setState(() => _failure = 'Soul needs the microphone to hear you.');
       return;
     }
@@ -148,9 +156,13 @@ class _CaptureScreenState extends State<CaptureScreen>
 
   Future<void> _stopAndTranscribe() async {
     final path = await _recorder.stop();
+
+    // Finishing the file is real elapsed time and this screen can be left
+    // during it. Touching the animation after dispose throws, so the mounted
+    // check comes first.
+    if (!mounted) return;
     _wave.stop();
 
-    if (!mounted) return;
     setState(() {
       _recording = false;
       _transcribing = true;
@@ -207,6 +219,20 @@ class _CaptureScreenState extends State<CaptureScreen>
 
     return Screen(
       body: [
+        // Top right, out of the way of the words, reachable without leaving
+        // the screen. Absent when there is nowhere to close to.
+        if (widget.onClose != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onClose,
+              child: const Padding(
+                padding: EdgeInsets.only(left: 16, bottom: 12),
+                child: Icon(Icons.close, size: 24, color: SoulColors.text3),
+              ),
+            ),
+          ),
         Label(widget.opener),
         const SizedBox(height: 14),
         Text(widget.prompt, style: SoulType.heading),
@@ -300,9 +326,6 @@ class _CaptureScreenState extends State<CaptureScreen>
         children: [
           if (typing)
             SoulButton('Send', kind: SoulButtonKind.filled, onPressed: _send),
-          if (!typing && widget.onSkip != null)
-            SoulButton('Skip for now',
-                kind: SoulButtonKind.ghost, onPressed: widget.onSkip),
         ],
       ),
     );

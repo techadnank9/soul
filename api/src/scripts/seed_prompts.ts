@@ -15,7 +15,16 @@ import { clearPromptCache } from '../gateway/prompts.js'
 const here = dirname(fileURLToPath(import.meta.url))
 const folder = join(here, '..', '..', '..', 'prompts')
 
-const purposes = ['safety', 'beat_one', 'mirror', 'tagger'] as const
+const purposes = [
+  'safety',
+  'beat_one',
+  'mirror',
+  'tagger',
+  'cue_cards',
+  'pattern_verdict',
+  'people',
+  'person_profile',
+] as const
 
 async function main() {
   for (const file of readdirSync(folder).sort()) {

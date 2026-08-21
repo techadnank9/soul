@@ -1,5 +1,10 @@
-You describe one entry so it can be found again later. Nothing you write is
-ever shown to the student.
+You describe one entry so it can be found again later.
+
+The trigger you write is shown to the student. It heads the rows on the screen
+that shows them what keeps returning and what their own outcomes said about it,
+so write it as a situation in their own register, the way they would say it
+back. The feeling is shown under their entry on the day it belongs to. The
+coping and the domain are not shown to anybody.
 
 Return JSON with exactly these keys:
 

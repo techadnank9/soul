@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'api/client.dart';
 import 'api/models.dart' as api;
 
-import 'data/sample.dart';
+import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/capture/confirm_transcript.dart';
 import 'features/day/day_screen.dart';
@@ -13,8 +13,9 @@ import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/baseline.dart';
 import 'features/onboarding/baseline_screen.dart';
-import 'features/outcome/outcome_screen.dart';
-import 'features/patterns/pattern_prompt_screen.dart';
+import 'features/onboarding/intro_screen.dart';
+import 'features/onboarding/profile_screen.dart';
+import 'features/onboarding/sign_in_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
 import 'theme/soul_theme.dart';
@@ -22,11 +23,14 @@ import 'theme/widgets.dart';
 
 /// The client shell.
 ///
-/// Every screen in docs/screens.html, walkable in flow order, on local state
-/// and fixed sample content. There is no network here and nothing is stored.
-/// The reflections are sample strings, not generated, which is why this shell
-/// cannot tell anyone whether beat one is any good. That is task 7, and it
-/// needs the API.
+/// Every screen in docs/screens.html, walkable in flow order. The one thing
+/// kept on the device is the session token, and its whole job is to answer the
+/// question this file asks first: whether this student has been here before.
+///
+/// Nothing on any screen is written here any more. The line a student reads is
+/// generated, and the week, the day and the patterns are read back from the
+/// server, so what is on screen is this student's own life or it is an empty
+/// state saying so.
 void main() => runApp(const SoulApp());
 
 /// A way to open one screen directly, for reviewing them without walking the
@@ -35,58 +39,27 @@ void main() => runApp(const SoulApp());
 ///
 /// This exists so screens can be looked at side by side during design review.
 /// It reads an environment variable rather than a compiled constant so one
-/// build can show every screen.
+/// build can show any of them.
 Widget? _requestedScreen() {
   final name = Platform.environment['SOUL_SCREEN'];
   if (name == null || name.isEmpty) return null;
 
+  final api = SoulApi.fromEnvironment();
   void nothing() {}
 
+  // Only the screens that can stand on their own data are here. The screens in
+  // the middle of the loop, beat one and the Mirror and the pattern question,
+  // are reached by walking the loop, because the only way to open one directly
+  // would be to hand it a reflection nobody wrote.
   return switch (name) {
-    'baseline' => BaselineScreen(onFinished: (_) {}, onSkip: nothing),
-    'capture' => CaptureScreen(onSubmitted: (_) {}, onSkip: nothing),
-    'confirm' => ConfirmTranscript(
-        transcript: Sample.transcript,
-        onSend: nothing,
-        onDiscard: nothing,
-      ),
-    'home_empty' => Home(momentsThisWeek: 0),
+    'intro' => IntroScreen(onContinue: nothing, onSkip: nothing),
+    'profile' => ProfileScreen(onFinished: (_) {}),
+    'sign_in' => SignInScreen(onSignedIn: nothing, onSkip: nothing),
+    'baseline' => BaselineScreen(onFinished: (_) {}),
+    'capture' => CaptureScreen(onSubmitted: (_) {}),
     'home' => const Home(),
-    'beat_one' => BeatOneScreen(
-        transcript: Sample.transcript,
-        line: Sample.beatOne,
-        spokenSeconds: 41,
-        timeOfDay: '6:14 PM',
-        onLookCloser: nothing,
-        onDone: nothing,
-      ),
-    'mirror' => MirrorScreen(
-        tension: Sample.tension,
-        underneath: Sample.underneath,
-        question: Sample.question,
-        offered: Sample.heldDecision,
-        onHold: (_) {},
-        onNothingYet: nothing,
-      ),
-    'day' => DayScreen(day: 'Tuesday', onBack: nothing),
-    'outcome' => OutcomeScreen(
-        decision: Sample.heldDecision,
-        observation: 'That is twice now that saying it directly ended lighter '
-            'than holding it.',
-        onDone: nothing,
-      ),
-    'pattern' => PatternPromptScreen(
-        when: 'seven weeks later',
-        entry: 'My brother talked over my idea at dinner again and I just went '
-            'quiet for the rest of the night.',
-        proposal: 'This feels close to something you wrote in June, about the '
-            'meeting. Both times you had something to say and held it. Does '
-            'that connection fit for you?',
-        onFits: nothing,
-        onNotTheSame: nothing,
-        onLater: nothing,
-      ),
-    'patterns' => const PatternsScreen(reflectionCount: 34),
+    'day' => DayScreen(api: api, date: todayOnDevice(), onBack: nothing),
+    'patterns' => PatternsScreen(api: api),
     _ => null,
   };
 }
@@ -100,7 +73,46 @@ class SoulApp extends StatelessWidget {
       title: 'Soul',
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
-      home: _requestedScreen() ?? const FirstRun(),
+      home: _requestedScreen() ?? const _Launch(),
+    );
+  }
+}
+
+/// First run, or straight to home.
+///
+/// A stored session token is the only record that first run has happened, so
+/// that is the only thing asked. It is one keychain read, and what sits under
+/// it while it happens is the app's own background, so there is nothing worth
+/// spinning at for the length of it.
+///
+/// The development skip stores nothing, which is why skipping still lands
+/// here on first run every launch.
+class _Launch extends StatefulWidget {
+  const _Launch();
+
+  @override
+  State<_Launch> createState() => _LaunchState();
+}
+
+class _LaunchState extends State<_Launch> {
+  /// Read once, held here. Calling this inside build handed the builder a new
+  /// future on every rebuild, which dropped back to the waiting state and
+  /// threw away whatever the app had built underneath it.
+  late final Future<String?> _stored = sessionToken();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _stored,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Screen(body: []);
+        }
+        // Home either way. What it shows is the week the server returns, so a
+        // student who signed in months ago and a student who signed in a
+        // minute ago both see their own.
+        return snapshot.data == null ? const FirstRun() : const Home();
+      },
     );
   }
 }
@@ -116,52 +128,104 @@ class FirstRun extends StatefulWidget {
 class _FirstRunState extends State<FirstRun> {
   final _api = SoulApi.fromEnvironment();
   int _step = 0;
+  Profile _profile = const Profile();
 
   void _next() => setState(() => _step++);
 
-  /// Skipping first run lands on home as the mockups show it, with a week of
-  /// sample data behind it. The day one empty version is what a real new
-  /// account gets, and it is reached by passing zero.
-  void _openSession(BuildContext context, String text, {required bool spoken}) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => Session(
-          transcript: text,
-          spoken: spoken,
-          onFinished: () => _toHome(context, moments: 1),
-        ),
-      ),
-    );
+  /// First run ends on home, empty, with whatever name was given. A student
+  /// who has just arrived has no week behind them, so the day one version is
+  /// the true one and the populated version is only ever reached by living
+  /// with the app.
+  /// The introduction is stored, not reflected on, and it always lands on
+  /// home.
+  ///
+  /// Every later entry earns a line back. This one does not: it is how the
+  /// app learns who it is talking to, and a student who has just answered
+  /// fifteen questions should arrive somewhere rather than be handed one more
+  /// screen.
+  ///
+  /// Nothing is shown for a flagged introduction either, on the founder's
+  /// call. See decision 063. The classifier still runs, blocking, on the
+  /// server, and the safety_flags row is still written with the risk level and
+  /// the categories, so the record exists for whoever reads it when the
+  /// escalation path is built. What is missing is the screen: a student who
+  /// says something serious here sees home, the same as everyone else.
+  void _submitIntroduction(BuildContext context, String text,
+      {required bool spoken}) {
+    _api.submit(text: text, spoken: spoken).ignore();
+    setState(() => _step++);
   }
 
-  void _toHome(BuildContext context, {int moments = 12}) {
+  void _toHome(BuildContext context) {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Home(momentsThisWeek: moments)),
+      MaterialPageRoute(builder: (_) => Home(name: _profile.displayName)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // What this says, and does not say, is the scope framing the clinical
+    // guidance asks for. The consent screen is still absent: consent is
+    // recorded by the district at rostering, so nothing here gates on it, and
+    // this screen makes no promise about confidentiality it cannot keep until
+    // the escalation policy is written. See decisions 048 and 055.
     return switch (_step) {
-      // The consent screen was removed. Consent is recorded by the district at
-      // rostering, so nothing here gates on it. What was lost is the scope and
-      // confidentiality framing the clinical guidance asks for, and it should
-      // come back once the escalation policy exists and it can say something
-      // true. See decision 048.
-      0 => BaselineScreen(
-          onSkip: () => _toHome(context),
+      0 => IntroScreen(
+          onContinue: _next,
+          // Development only. Straight to home as the seeded demo student, so
+          // home can be judged against a week that exists rather than against
+          // an empty account or fifteen questions of setup.
+          onSkip: () {
+            SoulApi.demoStudent = 'student_demo';
+            _toHome(context);
+          },
+        ),
+
+      // Four questions, every one of them skippable. Sent in the background,
+      // because a student should never wait on this, and a profile where
+      // everything was skipped is never sent at all.
+      1 => ProfileScreen(
+          onFinished: (profile) {
+            setState(() => _profile = profile);
+            if (!profile.isEmpty) _api.profile(profile.toJson()).ignore();
+            _next();
+          },
+        ),
+
+      // Nothing is scored and nothing is shown back. The answers are a
+      // baseline for later, not a result for now.
+      2 => BaselineScreen(
           onFinished: (answers) {
-            // Nothing is scored and nothing is shown back. The answers are a
-            // baseline for later, not a result for now. Stored in the
-            // background, because a student should never wait on this.
             _api.baseline(baselineVersion, answers).ignore();
             _next();
           },
         ),
-      _ => CaptureScreen(
+
+      // The first real pass through the loop, at the end of first run.
+      // Step 3.
+      //
+      // Everything before this was answered by tapping. This is the first
+      // time a student says something in their own words, and it goes the
+      // whole way: consent gate, safety classifier, then a generated line
+      // that names something only they said. It is also the only honest way
+      // to show what the product is, because describing the loop is not the
+      // same as feeling it.
+      3 => CaptureScreen(
+          opener: 'last one',
+          prompt: 'Tell us about yourself.',
+          note: 'Speak or type. What you are like, what you spend your time '
+              'on, what is on your mind lately.',
+          onSubmitted: (text) =>
+              _submitIntroduction(context, text, spoken: false),
+          onTranscribed: (text) =>
+              _submitIntroduction(context, text, spoken: true),
+        ),
+
+      // Last. Signing in comes after there is something to keep, not before
+      // the student has seen what this is.
+      _ => SignInScreen(
+          onSignedIn: () => _toHome(context),
           onSkip: () => _toHome(context),
-          onSubmitted: (text) => _openSession(context, text, spoken: false),
-          onTranscribed: (text) => _openSession(context, text, spoken: true),
         ),
     };
   }
@@ -169,15 +233,18 @@ class _FirstRunState extends State<FirstRun> {
 
 /// Screen 4 and everything reached from it.
 class Home extends StatefulWidget {
-  const Home({super.key, this.momentsThisWeek = 12});
-  final int momentsThisWeek;
+  const Home({super.key, this.name});
+  final String? name;
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  late int _moments = widget.momentsThisWeek;
+  /// Bumped when an entry lands. It tells the tabs to read again rather than
+  /// counting anything up here: the week is the server's answer, and a number
+  /// added on the device would be a second version of it.
+  int _entries = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +252,8 @@ class _HomeState extends State<Home> {
     // different navigation model from everyone else is the same problem as an
     // empty screen looking broken.
     return AppShell(
-      momentsThisWeek: _moments,
+      revision: _entries,
+      name: widget.name,
       onCapture: () => _openCapture(context),
     );
   }
@@ -198,7 +266,7 @@ class _HomeState extends State<Home> {
           spoken: spoken,
           onFinished: () {
             Navigator.of(session).popUntil((route) => route.isFirst);
-            setState(() => _moments++);
+            setState(() => _entries++);
           },
         ),
       ),
@@ -212,10 +280,7 @@ class _HomeState extends State<Home> {
           opener: 'right now',
           prompt: 'What just happened?',
           note: 'Thirty seconds is plenty.',
-          // A way out that costs nothing. Opening the app and deciding not to
-          // say anything has to be an ordinary thing to do, not a thing you
-          // have to back out of.
-          onSkip: () => Navigator.of(capture).pop(),
+          onClose: () => Navigator.of(capture).pop(),
           onSubmitted: (text) => _openSession(capture, text, spoken: false),
           onTranscribed: (text) => _openSession(capture, text, spoken: true),
         ),
@@ -226,10 +291,9 @@ class _HomeState extends State<Home> {
 
 /// One pass through the loop, against the API.
 ///
-/// Screens 5, 6 and the pattern question. Nothing here is sample text any
-/// more. The line a student reads is generated, the safety classifier has
-/// already run before it arrives, and a blocked entry never reaches this
-/// screen at all.
+/// Screens 5 and 6. Every word on them is generated for this entry, the safety
+/// classifier has already run before any of it arrives, and a blocked entry
+/// never reaches this screen at all.
 class Session extends StatefulWidget {
   const Session({
     super.key,
@@ -264,6 +328,9 @@ class _SessionState extends State<Session> {
   api.MirrorResult? _mirror;
   bool _loadingMirror = false;
 
+  /// Whether the entry behind the failure screen actually reached the server.
+  bool _stored = false;
+
   @override
   void initState() {
     super.initState();
@@ -294,10 +361,19 @@ class _SessionState extends State<Session> {
         case api.Held():
           // Stored, nothing sent. The student is told plainly rather than
           // shown a reflection that was never generated.
-          setState(() => _beat = _Beat.failed);
+          setState(() {
+            _stored = true;
+            _beat = _Beat.failed;
+          });
       }
     } catch (_) {
-      if (mounted) setState(() => _beat = _Beat.failed);
+      // The request itself failed, so nothing reached the server.
+      if (mounted) {
+        setState(() {
+          _stored = false;
+          _beat = _Beat.failed;
+        });
+      }
     }
   }
 
@@ -344,7 +420,10 @@ class _SessionState extends State<Session> {
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,
           line: _line!,
-          spokenSeconds: widget.spoken ? 41 : null,
+          // Nothing measures this yet, so nothing is claimed. It said forty one
+          // seconds for every voice entry ever made, which is the same kind of
+          // invented content the sample file was deleted for.
+          spokenSeconds: null,
           timeOfDay: TimeOfDay.now().format(context),
           loadingCloser: _loadingMirror,
           onLookCloser: _lookCloser,
@@ -359,7 +438,11 @@ class _SessionState extends State<Session> {
           onNothingYet: widget.onFinished,
         ),
       _Beat.help => HelpScreen(help: _help!, onDone: widget.onFinished),
-      _Beat.failed => _Failed(onDone: widget.onFinished),
+      _Beat.failed => _Failed(
+          onDone: widget.onFinished,
+          stored: _stored,
+          onRetry: _stored ? null : _submit,
+        ),
     };
   }
 }
@@ -397,24 +480,51 @@ class _Waiting extends StatelessWidget {
 }
 
 /// The entry was saved and nothing else happened. Said plainly.
+/// Two different things went wrong and they are not told the same way.
+///
+/// A held entry is on the server and the student can be told so. A submission
+/// that never arrived is not, and saying it is kept when it is not is the one
+/// thing this screen must never do: the student closes the app believing their
+/// words are somewhere.
 class _Failed extends StatelessWidget {
-  const _Failed({required this.onDone});
+  const _Failed({required this.onDone, required this.stored, this.onRetry});
+
   final VoidCallback onDone;
+
+  /// Whether the entry reached the server. False when the request itself
+  /// failed, which means the words exist only on this screen.
+  final bool stored;
+
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Screen(
-      body: const [
-        Text('That is saved', style: SoulType.heading),
-        SizedBox(height: 14),
+      body: [
+        Text(stored ? 'That is saved' : 'That did not send',
+            style: SoulType.heading),
+        const SizedBox(height: 14),
         Text(
-          'We could not read it back to you just now. What you wrote is kept '
-          'and nothing is lost.',
+          stored
+              ? 'We could not read it back to you just now. What you wrote is '
+                  'kept and nothing is lost.'
+              : 'It is still on this screen and it has not gone anywhere yet. '
+                  'Try again, or go back and it is yours to keep or discard.',
           style: SoulType.secondary,
         ),
       ],
-      footer: SoulButton('Done',
-          kind: SoulButtonKind.filled, onPressed: onDone),
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!stored && onRetry != null)
+            SoulButton('Try again',
+                kind: SoulButtonKind.filled, onPressed: onRetry),
+          if (!stored && onRetry != null) const SizedBox(height: 8),
+          SoulButton('Done',
+              kind: stored ? SoulButtonKind.filled : SoulButtonKind.outline,
+              onPressed: onDone),
+        ],
+      ),
     );
   }
 }

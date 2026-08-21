@@ -10,18 +10,80 @@ change the path, change this file in the same commit.
 
 ## Entry points
 
-There are only six ways anything starts running.
+There are only nine ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
 | Student taps the mic, then taps stop | Human | `app/lib/features/capture/capture_screen.dart` |
 | Student taps send on the transcript | Human | `app/lib/features/capture/confirm_transcript.dart` |
+| Student finishes the profile | Human | `app/lib/features/onboarding/profile_screen.dart` |
+| Student edits their profile | Human | `app/lib/features/profile/profile_tab.dart` |
 | Student answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
 | Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
+| Student opens a day | Human | `app/lib/features/day/days_screen.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
-| Nightly pattern sweep | Time | `api/src/jobs/pattern_sweep.ts` |
+| Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
 
-Everything else in the system is called by one of these six.
+Everything else in the system is called by one of these nine.
+
+---
+
+## Flow 0: first run
+
+Once, on a device that has never been used. Nothing here blocks anything: every
+question can be skipped and a student who skips all of them still gets the
+whole product.
+
+```
+main.dart / FirstRun
+  └─ 0. intro_screen.dart
+  │     what the app does, and three lines on what it is not
+  │     no account, no sign up, no consent screen (decisions 048 and 055)
+  │
+  ├─ 1. profile_screen.dart
+  │     name, age band, gender, where, one question at a time
+  │     the where question offers the device before the list
+  │        data/device_location.dart asks for permission, coarse failure and
+  │        refusal both fall back to the picker, which is always on screen
+  │     POST /profile  → services/profile/save.ts   ← background, nobody waits
+  │        writes only the fields that arrived, and null empties a field
+  │        coordinates decide the region, so a measured location always wins
+  │        over a picked one in the same request. The profile tab can still
+  │        set a region on its own later, which leaves the stored coordinates
+  │        pointing somewhere else until they are shared again or forgotten
+  │        derives timezone from region, never takes one from the client
+  │        writes an audit_log row naming the fields, never the values
+  │
+  ├─ 2. baseline_screen.dart
+  │     the ten questions, unchanged
+  │     POST /baseline  → routes/consent.ts         ← background, nobody waits
+  │
+  ├─ 3. capture_screen.dart, the introduction
+  │     tell us about yourself, spoken or typed
+  │     POST /entries, the whole loop: consent, safety, beat one
+  │     the line it generates is never shown. This entry is how the app
+  │     learns who it is talking to, not a moment to reflect on, and a
+  │     flagged one shows nothing either. See decision 063
+  │
+  ├─ 4. sign_in_screen.dart
+  │     the terms, the privacy policy, an agreement that gates the button
+  │     a development skip that is labelled as one
+  │
+  └─ 5. home
+        the week ring, and on a new account nothing in it yet
+```
+
+Every question in first run is mandatory. The skips were removed on the
+founder's call, so the name field, the four profile questions and all ten
+baseline questions have to be answered to reach home. See decision 063.
+
+The profile tab is the same endpoint from the other direction. It reads
+`GET /profile`, shows every field held, and writes one field at a time. A field
+sent as null empties it, which is how a student takes an answer back.
+
+Both first run posts are fire and forget on purpose. A student should never wait on a
+question that is a baseline for later rather than a result for now. The cost is
+that a profile given with no connection is lost, and there is no retry.
 
 ---
 
@@ -68,7 +130,7 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        │
        ├─ 4. generate/beatOne.ts
        │     buildBeatOnePrompt(entry)      ← current entry only, minimal history
-       │     gateway.call('beat_one', ...)  ← streamed
+       │     gateway.call('beat_one', ...)  ← not streamed, see the note below
        │     writes generations row with prompt_version, model_version
        │
        └─ 5. jobs/enqueue.ts
@@ -76,9 +138,14 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
              enqueue('embed_entry', { entryId })  ← async, lands with task 8
 ```
 
-Two things to notice. Consent and safety come before storage and generation, so
-there is no code path where they can be skipped. And the function that returns
-the response does not call the tagger; it enqueues it.
+Two things to notice. Consent comes before storage, safety comes before
+generation, and neither can be skipped by any path. And the function that
+returns the response does not call the tagger; it enqueues it.
+
+This flow is not streamed anywhere. `submit()` awaits the classifier, then
+awaits beat one, then returns one complete body, and the client reads it whole.
+The under three seconds target in task 6 is measured against that, and nothing
+has measured it yet.
 
 ---
 
@@ -185,25 +252,74 @@ loop closes and why the product gets better the longer someone uses it.
 
 ---
 
+## Consent, and where it lives
+
+Consent is recorded by the district at rostering and read by
+`consent/gate.ts`. `routes/consent.ts` records it, reads it and writes an audit
+row. No student has ever seen a consent screen, per decision 048.
+
+The sign in screen at the end of first run is a different thing and should not
+be mistaken for it. It records an agreement to the terms and the privacy
+policy, in the app, from the student. Whether a school product should be asking
+a child for that at all is open, and it is written up in the decision log.
+
 ---
 
-## Flow 0: first run
+## The read side
+
+Everything above this line writes. These four read, and until they existed the
+client could only send. Every screen showed fixed strings from a sample file,
+which is why a student on their first day was shown somebody else's week.
 
 ```
-baseline_screen.dart
-  └─ ten questions, each with its own control
-  └─ POST /baseline           → routes/baseline.ts
-        one row per answered question, unique on student and question
-        skipped questions have no row. Absence is the record of a skip.
-  └─ nothing is scored and nothing is shown back
-
-capture_screen.dart          ← the first entry, same screen as every later one
+GET /week       → services/reads/week.ts        the ring, the count, seven days,
+                                               and what they are still holding
+GET /days       → services/reads/days.ts       every day with something in it
+GET /day/:date  → services/reads/day.ts        one day, and its cue cards
+GET /patterns   → services/reads/patterns.ts   good, bad, and still forming
+GET /reflection → services/reads/reflection.ts one theme, and the entries
+                                               behind it
+GET /people     → services/people/read.ts      who they write about
+GET /people/:id → services/people/read.ts      one person, and where they
+                                               come up
 ```
 
-Consent has no screen. It is recorded by the district at rostering and read by
-`consent/gate.ts`. `routes/consent.ts` records and reads it, and writes an
-audit row, but no student ever sees it. See decision 048 for what that removed
-and what has to come back.
+Three things hold across all of them.
+
+They run inside `asStudent()`, so the row level security role is doing the
+scoping and not only the where clause. This is the first code on the request
+path that uses it, and decision 026 always said it should.
+
+Days and weeks are cut by the student's own timezone, from `students.timezone`,
+falling back to UTC. An entry written late on Sunday evening in Los Angeles is
+on Sunday. The seed script learned this the hard way by writing Los Angeles
+times into a London student and sliding half the week.
+
+No path takes a student id. There is no id to get wrong.
+
+---
+
+## What runs in the background
+
+Nothing below is on the request path. The runner claims one job at a time with
+a row lock, so two workers never run the same one.
+
+```
+tag_entry        the tagger, and it books the two below
+cue_cards        a yes or no question about something they said is coming up
+people           the people named in one entry, from its own words
+person_profile   what happens between the student and somebody, once that
+                 person has come up twice
+pattern_sweep    the nightly candidate query, which books the verdicts
+pattern_verdicts whether a theme is doing them good or costing them
+check_back       days later, on the day they named
+embed_entry      never claimed. The runner only claims what it can run, so
+                 these stay pending until task 8 gives them a worker
+```
+
+Two of these write about somebody who is not a user of this product. See the
+people tables in SCHEMA.md and the decision log for what that means and what
+was done to narrow it.
 
 ---
 
@@ -275,6 +391,12 @@ improves.
 7. The tagger never runs on the request path.
 8. Nothing is written to `confirmed_patterns` without a student confirmation and
    at least three supporting entry ids.
+
+   Note what this no longer covers. `pattern_verdicts` is written without any
+   confirmation and says plainly whether a theme is worth keeping or worth
+   stopping. That is a founder decision taken against the earlier clinical
+   guidance, on purpose, and it is written up in CONTEXT.md and the decision
+   log. The student's own outcomes still outrank it.
 9. Audio is never persisted. It is deleted the moment a transcript returns.
 10. No entry is submitted without the student having seen the transcript. A
     typed entry has nothing to confirm and skips the step; a spoken one never
@@ -283,4 +405,11 @@ improves.
     send or discard, because it is the permanent record and the text the safety
     classifier reads.
 12. Consent has no student facing screen. It is recorded at rostering and read
-    by the gate.
+    by the gate. The sign in screen at the end of first run records an
+    agreement to the terms and the privacy policy, which is a different thing
+    and must not be mistaken for it.
+13. A card is only ever about something the student named themselves, and a
+    person only ever exists because they named them. Neither is invented, and
+    an empty answer is the common one.
+14. Anything the app holds about a person can be edited and deleted by the
+    student who wrote it. The entries stay theirs either way.

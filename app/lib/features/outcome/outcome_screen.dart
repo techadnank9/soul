@@ -16,7 +16,11 @@ class OutcomeScreen extends StatefulWidget {
 
   final String decision;
   final String? observation;
-  final VoidCallback onDone;
+
+  /// What happened in their words, and how it left them. Either can be null:
+  /// a student who opens this and says nothing has still answered, and the
+  /// outcome is stored either way.
+  final void Function(String? happened, String? felt) onDone;
 
   @override
   State<OutcomeScreen> createState() => _OutcomeScreenState();
@@ -50,9 +54,15 @@ class _OutcomeScreenState extends State<OutcomeScreen> {
         const SizedBox(height: 24),
         const Rule(),
         const SizedBox(height: 18),
-        const Text('You did it. What happened?', style: SoulType.lead),
+        // Not "you did it". The wording is neutral on purpose: a student who
+        // did not do it has still answered, and a question that assumes they
+        // did turns the check back into a test they can fail.
+        const Text('What happened?', style: SoulType.lead),
         const SizedBox(height: 14),
-        SoulField(controller: _controller, hint: 'What happened'),
+        SoulField(
+          controller: _controller,
+          hint: 'Whatever happened, or did not',
+        ),
         const SizedBox(height: 24),
         const Text('And afterwards?', style: SoulType.lead),
         const SizedBox(height: 14),
@@ -73,8 +83,14 @@ class _OutcomeScreenState extends State<OutcomeScreen> {
           Inset(body: widget.observation!),
         ],
       ],
-      footer: SoulButton('Done',
-          kind: SoulButtonKind.filled, onPressed: widget.onDone),
+      footer: SoulButton(
+        'Done',
+        kind: SoulButtonKind.filled,
+        onPressed: () => widget.onDone(
+          _controller.text.trim().isEmpty ? null : _controller.text.trim(),
+          _felt?.toLowerCase(),
+        ),
+      ),
     );
   }
 }

@@ -6,8 +6,9 @@
   "main": "src/index.ts",
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "tsx src/migrate.ts",
-    "test": "vitest run"
+    "migrate": "tsx --env-file-if-exists=../.env src/migrate.ts",
+    "test": "vitest run",
+    "reset": "tsx --env-file-if-exists=../.env src/reset.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.6",

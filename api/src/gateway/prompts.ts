@@ -1,7 +1,15 @@
 import { eq, and } from 'drizzle-orm'
 import { db, prompts } from '../db.js'
 
-export type Purpose = 'safety' | 'beat_one' | 'mirror' | 'tagger'
+export type Purpose =
+  | 'safety'
+  | 'beat_one'
+  | 'mirror'
+  | 'tagger'
+  | 'cue_cards'
+  | 'pattern_verdict'
+  | 'people'
+  | 'person_profile'
 
 /**
  * Prompt text comes from the database, never from the binary.

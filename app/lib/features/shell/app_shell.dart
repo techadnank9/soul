@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../data/sample.dart';
-import '../day/day_screen.dart';
+import '../../api/client.dart';
+import '../people/people_screen.dart';
+import '../profile/profile_tab.dart';
+import '../day/days_screen.dart';
 import '../home/home_screen.dart';
 import '../patterns/patterns_screen.dart';
 import '../../theme/soul_theme.dart';
@@ -15,20 +17,43 @@ import '../../theme/soul_theme.dart';
 /// Capture is not a tab. It is the raised button in the middle, because it is
 /// an action rather than a place, and it is the only thing on this bar the
 /// student is ever encouraged to do.
+///
+/// Profile is the fourth destination. It is last because it is the one a
+/// student visits rarely and on purpose, and it is a tab rather than a menu
+/// because what the app holds about somebody should not be hidden behind a
+/// gear.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.onCapture, this.momentsThisWeek = 12});
+  const AppShell({
+    super.key,
+    required this.onCapture,
+    this.revision = 0,
+    this.name,
+  });
 
   final VoidCallback onCapture;
-  final int momentsThisWeek;
 
-  bool get _dayOne => momentsThisWeek == 0;
+  /// Changes when an entry lands, so the tabs behind the capture screen go and
+  /// read again instead of showing what was true a minute ago.
+  final int revision;
+
+  final String? name;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
+  final _api = SoulApi.fromEnvironment();
   int _tab = 0;
+
+  /// Which day the Days tab should open, when the student picked one from the
+  /// week strip. Null means the list decides, and it opens the newest.
+  String? _day;
+
+  void _openDay(String date) => setState(() {
+        _day = date;
+        _tab = 1;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +65,18 @@ class _AppShellState extends State<AppShell> {
             index: _tab,
             children: [
               HomeScreen(
-                momentsThisWeek: widget.momentsThisWeek,
-                // Nothing is being held on day one, because nothing has been
-                // decided yet.
-                heldDecision: widget._dayOne ? null : Sample.heldDecision,
+                api: _api,
+                name: widget.name,
+                revision: widget.revision,
                 showFooter: false,
                 onCapture: widget.onCapture,
-                onOpenDay: (_) => setState(() => _tab = 1),
+                onOpenDay: _openDay,
                 onOpenPatterns: () => setState(() => _tab = 2),
-                onOutcome: widget.onCapture,
               ),
-              DayScreen(day: 'Tuesday', onBack: () => setState(() => _tab = 0)),
-              const PatternsScreen(reflectionCount: 34),
+              DaysScreen(api: _api, revision: widget.revision, openOn: _day),
+              PatternsScreen(api: _api, revision: widget.revision),
+              PeopleScreen(api: _api, revision: widget.revision),
+              ProfileTab(api: _api),
             ],
           ),
           // Capture floats clear of the bar rather than sitting inside it.
@@ -100,6 +125,8 @@ class _TabBar extends StatelessWidget {
     (icon: Icons.circle_outlined, label: 'This week'),
     (icon: Icons.view_day_outlined, label: 'Days'),
     (icon: Icons.auto_awesome_outlined, label: 'Returning'),
+    (icon: Icons.people_outline, label: 'People'),
+    (icon: Icons.person_outline, label: 'Profile'),
   ];
 
   @override
@@ -162,7 +189,10 @@ class _Tab extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: SoulType.sans,
-              fontSize: 11,
+              // Five labels across a 375 point phone leaves about 66 points
+              // each. Eleven points truncated This week and Returning, so the
+              // label steps down and the letter spacing comes out.
+              fontSize: 10,
               fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               color: colour,
             ),

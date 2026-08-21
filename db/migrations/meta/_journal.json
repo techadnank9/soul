@@ -15,6 +15,83 @@
       "when": 1787142972748,
       "tag": "0001_typical_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787172325032,
+      "tag": "0002_slow_proudstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787175682684,
+      "tag": "0003_flashy_meggan",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787175885466,
+      "tag": "0004_large_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787179964930,
+      "tag": "0005_colorful_doorman",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787249209937,
+      "tag": "0006_colorful_ultimo",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787258316060,
+      "tag": "0007_groovy_logan",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787271149147,
+      "tag": "0008_rich_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787271191680,
+      "tag": "0009_lucky_stardust",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787272204911,
+      "tag": "0010_quiet_shooting_star",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787273702466,
+      "tag": "0011_fresh_dreadnoughts",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787292492464,
+      "tag": "0012_young_power_pack",
+      "breakpoints": true
     }
   ]
 }

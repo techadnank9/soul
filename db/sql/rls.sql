@@ -49,11 +49,12 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'districts','schools','students','entries','kept_lines','tags',
+    'districts','schools','students','sessions','entries','kept_lines','tags',
     'baseline_answers',
-    'entry_embeddings','decisions','outcomes','pattern_candidates',
-    'confirmed_patterns','pattern_rejections','safety_flags','generations',
-    'prompts','jobs','audit_log'
+    'entry_embeddings','decisions','outcomes','cue_cards','pattern_candidates',
+    'confirmed_patterns','pattern_rejections','pattern_verdicts','safety_flags',
+    'people','entry_people',
+    'generations','prompts','jobs','audit_log'
   ]
   loop
     execute format('alter table %I enable row level security', t);
@@ -70,9 +71,9 @@ declare t text;
 begin
   foreach t in array array[
     'entries','kept_lines','tags','entry_embeddings','decisions','outcomes',
-    'baseline_answers',
+    'baseline_answers','cue_cards',
     'pattern_candidates','confirmed_patterns','pattern_rejections',
-    'safety_flags','generations'
+    'pattern_verdicts','safety_flags','generations','people','entry_people'
   ]
   loop
     execute format('drop policy if exists %I on %I', t || '_student_scope', t);
@@ -83,6 +84,30 @@ begin
                      and school_id = app_current_school()
                      and district_id = app_current_district())',
       t || '_student_scope', t);
+  end loop;
+end
+$$;
+
+-- What a student may remove --------------------------------------------------
+
+-- Delete was never granted, so nothing a student owns could be deleted by the
+-- request path. The product promises the opposite: everything the app holds is
+-- something they can remove, and the people tables made that promise concrete
+-- the moment somebody wanted a person gone.
+--
+-- Granted on the student scoped tables only. prompts, jobs and audit_log are
+-- deliberately absent: an audit row a student can delete is not an audit row.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'entries','kept_lines','tags','entry_embeddings','decisions','outcomes',
+    'baseline_answers','cue_cards',
+    'pattern_candidates','confirmed_patterns','pattern_rejections',
+    'pattern_verdicts','people','entry_people'
+  ]
+  loop
+    execute format('grant delete on table %I to soul_student', t);
   end loop;
 end
 $$;
@@ -109,12 +134,19 @@ create policy jobs_student_scope on jobs to soul_student
   using (student_id = app_current_student())
   with check (student_id = app_current_student());
 
--- prompts and audit_log carry no policy for soul_student on purpose.
+-- prompts, sessions and audit_log carry no policy for soul_student on purpose.
 -- Row level security with no matching policy denies every row. Prompt text is
 -- read by the service role inside the gateway, and nobody reads the audit log
 -- from the request path.
+--
+-- sessions is the strictest of the three. It is read once per request to work
+-- out which student is asking, which happens before the role becomes
+-- soul_student, so the student role never needs it. Leaving it readable would
+-- put every device's token hash one missing where clause away from a student
+-- who already has a token of their own.
 
 revoke select, insert, update on table prompts from soul_student;
+revoke select, insert, update on table sessions from soul_student;
 revoke select, insert, update on table audit_log from soul_student;
 grant insert on table audit_log to soul_student;
 

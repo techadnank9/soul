@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db, entries, tags } from '../../db.js'
 import { call } from '../../gateway/call.js'
+import { enqueue } from '../../jobs/enqueue.js'
 import { taggerResult } from '../../contracts.js'
 import type { Session } from '../../session.js'
 
@@ -45,4 +46,14 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
     confidence: result.value.confidence,
     taggerVersion: TAGGER_VERSION,
   })
+
+  // Cue cards go last and in their own job, so a card is never the reason an
+  // entry ends up untagged. The tags are what the rest of the system is built
+  // on and this call is the longest one in the queue.
+  await enqueue('cue_cards', { entryId }, session)
+
+  // The people in the entry, from the entry's own words. Booked here for the
+  // same reason the cards are: the tagger is the last thing that has to
+  // succeed, and neither of these can be the reason an entry goes untagged.
+  await enqueue('people', { entryId }, session)
 }

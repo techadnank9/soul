@@ -17,6 +17,14 @@ export const env = {
   port: Number(process.env.PORT ?? 8080),
   databaseUrl: () => required('DATABASE_URL'),
 
+  /**
+   * The audience every Apple identity token has to name. A token minted for
+   * another app is a real token signed by Apple, so this is the check that
+   * makes it ours. Read late and required, because verifying against a missing
+   * bundle identifier is worse than refusing to verify at all.
+   */
+  appleBundleId: () => required('APPLE_BUNDLE_ID'),
+
   providers: {
     openaiKey: optional('OPENAI_API_KEY'),
     geminiKey: optional('GEMINI_API_KEY'),

@@ -101,6 +101,90 @@ const config: Record<Purpose, PurposeConfig> = {
     // Everything downstream is built on these tags, and nobody is waiting.
     reasoning: 'medium',
   },
+  /**
+   * The verdict on a theme, and the sentence a student reads under it.
+   *
+   * Zero temperature. This call says whether repeating something is doing a
+   * student good or costing them, and a warmer setting buys a nicer sentence
+   * at the price of the same theme being judged one way tonight and the other
+   * way next week.
+   */
+  /**
+   * Reading names out of one entry. Small, exact, and off the latency path.
+   *
+   * Temperature zero because there is a right answer: the names in the text.
+   * Low reasoning because the failure here is not shallow thinking, it is
+   * inventing somebody, and the prompt is what holds that.
+   */
+  people: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5-mini',
+      gemini: 'gemini-2.5-flash',
+      openrouter: 'openai/gpt-5-mini',
+    },
+    temperature: 0,
+    maxTokens: 2000,
+    timeoutMs: 60_000,
+    json: true,
+    reasoning: 'low',
+  },
+
+  /**
+   * Writing about somebody who is not a user of this product and cannot read
+   * what is written. The full model, thinking, because the difference between
+   * what happened and what somebody is like is the whole job and it is not an
+   * easy line to hold.
+   */
+  person_profile: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
+    },
+    temperature: 0.2,
+    maxTokens: 4000,
+    timeoutMs: 120_000,
+    json: true,
+    reasoning: 'medium',
+  },
+
+  pattern_verdict: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
+    },
+    temperature: 0,
+    maxTokens: 4000,
+    timeoutMs: 120_000,
+    json: true,
+    // Medium, and nobody is waiting. The hardest part of this call is
+    // deciding that a theme is not yet worth a verdict, which is the answer
+    // it gets wrong when it is hurried, the same way the cue card call does.
+    reasoning: 'medium',
+  },
+  cue_cards: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
+    },
+    // Low, because a card has to quote the student rather than invent a
+    // better sentence than the one they wrote.
+    temperature: 0.3,
+    maxTokens: 8000,
+    timeoutMs: 120_000,
+    json: true,
+    // The longest timeout and the same thinking as the Mirror. This call
+    // reads a week of entries and its main job is deciding that most of them
+    // point at nothing, which is the answer it gets wrong when it is hurried.
+    // Nobody is waiting for it.
+    reasoning: 'medium',
+  },
 }
 
 function keyFor(provider: ProviderName): string | undefined {

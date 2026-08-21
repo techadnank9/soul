@@ -1,10 +1,16 @@
 {
   "name": "soul",
   "private": true,
-  "workspaces": ["db", "api"],
+  "workspaces": [
+    "db",
+    "api"
+  ],
   "scripts": {
     "db:generate": "npm run generate -w @soul/db",
     "db:migrate": "npm run migrate -w @soul/db",
-    "db:test": "npm run test -w @soul/db"
+    "db:test": "npm run test -w @soul/db",
+    "db:reset": "npm run reset -w @soul/db --",
+    "seed": "npm run seed:prompts -w @soul/api && npm run seed:fixtures -w @soul/api",
+    "seed:demo": "npm run seed:demo -w @soul/api"
   }
 }

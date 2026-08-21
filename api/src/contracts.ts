@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { regionKeys } from './profile/regions.js'
 
 /**
  * The wire contract, shared with the client.
@@ -78,6 +79,226 @@ export const answerCandidate = z.object({
   answer: z.enum(['fits', 'not_the_same', 'later']),
   reason: z.string().max(500).optional(),
 })
+
+/**
+ * The read side, one shape per screen.
+ *
+ * Weeks and days are bounded by the student's own timezone, never the
+ * server's. Every one of these is scoped to the session student, which is why
+ * none of them names a student anywhere.
+ */
+export const dayDate = z.iso.date()
+
+/**
+ * The week. Seven days always, Monday first, whether or not anything was
+ * written in them. Themes are at most four, highest first, and a week with no
+ * tags yet has none rather than placeholders.
+ */
+export const weekView = z.object({
+  moments: z.number().int().min(0),
+  themes: z
+    .array(z.object({ name: z.string(), count: z.number().int() }))
+    .max(4),
+  days: z
+    .array(
+      z.object({
+        date: dayDate,
+        weekday: z.string().length(1),
+        count: z.number().int().min(0),
+      }),
+    )
+    .length(7),
+
+  /**
+   * What the student said they would do, once the day they named has come and
+   * gone without an answer. Null on almost every week.
+   */
+  holding: z
+    .object({
+      decisionId: z.string().uuid(),
+      chose: z.string(),
+      horizon: z.string(),
+    })
+    .nullable(),
+})
+export type WeekView = z.infer<typeof weekView>
+
+/**
+ * A cue card, about something the student themselves said was coming up.
+ *
+ * about names the thing in the student's own terms. question is one thing they
+ * can answer yes or no, drawn from what they wrote, so it is theirs rather
+ * than advice, and under it the screen puts a box for anything they want to
+ * say about it. A card that nothing in the entries points to is never made,
+ * which is why a day usually has none, occasionally one, and rarely more.
+ */
+export const dayCard = z.object({
+  id: z.string().uuid(),
+  about: z.string(),
+  question: z.string(),
+  answered: z.boolean(),
+})
+export type DayCard = z.infer<typeof dayCard>
+
+/** One day, entries in the order they were written, earliest first. */
+export const dayView = z.object({
+  date: dayDate,
+  entries: z.array(
+    z.object({
+      id: z.string().uuid(),
+      at: z.string(),
+      text: z.string(),
+      feeling: z.string().nullable(),
+      trigger: z.string().nullable(),
+    }),
+  ),
+
+  /**
+   * Unanswered first. A day with none carries an empty array,
+   * never null, so the screen has one shape to read rather than two.
+   */
+  // No cap. The count was never the point: a card exists where there is
+  // something worth saying back about, which is usually nothing and
+  // occasionally three. A limit here would have refused the third card of a
+  // full week while letting through the thin one.
+  cards: z.array(dayCard),
+})
+export type DayView = z.infer<typeof dayView>
+
+export const cardId = z.string().uuid()
+
+/**
+ * Answering a cue card. Yes or no, and a box.
+ *
+ * answer is the whole of it. detail is what they wrote in the box, which is
+ * usually nothing and is theirs either way: a yes can carry how they plan to
+ * do it and a no can carry why not.
+ *
+ * horizonDays is the day the check back fires and it only means anything on a
+ * yes, because a no books nothing. It is left optional so a client that has
+ * nothing to say about when gets the same three days the Mirror path gives.
+ */
+export const answerCard = z.object({
+  answer: z.enum(['yes', 'no']),
+  detail: z.string().trim().max(500).optional(),
+  horizonDays: z.number().int().min(1).max(30).default(3),
+})
+export type AnswerCard = z.infer<typeof answerCard>
+
+/**
+ * Patterns. Confirmed ones are the student's own words about themselves.
+ * Forming ones are candidates the sweep proposed and the student has not
+ * answered, and they are named as forming because nothing is a pattern until
+ * the student says it is.
+ *
+ * lighter and heavier are the themes the student has already answered about,
+ * split by what they answered. The word comes from outcomes.felt, which only
+ * they set, so neither list is the app's reading of anything. A theme with no
+ * outcome yet is in neither and stays what it was, a thing that keeps
+ * returning.
+ *
+ * heavier is not a warning and nothing that reads it may turn it into one. It
+ * holds what the student said left them heavier, in their theme's words, and a
+ * screen that adds so maybe stop has said something the student did not.
+ *
+ * Every array is present and empty rather than absent, so a screen has one
+ * shape to read on the first day and on the hundredth.
+ */
+const feltTheme = z.object({
+  theme: z.string(),
+  times: z.number().int(),
+  lastAt: z.string(),
+})
+
+export const patternsView = z.object({
+  reflections: z.number().int().min(0),
+  lighter: z.array(feltTheme),
+  heavier: z.array(feltTheme),
+  confirmed: z.array(
+    z.object({
+      id: z.string().uuid(),
+      theme: z.string(),
+      supporting: z.number().int(),
+      confirmedAt: z.string(),
+    }),
+  ),
+  forming: z.array(
+    z.object({
+      id: z.string().uuid(),
+      theme: z.string(),
+      supporting: z.number().int(),
+    }),
+  ),
+})
+export type PatternsView = z.infer<typeof patternsView>
+
+/**
+ * The profile, given at first run.
+ *
+ * Every field is optional and they are sent as they are answered, so a student
+ * who stops halfway keeps what they gave. displayName is a first name for the
+ * app to use, capped short because anything longer is not one.
+ *
+ * A field sent as null empties it. That is different from a field left out,
+ * which is untouched, and the difference is what lets the profile tab take an
+ * answer back without a second endpoint.
+ *
+ * The timezone is not in this contract. It is derived from the region on the
+ * server, never sent by the client.
+ */
+export const saveProfile = z.object({
+  displayName: z.string().trim().min(1).max(40).nullable().optional(),
+  ageBand: z
+    .enum(['under_13', '13_17', '18_24', '25_34', '35_49', '50_plus'])
+    .nullable()
+    .optional(),
+  gender: z.enum(['male', 'female', 'nonbinary', 'not_said']).nullable().optional(),
+  region: z.enum(regionKeys).nullable().optional(),
+
+  /**
+   * Exact coordinates, when the student shared their location. Sent together
+   * or not at all, and sent as null to forget them.
+   *
+   * When they arrive the region and the timezone are derived from them and
+   * whatever region the client thought it was is ignored, so a measured
+   * location and a picked one cannot disagree.
+   */
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+})
+export type SaveProfile = z.infer<typeof saveProfile>
+
+/**
+ * Signing in with Apple.
+ *
+ * The bearer on this call is still the roster reference, because that is what
+ * says which student the Apple account is about to be attached to. What comes
+ * back is the session token every later call uses instead.
+ */
+export const appleSignIn = z.object({
+  identityToken: z.string().min(1).max(8000),
+  appleUserId: z.string().min(1).max(200),
+})
+export type AppleSignIn = z.infer<typeof appleSignIn>
+
+export const appleSession = z.object({
+  token: z.string(),
+  expiresAt: z.string(),
+})
+export type AppleSession = z.infer<typeof appleSession>
+
+/**
+ * One day with something in it, for the list of days.
+ *
+ * feelings are the distinct ones on that day's tags, so a day can be told
+ * apart before it is opened.
+ */
+export type DayCount = {
+  date: string
+  weekday: string
+  count: number
+  feelings: string[]
+}
 
 /** What the tagger must return. Anything else is discarded. */
 export const taggerResult = z.object({

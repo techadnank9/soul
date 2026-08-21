@@ -34,7 +34,18 @@ class Constellation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return LayoutBuilder(
+      builder: (context, box) {
+        // Square and centred, the same as the orb. Filling the height pulled
+        // the four points so far apart that they stopped reading as one sky
+        // and started reading as a list that had been knocked over.
+        final side = math.min(box.maxWidth, box.maxHeight);
+
+        return Center(
+          child: SizedBox(
+            width: side,
+            height: side,
+            child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF241F1B),
         borderRadius: BorderRadius.circular(28),
@@ -100,6 +111,10 @@ class Constellation extends StatelessWidget {
             ),
         ],
       ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -254,7 +269,7 @@ class Ripples extends StatelessWidget {
 ///
 /// For what happens after deciding under pressure, because each of those is a
 /// small scene and they read better one at a time than four at once.
-class SwipeDeck extends StatefulWidget {
+class SwipeDeck extends StatelessWidget {
   const SwipeDeck({
     super.key,
     required this.options,
@@ -267,98 +282,101 @@ class SwipeDeck extends StatefulWidget {
   final ValueChanged<int> onChoose;
 
   @override
-  State<SwipeDeck> createState() => _SwipeDeckState();
+  Widget build(BuildContext context) {
+    // Every option on screen at once.
+    //
+    // This was a swipe deck, one card at a time. A student who does not swipe
+    // never sees options two, three and four, and answers from the one card
+    // they were shown. A question whose options are hidden is not a question.
+    return Column(
+      children: [
+        for (var row = 0; row < (options.length + 1) ~/ 2; row++) ...[
+          if (row > 0) const SizedBox(height: 12),
+          Expanded(
+            child: Row(
+              children: [
+                for (var column = 0; column < 2; column++) ...[
+                  if (column > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: row * 2 + column < options.length
+                        ? _Card(
+                            index: row * 2 + column,
+                            text: options[row * 2 + column],
+                            chosen: chosen == row * 2 + column,
+                            dimmed: chosen != null &&
+                                chosen != row * 2 + column,
+                            onTap: () => onChoose(row * 2 + column),
+                          )
+                        : const SizedBox(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
-class _SwipeDeckState extends State<SwipeDeck> {
-  late final _pages = PageController(viewportFraction: 0.78);
-  int _at = 0;
+class _Card extends StatelessWidget {
+  const _Card({
+    required this.index,
+    required this.text,
+    required this.chosen,
+    required this.dimmed,
+    required this.onTap,
+  });
 
-  @override
-  void dispose() {
-    _pages.dispose();
-    super.dispose();
-  }
+  final int index;
+  final String text;
+  final bool chosen;
+  final bool dimmed;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: PageView.builder(
-            controller: _pages,
-            itemCount: widget.options.length,
-            onPageChanged: (i) => setState(() => _at = i),
-            itemBuilder: (context, i) {
-              final near = i == _at;
-              return AnimatedScale(
-                scale: near ? 1 : 0.9,
-                duration: const Duration(milliseconds: 220),
-                child: GestureDetector(
-                  onTap: () => widget.onChoose(i),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 20,
-                    ),
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: widget.chosen == i
-                          ? baselineColours[i]
-                          : SoulColors.s1,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: baselineColours[i]
-                            .withValues(alpha: near ? 0.9 : 0.2),
-                        width: 2,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: SoulColors.shade,
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        widget.options[i],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: SoulType.serif,
-                          fontSize: 24,
-                          height: 1.3,
-                          color: widget.chosen == i
-                              ? Colors.white
-                              : SoulColors.text,
-                        ),
-                      ),
-                    ),
-                  ),
+    return Enter(
+      index: index,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: dimmed ? 0.45 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: chosen ? baselineColours[index] : SoulColors.s1,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: baselineColours[index].withValues(alpha: chosen ? 1 : 0.35),
+                width: 2,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: SoulColors.shade,
+                  blurRadius: 18,
+                  offset: Offset(0, 6),
                 ),
-              );
-            },
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 0; i < widget.options.length; i++)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: i == _at ? 20 : 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: i == _at ? baselineColours[i] : SoulColors.border2,
-                  borderRadius: BorderRadius.circular(4),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: SoulType.serif,
+                  fontSize: 20,
+                  height: 1.25,
+                  color: chosen ? Colors.white : SoulColors.text,
                 ),
               ),
-          ],
+            ),
+          ),
         ),
-        const SizedBox(height: 14),
-        Label('swipe to see them, tap the one that fits'),
-      ],
+      ),
     );
   }
 }

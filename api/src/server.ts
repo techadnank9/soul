@@ -3,8 +3,13 @@ import { Hono } from 'hono'
 import { env } from './env.js'
 import { resolveSession, type Session } from './session.js'
 import { entries } from './routes/entries.js'
+import { reads } from './routes/reads.js'
+import { cards } from './routes/cards.js'
 import { transcription } from './routes/transcribe.js'
 import { consent } from './routes/consent.js'
+import { profile } from './routes/profile.js'
+import { peopleRoutes } from './routes/people.js'
+import { auth } from './routes/auth.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -29,9 +34,18 @@ app.use('*', async (c, next) => {
   await next()
 })
 
+// Signing in is above the rest because it is the one route whose bearer is
+// still the roster reference. It needs a student to attach an Apple account
+// to, which is why it lives inside this block rather than in front of it.
+app.route('/', auth)
+
 app.route('/', entries)
+app.route('/', reads)
+app.route('/', cards)
 app.route('/', transcription)
 app.route('/', consent)
+app.route('/', profile)
+app.route('/', peopleRoutes)
 
 app.onError((error, c) => {
   console.error(error)

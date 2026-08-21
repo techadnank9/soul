@@ -1,6 +1,12 @@
 import { sql } from '../db.js'
 import { tagEntry } from '../services/tagging/tag.js'
 import { checkBack } from '../services/decisions/checkBack.js'
+import { generateCards } from '../services/cards/generate.js'
+import { extractPeople } from '../services/people/extract.js'
+import { writeProfile } from '../services/people/profile.js'
+import { sweep } from './pattern_sweep.js'
+import { sweepVerdicts } from '../services/verdicts/sweep.js'
+import { scheduleSweep, scheduleVerdicts } from './enqueue.js'
 import type { Session } from '../session.js'
 
 /**
@@ -12,6 +18,24 @@ import type { Session } from '../session.js'
  */
 const MAX_ATTEMPTS = 5
 const POLL_MS = 2000
+
+/**
+ * The types this runner can run.
+ *
+ * A job of any other type is left where it is rather than claimed. That is
+ * what makes embed_entry a backlog: those rows wait, pending, until task 8
+ * gives them a worker. Claiming one and returning would mark it done and the
+ * entry would never be embedded by anything.
+ */
+const HANDLED = [
+  'tag_entry',
+  'check_back',
+  'pattern_sweep',
+  'pattern_verdicts',
+  'cue_cards',
+  'people',
+  'person_profile',
+]
 
 type Job = {
   id: string
@@ -28,7 +52,9 @@ async function claim(): Promise<Job | null> {
     update jobs set status = 'running', attempts = attempts + 1
     where id = (
       select id from jobs
-      where status = 'pending' and run_at <= now()
+      where status = 'pending'
+        and run_at <= now()
+        and type = any(${HANDLED})
       order by run_at
       for update skip locked
       limit 1
@@ -37,30 +63,71 @@ async function claim(): Promise<Job | null> {
   return rows[0] ?? null
 }
 
-async function run(job: Job): Promise<void> {
-  const payload = JSON.parse(job.payload) as Record<string, string>
-
+/**
+ * Every job here belongs to one student except the sweep, which belongs to all
+ * of them. Reading the student out where it is used keeps that difference in
+ * one place instead of refusing the sweep before it starts.
+ */
+function studentOf(job: Job): Session {
   if (!job.student_id || !job.school_id || !job.district_id) {
     throw new Error('job has no student')
   }
-
-  const session: Session = {
+  return {
     studentId: job.student_id,
     schoolId: job.school_id,
     districtId: job.district_id,
   }
+}
+
+async function run(job: Job): Promise<void> {
+  const payload = JSON.parse(job.payload) as Record<string, string>
 
   switch (job.type) {
     case 'tag_entry':
-      await tagEntry(payload.entryId!, session)
+      await tagEntry(payload.entryId!, studentOf(job))
       return
     case 'check_back':
-      await checkBack(payload.decisionId!, session)
+      await checkBack(payload.decisionId!, studentOf(job))
       return
-    case 'embed_entry':
-      // Embeddings land with task 8. The job is enqueued from day one so the
-      // backlog exists when the worker does.
+    case 'people': {
+      // Usually zero. Most entries name nobody, and an entry that names
+      // nobody must produce nobody.
+      const named = await extractPeople(payload.entryId!, studentOf(job))
+      console.log(`${named} people named`)
       return
+    }
+    case 'person_profile': {
+      const written = await writeProfile(payload.personId!, studentOf(job))
+      console.log(written ? 'profile written' : 'profile not due')
+      return
+    }
+    case 'cue_cards': {
+      // Often zero, which is the answer when nothing the student wrote points
+      // forward. Logged either way, because a run that writes nothing for a
+      // week is the first sign the prompt has stopped working.
+      const cards = await generateCards(payload.entryId!, studentOf(job))
+      console.log(`${cards} cards written`)
+      return
+    }
+    case 'pattern_sweep': {
+      const count = await sweep()
+      console.log(`${count} candidates proposed`)
+      // Booked here rather than by a cron entry, so the only thing that has to
+      // be running for the sweep to keep happening is this runner.
+      await scheduleSweep()
+      // And the verdicts on the back of it, now rather than tonight, because
+      // the themes this sweep just read are the ones they are written about.
+      await scheduleVerdicts()
+      return
+    }
+    case 'pattern_verdicts': {
+      // Skipped is the ordinary answer and it is not a failure. A theme the
+      // entries do not carry a verdict for stays a thing that keeps
+      // returning, in neither section, and is asked about again next time.
+      const { judged, skipped } = await sweepVerdicts()
+      console.log(`${judged} verdicts written, ${skipped} left without one`)
+      return
+    }
     default:
       throw new Error(`unknown job type ${job.type}`)
   }
@@ -87,6 +154,9 @@ export async function tick(): Promise<boolean> {
 }
 
 async function loop(): Promise<void> {
+  // The sweep keeps itself going once it has run once. This is the once.
+  await scheduleSweep()
+
   for (;;) {
     const worked = await tick()
     if (!worked) await new Promise((resolve) => setTimeout(resolve, POLL_MS))

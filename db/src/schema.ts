@@ -9,6 +9,7 @@ import {
   boolean,
   timestamp,
   real,
+  doublePrecision,
   index,
   uniqueIndex,
   vector,
@@ -34,9 +35,53 @@ export const safetyStatus = pgEnum('safety_status', ['open', 'acknowledged', 'cl
 export const decisionStatus = pgEnum('decision_status', ['open', 'closed', 'abandoned'])
 export const feltAfter = pgEnum('felt_after', ['lighter', 'same', 'worse'])
 export const candidateStatus = pgEnum('candidate_status', ['pending', 'surfaced', 'confirmed', 'rejected'])
-export const generationPurpose = pgEnum('generation_purpose', ['safety', 'beat_one', 'mirror', 'tagger'])
+
+/**
+ * What the app now says about a theme that keeps returning, and who said it.
+ *
+ * good and bad are the two sections of the patterns screen. unsettled is the
+ * third answer and it is never shown: it is written down so that a theme the
+ * model declined to judge is not asked about again every night until a run
+ * happens to say something. source records
+ * which of the two things decided it: outcomes means the student's own answers
+ * to their check backs, model means we judged it because they had not. The
+ * student's answer wins wherever there is one, so a row written from a model
+ * verdict is replaced by one written from outcomes as soon as they say
+ * something.
+ */
+export const themeVerdict = pgEnum('theme_verdict', ['good', 'bad', 'unsettled'])
+export const verdictSource = pgEnum('verdict_source', ['outcomes', 'model'])
+export const generationPurpose = pgEnum('generation_purpose', [
+  'safety',
+  'beat_one',
+  'mirror',
+  'tagger',
+  'cue_cards',
+  'pattern_verdict',
+  'people',
+  'person_profile',
+])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
+
+/**
+ * The profile set, asked once at first run.
+ *
+ * A band rather than a birthdate, because the product needs to know roughly
+ * how old a student is to speak to them properly and has no use at all for the
+ * day they were born. not_said is a real answer and is stored as one, so a
+ * student who declines is distinguishable from one who never reached the
+ * question.
+ */
+export const ageBand = pgEnum('age_band', [
+  'under_13',
+  '13_17',
+  '18_24',
+  '25_34',
+  '35_49',
+  '50_plus',
+])
+export const gender = pgEnum('gender', ['male', 'female', 'nonbinary', 'not_said'])
 
 /* ------------------------------------------------------------- tenancy -- */
 
@@ -61,7 +106,9 @@ export const schools = pgTable(
 )
 
 /**
- * No names, no birthdates. external_ref is the rostering identifier.
+ * No surnames, no birthdates. external_ref is the rostering identifier. A
+ * first name is held only if the student gives one, and only so the app can
+ * call them something.
  * Identifying information stays in the rostering system, not here.
  */
 export const students = pgTable(
@@ -72,12 +119,91 @@ export const students = pgTable(
     districtId: uuid('district_id').notNull().references(() => districts.id),
     externalRef: text('external_ref').notNull(),
     yearGroup: smallint('year_group'),
+
+    /**
+     * The Apple subject identifier, present once the student has signed in on
+     * a device. It is null until then, because rostering creates the student
+     * and signing in only attaches a device to a row that already exists.
+     *
+     * Apple gives a different subject to every developer account, so this is
+     * not a shared identifier and cannot be joined against anything outside
+     * this database. It is unique because two students cannot be the same
+     * Apple account.
+     */
+    appleUserId: text('apple_user_id'),
+
+    /**
+     * The profile, given by the student at first run. Every column is
+     * nullable, because a student can leave first run at any point and a
+     * half answered profile is a real state rather than a broken one.
+     *
+     * displayName is a first name and nothing more. It is what the app calls
+     * them, not an identity record. There is still no surname and no
+     * birthdate anywhere in this schema.
+     *
+     * region is the answer the student chose. timezone is derived from it and
+     * stored beside it, so a check back can fire in their late afternoon
+     * rather than the server's.
+     */
+    displayName: text('display_name'),
+    ageBand: ageBand('age_band'),
+    gender: gender('gender'),
+    region: text('region'),
+    timezone: text('timezone'),
+
+    /**
+     * Exact coordinates, when the student shared their location.
+     *
+     * This is precise location data about a child and it is the most sensitive
+     * pair of columns in the schema. It is held because the founder asked for
+     * it, not because anything in the product needs it: the region and the
+     * timezone are derived from it and would work just as well from the
+     * picker. See decision 061.
+     *
+     * Anything reading these should ask first whether the region would do.
+     */
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    profileRecordedAt: timestamp('profile_recorded_at', { withTimezone: true }),
     consentRecordedAt: timestamp('consent_recorded_at', { withTimezone: true }),
     consentVersion: text('consent_version'),
     notifyOptIn: boolean('notify_opt_in').notNull().default(false),
     createdAt: now(),
   },
-  (t) => [uniqueIndex('students_school_external_ref_idx').on(t.schoolId, t.externalRef)],
+  (t) => [
+    uniqueIndex('students_school_external_ref_idx').on(t.schoolId, t.externalRef),
+    uniqueIndex('students_apple_user_id_idx').on(t.appleUserId),
+  ],
+)
+
+/**
+ * A signed in device.
+ *
+ * Only the sha256 hash of the token is stored. The token itself is returned
+ * once and then exists on the device and nowhere else, so this table read in
+ * full still lets nobody in.
+ *
+ * A row is the answer to which student is asking, so it carries the school and
+ * the district alongside the student rather than joining for them on every
+ * request. revoked_at is set rather than the row deleted, because a district
+ * asking when a device stopped being trusted needs the row to still be there.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    tokenHash: text('token_hash').notNull(),
+    createdAt: now(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('sessions_token_hash_idx').on(t.tokenHash),
+    index('sessions_student_idx').on(t.studentId),
+  ],
 )
 
 /* ------------------------------------------------------------- entries -- */
@@ -236,6 +362,61 @@ export const outcomes = pgTable(
   (t) => [index('outcomes_decision_idx').on(t.decisionId)],
 )
 
+/* ----------------------------------------------------------- cue cards -- */
+
+/**
+ * A card about something the student said was coming up.
+ *
+ * entry_id is the entry the card was drawn from, so every card can be put
+ * back next to the sentence it came from. A card about a thing nobody
+ * mentioned is the one failure this feature has, and this column is how it is
+ * caught.
+ *
+ * The prompt and model versions sit here as well as on the generation row.
+ * A card outlives the day it was written and the first question about a bad
+ * one is which prompt wrote it.
+ *
+ * A card asks one question the student answers yes or no, and answered_yes is
+ * that answer. detail is whatever they wrote in the box under it, which is
+ * theirs and optional either way. answered_at is what says a card has been
+ * dealt with, and it is what puts the unanswered ones first.
+ *
+ * A yes writes a decisions row, the same way the Mirror path does, and
+ * decision_id is that row. A no writes no decision and books nothing, so a no
+ * is a card with an answer, a time, sometimes a sentence, and a null there.
+ *
+ * options and chosen_index belong to the cards written before the question
+ * became a yes or a no. Nothing writes to either column now and nothing reads
+ * them on the student's path. They stay because the rows that have them are a
+ * record of what a student was actually asked, and dropping the columns would
+ * rewrite that history into three blanks.
+ */
+export const cueCards = pgTable(
+  'cue_cards',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entryId: uuid('entry_id').notNull().references(() => entries.id),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    about: text('about').notNull(),
+    question: text('question').notNull(),
+    options: text('options').array(),
+    promptVersion: text('prompt_version').notNull(),
+    modelVersion: text('model_version').notNull(),
+    chosenIndex: smallint('chosen_index'),
+    answeredYes: boolean('answered_yes'),
+    detail: text('detail'),
+    decisionId: uuid('decision_id').references(() => decisions.id),
+    answeredAt: timestamp('answered_at', { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => [
+    index('cue_cards_student_created_idx').on(t.studentId, t.createdAt.desc()),
+    index('cue_cards_entry_idx').on(t.entryId),
+  ],
+)
+
 /* ------------------------------------------------------------ patterns -- */
 
 /**
@@ -277,6 +458,40 @@ export const confirmedPatterns = pgTable(
   (t) => [index('confirmed_patterns_student_idx').on(t.studentId)],
 )
 
+/**
+ * The verdict on a theme, and the one line the student reads under it.
+ *
+ * Rows are appended, never updated. The newest row for a theme is the live
+ * one and the ones under it are how a line that landed badly gets traced back
+ * to the prompt and the model that wrote it, which is the same reason the
+ * cue card row carries both versions.
+ *
+ * `line` is written for the verdict on its own row, so a theme whose verdict
+ * turns over gets a new row with a new line rather than the old sentence under
+ * a new heading. `supporting` is how many entries were behind the theme when
+ * it was judged, which is what says a stored line is out of date.
+ */
+export const patternVerdicts = pgTable(
+  'pattern_verdicts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    theme: text('theme').notNull(),
+    verdict: themeVerdict('verdict').notNull(),
+    source: verdictSource('source').notNull(),
+    line: text('line').notNull(),
+    supporting: integer('supporting').notNull(),
+    promptVersion: text('prompt_version').notNull(),
+    modelVersion: text('model_version').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    index('pattern_verdicts_student_theme_idx').on(t.studentId, t.theme, t.createdAt.desc()),
+  ],
+)
+
 /** Checked by the sweep so the same wrong idea is never offered twice. */
 export const patternRejections = pgTable(
   'pattern_rejections',
@@ -291,6 +506,86 @@ export const patternRejections = pgTable(
     createdAt: now(),
   },
   (t) => [index('pattern_rejections_student_theme_idx').on(t.studentId, t.theme)],
+)
+
+/* -------------------------------------------------------------- people -- */
+
+/**
+ * The people a student writes about.
+ *
+ * This table holds records about somebody who is not a user of this product,
+ * did not agree to be described, and cannot read or delete what is written
+ * here. That was raised and decided, and the shape below is what makes it
+ * defensible rather than reckless.
+ *
+ * name is what the student calls them and nothing more. There is no surname,
+ * no contact detail we went looking for, and no identifier that would find
+ * this person anywhere else. reach is the student's own note about how they
+ * would get hold of them, written by them, empty until they write it.
+ *
+ * relation and profile are written by the model from this student's own
+ * entries. They describe what happens between the two of them. They never
+ * describe what the other person is like, because a child's character is not
+ * ours to summarise from somebody else's diary.
+ *
+ * name_is_theirs and the other two flags mark a field the student edited. A
+ * later profile run leaves those alone: their words about a person outrank
+ * ours, permanently.
+ */
+export const people = pgTable(
+  'people',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+
+    name: text('name').notNull(),
+    relation: text('relation'),
+    profile: text('profile'),
+    reach: text('reach'),
+
+    nameIsTheirs: boolean('name_is_theirs').notNull().default(false),
+    relationIsTheirs: boolean('relation_is_theirs').notNull().default(false),
+    reachIsTheirs: boolean('reach_is_theirs').notNull().default(false),
+
+    mentions: integer('mentions').notNull().default(0),
+    firstSeenAt: timestamp('first_seen_at', { withTimezone: true }),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+
+    promptVersion: text('prompt_version'),
+    modelVersion: text('model_version'),
+    profiledMentions: integer('profiled_mentions').notNull().default(0),
+    createdAt: now(),
+  },
+  (t) => [
+    // One row per name per student. Two Sams in one life are one row until the
+    // student renames one of them, which is the only thing that can tell them
+    // apart and is not ours to guess.
+    uniqueIndex('people_student_name_idx').on(t.studentId, t.name),
+    index('people_student_seen_idx').on(t.studentId, t.lastSeenAt.desc()),
+  ],
+)
+
+/** Where a person was mentioned, and the words they were mentioned in. */
+export const entryPeople = pgTable(
+  'entry_people',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entryId: uuid('entry_id').notNull().references(() => entries.id),
+    personId: uuid('person_id').notNull().references(() => people.id),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+
+    /** The sentence they appear in, so a mention can be shown in context. */
+    said: text('said').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    uniqueIndex('entry_people_entry_person_idx').on(t.entryId, t.personId),
+    index('entry_people_person_idx').on(t.personId),
+  ],
 )
 
 /* -------------------------------------------------------------- safety -- */

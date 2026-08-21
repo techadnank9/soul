@@ -48,6 +48,16 @@ export async function loadContext(
       .orderBy(desc(keptLines.createdAt))
       .limit(KEPT_LINES),
 
+    /**
+     * Every open decision, whatever asked for it.
+     *
+     * A cue card answer writes a decisions row itself rather than a row of its
+     * own kind, so a thing chosen on a card is already in this result and
+     * there is nothing here that could tell it from a thing chosen after the
+     * Mirror. That is deliberate and it is what keeps the model from having
+     * two half memories of the same student. Anything that later gives cards
+     * their own table has to add them back here by hand.
+     */
     db
       .select({ chose: decisions.chosenText, horizon: decisions.horizon })
       .from(decisions)

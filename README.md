@@ -118,13 +118,37 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | 8 Mirror and decision | Built. |
 | 9 Tagging | Built. The fifty entry hand check has not been done. |
 | 10 Check backs | Job runner built. Not yet exercised across a redeploy. |
-| 11 Home with empty states | Done, day one version first. |
+| 11 Home with empty states | Done, day one version first. First run now ends here. |
+| Profile tab | Fourth destination. Reads and writes every held field. |
 | 12 Pattern candidates | Query built. Not yet seen with real tags behind it. |
-| 13 Day view | Built on sample data. |
+| 13 Day view | Built on the student's own entries. Days list, then one day. |
+| Cue cards | A yes or no question about something they said is coming up, with a box. |
+| Reflections | Good and bad patterns, one line each, opening on the entries behind them. |
+| People | Everyone they write about, with a profile the model writes. |
+| Sign in with Apple | Built, and unusable until the capability has a team behind it. |
 
-What is real: entries, the consent gate, the safety path, beat one, the Mirror,
-decisions, transcription. What is still sample data: the week ring, the day
-view, the patterns list.
+What is real: all of it. The sample file is deleted, every screen reads the
+student's own rows, and nothing in the app is invented content any more.
+
+What has never been tested on a real student: all of it. Task 0 and task 7 are
+both still open, and the eval directory that would answer task 7 is still
+empty.
+
+## First run
+
+An intro that says what the app does and what it is not, four profile
+questions, the ten baseline questions, then home, empty. Every question can be
+skipped and none of them gates anything.
+
+The profile is a first name, an age band, a gender and a location. There is no
+surname and no birthdate. The where question offers the device before the list,
+and a student who shares their location has their exact coordinates stored; one
+who refuses picks a region and nothing else is asked. Either way the timezone is
+derived on the server and never sent by the client.
+
+A fourth tab shows everything held, changeable and emptiable, next to a plain
+statement of what is not held. Decisions 055 to 061 have the reasoning, and 061
+has the argument against storing coordinates at all.
 
 ## Running it locally
 
@@ -137,11 +161,46 @@ createdb soul
 export DATABASE_URL="postgres://$(whoami)@localhost:5432/soul"
 
 npm install
-npm run db:migrate -w @soul/db      # schema, then row level security
-npm run seed:prompts -w @soul/api   # /prompts into the database
+npm run db:migrate                  # schema, then row level security
+npm run seed                        # prompts, then the two test students
 npm run db:test                     # the tenancy test
 npm start -w @soul/api
 ```
 
+To start from nothing again:
+
+```
+npm run db:reset -- --yes           # every row, gone. Refuses anything remote
+npm run seed
+```
+
+The client, pointed at that API:
+
+```
+cd app
+flutter run --dart-define=SOUL_API=http://localhost:8080 \
+            --dart-define=SOUL_STUDENT=student_with_consent
+```
+
 Without provider keys the safety classifier cannot answer, so every entry
 returns the help screen. That is the designed behaviour, not a failure.
+
+## Sign in with Apple
+
+The capability is already wired into the project. `app/ios/Runner/Runner.entitlements`
+holds `com.apple.developer.applesignin` set to Default, and all three build
+configurations of the Runner target point at it. There is no Apple developer team
+yet, so signing is left untouched and the simulator build runs as it is.
+
+Once a team id exists, a human has to do four things in Xcode:
+
+1. Open `app/ios/Runner.xcworkspace` and select the Runner target.
+2. Under Signing and Capabilities, choose the team. The bundle identifier is
+   `space.soul.soul` and it does not change.
+3. Check that Sign in with Apple is listed as a capability. It is read from the
+   entitlements file, so it should already be there.
+4. Enable Sign in with Apple for the same identifier in the Apple developer
+   account, then let Xcode regenerate the provisioning profile.
+
+A device build fails until both step 2 and step 4 are done. The simulator build
+needs neither.

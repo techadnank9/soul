@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
-import '../../theme/widgets.dart';
 import 'baseline.dart';
 import 'baseline_answering.dart';
 import 'baseline_more.dart';
@@ -18,12 +17,10 @@ class BaselineScreen extends StatefulWidget {
   const BaselineScreen({
     super.key,
     required this.onFinished,
-    required this.onSkip,
   });
 
   /// Answers, indexed by question, with null for anything skipped.
   final ValueChanged<List<int?>> onFinished;
-  final VoidCallback onSkip;
 
   @override
   State<BaselineScreen> createState() => _BaselineScreenState();
@@ -45,7 +42,7 @@ class _BaselineScreenState extends State<BaselineScreen> {
         Answering.blank => 'Finish the sentence',
         Answering.constellation => 'Pick the one you wait for',
         Answering.stack => 'Bring one to the front',
-        Answering.deck => 'Swipe through, tap what fits',
+        Answering.deck => 'Tap the one that fits',
         Answering.dial => 'Turn it toward what you are ready for',
         _ => null,
       };
@@ -211,8 +208,6 @@ class _BaselineScreenState extends State<BaselineScreen> {
                   ),
                 ),
               ),
-              SoulButton('Skip these',
-                  kind: SoulButtonKind.ghost, onPressed: widget.onSkip),
             ],
           ),
         ),

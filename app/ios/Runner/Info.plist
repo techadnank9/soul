@@ -68,5 +68,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Soul uses your location to set your region and the hour it comes back to you. Your exact position is saved to your profile, where you can see it and remove it. You can skip this and pick from a list instead.</string>
 </dict>
 </plist>

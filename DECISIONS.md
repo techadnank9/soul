@@ -1107,3 +1107,1779 @@ send or discard, per decision 019.
 
 Reverses if: a first party capture API appears, or upload size on school wifi
 turns out to matter more than the container reliability.
+
+---
+
+### 055. First run is an intro, a profile, the baseline set, then home
+Aug 2026, Adnan
+
+Decision: first run is four screens in order. An intro that says what the app
+does, four profile questions, the ten baseline questions, then home. It ends on
+home rather than on a capture.
+
+Why: founder call, and it closes two gaps. The product had no screen that said
+what it was before asking a student to answer eleven questions, which decision
+048 left open when the consent screen was removed. And first run used to end by
+pushing a student straight into a capture, which made the first thing the app
+ever asks of somebody a thirty second recording. Landing on home makes the
+first capture a thing they choose.
+
+The intro says what this is not, in three lines: it does not score you, name
+what you feel, or replace anyone you would talk to. That is the scope framing
+Sofia asks for, minus the confidentiality promise, which still cannot be made
+until the escalation policy exists.
+
+Rejected: keeping the baseline set first, which is what shipped. Eleven
+questions before the product has said anything about itself is a lot to ask of
+a twelve year old.
+
+Reverses if: first run measurably loses students before home, in which case the
+baseline set is the part to cut, not the intro.
+
+---
+
+### 056. The profile is a first name, an age band, a gender and a region
+Aug 2026, Adnan, against the advice recorded here
+
+Decision: first run asks four questions and stores the answers on the student
+row. What we call you, how old you are as a band, your gender, and which region
+you are in. Every question is skippable and none of them gates anything.
+
+Why: the founder wants the app to know who it is speaking to. A reflection
+product that writes a line back about a student and has to avoid naming them or
+referring to them at all is working with one hand tied.
+
+The shape is narrowed on purpose, and this is the part that was argued. The
+schema held no names and no birthdates by design, because the students include
+under 13s, the product is sold to districts, and every field held about a child
+is a field named in a data agreement. So it is a first name and not a full one,
+a band and not a birthdate, and a region and not a place. None of it is
+required, and a student who skips every question still gets the whole product.
+
+Rejected: full name, exact age and free text location, which is what was first
+asked for. It adds a directly identifying record of a minor for no capability
+the narrower version does not already give.
+
+Also rejected: asking pronouns instead of gender. Pronouns are what generated
+text actually needs. Gender was the founder's call and it answers the same
+question for the model, less precisely.
+
+Reverses if: a district review objects to any of it, in which case the first
+name is the one worth defending and the rest can go.
+
+---
+
+### 057. The timezone is derived on the server from the region
+Aug 2026, Claude
+
+Decision: the client sends a region key from a fixed list. The server maps it
+to an IANA timezone and stores both. The client never sends a timezone, and
+"somewhere else" stores a null zone rather than a guess.
+
+Why: a check back is scheduled days out and fired against whatever zone we hold
+for that student, so the zone is a scheduling input rather than a display
+preference. A string that arrived from a device is one we would have to trust.
+A null is a state the scheduler can notice; a wrong zone is not.
+
+Note what this does not yet fix. `enqueue.inDays` still hardcodes seventeen
+hundred server time, so the stored zone is not read by anything. Wiring it is
+a separate change to the job path.
+
+Rejected: reading the zone from the device with a package. One more dependency
+and one more name in a data agreement, to get a value we can derive.
+
+Reverses if: the region list stops covering where students actually are, at
+which point this becomes a real timezone picker.
+
+---
+
+### 058. Reset and fixtures are scripts, not rows made by hand
+Aug 2026, Claude
+
+Decision: `npm run db:reset -- --yes` truncates every table, and
+`npm run seed` loads prompts and the two test students. The reset refuses to
+run without the flag and refuses anything that is not localhost without a
+second flag.
+
+Why: the two test students CLAUDE.md promises existed only on the machine that
+created them, so the documentation was true in one place and the first thing a
+reset destroyed was the fixtures. Both are now reproducible in one command.
+
+The guards are because this is the one script in the repository whose whole
+purpose is to delete student data.
+
+Reverses if: fixtures need to differ per developer, which would make this a
+config file rather than a script.
+
+---
+
+### 059. The profile is a tab, not a settings screen
+Aug 2026, Adnan
+
+Decision: a fourth destination on the tab bar, after the week, the days and
+the patterns. It shows every field the app holds about the student, each one
+changeable, each one emptiable, and it names what is not held.
+
+Why: founder call, and it is the right shape. What a product holds about a
+child should not be behind a gear icon in a corner. Putting it on the bar means
+a student can check it in one tap and a district reviewer can be shown it in
+one tap.
+
+Emptying is a real answer rather than a cancel. A field sent as null clears the
+column; a field left out is untouched. That distinction is in the contract on
+purpose, so taking an answer back reaches the database rather than only the
+screen.
+
+Reverses if: the bar gets a fifth destination, at which point four plus a
+floating capture button is too many and this becomes the first thing to move.
+
+---
+
+### 060. The age bands reach adulthood
+Aug 2026, Adnan
+
+Decision: six bands rather than four. Under 13, 13 to 17, 18 to 24, 25 to 34,
+35 to 49, 50 or over.
+
+Why: founder call. The four school age bands assumed every user is a student in
+a school, and the ladder now covers whoever else ends up holding the app.
+
+Asked for as under 13, then 13 to 18, then 18 to 25, which puts an eighteen
+year old in two bands at once. Each band ends where the next begins instead.
+
+Six options do not fit as centred colour tiles on a small phone, so the age
+question moved to the same scrolling list the regions use. The migration drops
+old answers rather than mapping them, because 17_18 straddles two new bands.
+That is safe only while no student outside this machine has answered it.
+
+Reverses if: the product stays inside schools, in which case the four school
+bands were the more useful cut.
+
+---
+
+### 061. Exact coordinates, asked from the device
+Aug 2026, Adnan, against the advice recorded here
+
+Decision: the where question asks the device for the student's position. The
+coordinates are sent, stored on the student row, and shown back to the student
+on the profile tab, where they can be removed. The region and the timezone are
+derived from them on the server. Refusing the permission falls back to the
+picker and costs nothing.
+
+Why: founder call, asked for twice.
+
+The case against it, recorded because it will be asked in a district review.
+Nothing in the product needs a position. The region and the hour a check back
+fires were already answered by the picker, and the picker is still there for
+every student who refuses. What the coordinates add is precise location data
+about a child, in a database sold to school districts, some of whose students
+are under 13. That is a category of data with its own rules, its own breach
+consequences and its own line in every agreement, held for a capability we
+already had.
+
+What was done to narrow it. The coordinates never choose their own meaning: the
+server derives the region and drops back to elsewhere when nothing is within
+two thousand kilometres. Nothing is geocoded, so no address is ever produced
+and no third party sees a position. The permission string says plainly that the
+exact position is saved and can be removed. The profile tab shows it as its own
+line rather than folded into the region, and forgetting it clears both columns.
+
+The cost that is not narrowed. geolocator is the second runtime dependency the
+client carries and it brought twenty five transitive packages, each of which is
+now a name in a data agreement that previously listed one.
+
+Reverses if: a district review objects, or the escalation policy work concludes
+that holding a child's position changes what has to be reported and to whom. At
+that point the picker alone is a complete answer and the columns can be
+dropped.
+
+---
+
+### 062. The intro says what reflection is before it says what the app does
+Aug 2026, Adnan, wording his
+
+Decision: the first screen opens with two paragraphs the founder wrote.
+Reflection is not thinking harder about something, it is saying it out loud and
+hearing what was actually in there. Most of it never gets said, it just sits,
+shaping what you do next without you noticing. The mechanic follows in one
+line, and the heading shortens to "Thirty seconds, out loud."
+
+Why: the old opening described the product and never said what it was for. A
+student who does not know what reflection is cannot want it, and the founder's
+two paragraphs answer that in the product voice already, with no hyphens, no
+reassurance and no jargon.
+
+The heading shortened because the founder's first paragraph says what the old
+one was reaching for. Thirty seconds stays, because it is the only concrete
+promise on the screen and the whole product is built to keep it.
+
+The order is idea, then absence, then mechanic. What this is not stays last and
+unchanged.
+
+Reverses if: students read the first two paragraphs as abstract and skip them,
+which would put the mechanic back on top.
+
+---
+
+### 063. Sessions are a table the request path cannot read
+Aug 2026, Claude
+
+Decision: a signed in device is a row in `sessions` holding the sha256 hash of
+its token, the student, the school, the district, an expiry a hundred and
+eighty days out and a nullable `revoked_at`. The table is granted to nobody and
+carries no policy, so `soul_student` cannot read it at all. The token itself is
+returned once and stored nowhere on the server. A token starting with `soul_`
+is looked up by hash, and anything else falls through to the `external_ref`
+lookup that has driven the product from a laptop since the first day.
+
+Why: the lookup happens before the transaction becomes `soul_student`, so the
+request path never needs this table. Granting it read anyway would put every
+device's token hash one missing where clause away from a student who already
+holds a token of their own, which is the one row in this database that is worth
+stealing. Every other table is scoped by a policy because the student has to
+read it. This one is denied outright because they do not.
+
+Storing the hash rather than the token is the same argument one layer down. A
+leaked backup of this table is a list of hashes and a hash cannot be sent as a
+bearer token.
+
+`revoked_at` is set rather than the row deleted, because a district asking when
+a device stopped being trusted needs a row to read. Signing in on a second
+device leaves the first session alone, since a student with a phone and an iPad
+has two devices rather than a problem.
+
+Reverses if: something on the request path genuinely needs to list a student's
+own devices, at which point this needs a policy scoped to `student_id` and a
+column set that does not include the hash.
+
+---
+
+### 064. Apple tokens are verified with node crypto, and the link is written once
+Aug 2026, Claude
+
+Decision: the identity token is verified in about eighty lines using
+`node:crypto`. Apple's keys are fetched, cached in memory for ten minutes, and
+turned into public keys with `createPublicKey` from the JWK modulus and
+exponent. A key identifier that is not in the cache triggers exactly one
+refetch before the token is refused. The algorithm has to be RS256, the issuer
+has to be Apple, the audience has to be `APPLE_BUNDLE_ID`, the expiry has to be
+in the future, and the subject has to match the account the client named.
+Claims are read only after the signature has verified.
+
+Why: the alternative is a JWT library, which is a package on the dependency
+list and a name in every district data agreement, for work that is one fetch,
+one key construction and one signature check. The rule in CLAUDE.md is one more
+function over one more package, and this is what that rule looks like when it
+costs something.
+
+The refetch matters more than it looks. Apple rotates signing keys without
+notice, and a rotation mid cache is indistinguishable from a forged key
+identifier at the moment it arrives. One extra request is cheaper than a
+student who cannot sign in until a cache expires.
+
+Also decided, because the contract does not say: when the roster bearer
+resolves to a student who already carries a different `apple_user_id`, the
+sign in is refused rather than the column overwritten. Overwriting would hand
+one student's entries to another Apple account, and a debug build carrying a
+roster reference is exactly the situation where that happens by accident. When
+the Apple subject is already linked, that student wins over the roster bearer,
+because the account is the credential that was just proven and the roster
+reference is only the build's default.
+
+Every refusal is one status and one body. The reason goes to the log, never to
+the client, because a caller working out which check it failed is being helped
+to pass it.
+
+Reverses if: a district needs a device moved between students without touching
+the database, which would need a revoke and relink path rather than a silent
+overwrite.
+
+---
+
+### 065. The session token is the only thing the client keeps on the device
+Aug 2026, Claude
+
+Decision: `app/lib/data/session_store.dart` is the only place in the client
+that touches secure storage. It holds one key in the keychain, at Apple's
+default accessibility, reads it once per launch and remembers the answer, and
+never throws at a caller. `SoulApi` picks its bearer per request: the stored
+session token when there is one, the compile time roster token otherwise.
+
+Why: the token is the one secret the app carries, so it belongs in the keychain
+rather than a preferences file that ships in plain text inside a backup. One
+file owns it because a secret read from four places is a secret leaked from the
+fourth. The bearer is chosen per request rather than fixed at construction
+because every screen builds its own `SoulApi` and none of them should have to
+know whether sign in has happened yet.
+
+The expiry the server returns is not stored. The only thing the client could
+do with an expired token is refuse to send it, and the server refuses it
+anyway, so keeping the date would add a second clock that can disagree with the
+first.
+
+A keychain that will not open reads as no token. That walks a student through
+first run again, which is a bad morning rather than a broken app, and it is a
+better failure than a screen that cannot load.
+
+Reverses if: something else on the device has to be kept, at which point this
+becomes a store with more than one key and the read once cache needs a way to
+be invalidated.
+
+---
+
+### 066. A signed in student opens on the populated home
+Aug 2026, Claude
+
+Decision: on launch, a stored session token opens `Home` with its default
+week rather than the day one version. No token opens first run.
+
+Why: day one is a real state and it is the one first run ends on, but a student
+who signed in has already been through the loop at least once, so showing them
+the empty week would be describing a day they have already had. The week itself
+is still sample content, like the rest of the shell, so this chooses between
+two placeholders and picks the one that is not actively false.
+
+The development skip stores nothing, on purpose. A skip that left a token
+behind would hide first run from the next launch, which is usually the exact
+thing the person pressing it wants to see again.
+
+Reverses if: there is a call that returns the real week, at which point the
+count comes from the server and this stops being a choice.
+
+---
+
+### 067. The three read screens each ask for their own data and own three states
+Aug 2026, Claude
+
+Decision: `HomeScreen`, `DayScreen` and `PatternsScreen` are stateful, hold a
+`SoulApi`, and call `/week`, `/day/:date` and `/patterns` themselves. Each one
+renders exactly three states before it renders anything else: waiting, a
+failure with a Try again button, and an empty state written for that screen.
+The shell passes a `revision` counter that changes when an entry lands, and a
+screen whose revision changed asks again rather than counting anything up on
+the device.
+
+This is the call decision 066 said would settle it. A signed in student now
+opens on whatever the server returns, and the day one screen is shown when the
+week has no moments in it rather than when a flag says so.
+
+Why: `ProfileTab` already worked this way and it is the right shape. A tab that
+failed to load is retryable on its own, without taking the other three with it,
+and the shell does not have to know the shape of three different responses. The
+counter exists because the alternative, adding one to a number the server gave
+us, creates a second version of the week that can disagree with the stored one.
+
+Every empty state is written before the populated one, so a student with no
+entries this week sees the day one screen, a day with nothing in it says so in
+one line, and a student with nothing repeating yet is told that plainly instead
+of being shown three patterns nobody has.
+
+Reverses if: two screens need the same response, at which point one owner above
+them beats two calls that can disagree.
+
+---
+
+### 068. Every date is a string the server wrote, except one
+Aug 2026, Claude
+
+Decision: dates cross the wire as YYYY-MM-DD and the client keeps them as text.
+The date on a week dot is passed back to `/day/:date` untouched, and nothing on
+the device works out where a week starts or which day an entry belongs to. The
+one exception is `todayOnDevice()` in `day_screen.dart`, which is the day the
+Days tab opens on before the student has picked one, and the day the week strip
+outlines as today.
+
+The instant on an entry, `at`, is held and not shown. Reading a clock time off
+it would mean choosing a timezone in the client, and the order the entries
+arrive in already says what the screen needs.
+
+Why: weeks and days are bounded by `students.timezone` on the server, so a
+Sunday evening in Los Angeles lands on Sunday. Parsing those strings into
+instants here would put a second clock, the device one, next to the student's
+own, and the two disagree for exactly the students the boundary rule exists
+for. The one exception is a default selection rather than a boundary: a phone
+in a different zone to the student's region can open the neighbouring day, the
+entries inside it are still cut by the server, and every dot on the week strip
+carries a server date so tapping one is always exact.
+
+Reverses if: the day screen has to show times, which needs the offset the
+entry was written at, either sent as its own field or read off the string.
+
+---
+
+### 069. The four colours are handed out by position, not by feeling
+Aug 2026, Claude
+
+Decision: nothing maps a feeling to a colour. The week ring colours its arcs by
+position in the themes list, which arrives highest first, and the day timeline
+colours its dots in the order the feelings appear on that day. An entry the
+tagger has not reached yet takes a quiet grey. The same feeling can therefore
+be one colour on the week and another on the day.
+
+The day dots on home carry no feeling colour at all. They are filled when
+something was written that day and empty when nothing was.
+
+Why: the read contract has no colour in it and feelings are free text from the
+tagger, so any fixed mapping would be a table in the client guessing at words
+it has not seen. Position gives four distinct colours where distinctness is the
+whole job, which is telling one arc from another and one line of the key from
+the next. A day dot that guessed a feeling from a count would be the app making
+something up on the screen that is meant to be a record.
+
+Reverses if: the contract starts naming a colour, or feelings become a closed
+set, at which point one mapping can be true everywhere.
+
+---
+
+### 070. Anything on these screens with no data behind it was removed
+Aug 2026, Claude
+
+Decision: `app/lib/data/sample.dart` is deleted. Four things that only existed
+because of it went with it: the held decision card on home and its three
+outcome buttons, the pattern count under the What keeps returning card, the
+closing observation and the Yes and Not really buttons on the day screen, and
+the twelve week strip under each pattern. The `SOUL_SCREEN` entries for beat
+one, the Mirror, the confirm step, the outcome screen and the pattern question
+are gone too, because opening one of those directly means handing it a
+reflection nobody wrote.
+
+Why: the read contract carries no held decision, no pattern count for home, no
+per week marks and no observation about a day, and the way to show one anyway
+is to invent it. Moving the strings into another file would have kept the same
+problem with a different name on it. Those five screens are still reachable in
+design review by walking the loop with the API running, which is also the only
+way to see them with real words on them.
+
+Reverses if: a held decision is added to the week contract, or pattern
+supporting entries come back with the weeks they fall in, at which point the
+card and the strip come back with something true in them.
+
+---
+
+### 071. Reads have a deadline, writes do not
+Aug 2026, Claude
+
+Decision: `SoulApi._get` gives up after twenty seconds. The write path is left
+alone.
+
+Why: the connection timeout does not cover a connection that opens and then
+goes quiet, and the three screens that read are the ones a student sits in
+front of. Without a deadline their waiting state has no end and no way out of
+it. Writes are different: the Mirror thinks for a while, and cutting one off
+would show a student a failure for a response that was on its way.
+
+Reverses if: a read gets slow enough to be worth waiting longer for, which
+would mean the twenty seconds moves rather than that it goes.
+
+---
+
+### 072. The read side runs as the student, inside the row level security role
+Aug 2026, Claude
+
+Decision: `/week`, `/day/:date` and `/patterns` do their work inside
+`asStudent()`, so the role is `soul_student` and `app.student_id` is set for
+the transaction. Every query inside still names `student_id` itself.
+
+Why: `asStudent()` has been in `session.ts` since the beginning and nothing
+called it, which meant invariant 3 was true on paper and application code was
+the only guard in practice. Reads are the place that matters most, because a
+missing where clause on the write path writes a row nobody sees and a missing
+one on a read puts another student's entries on a screen. Both guards cost one
+transaction and neither is load bearing on its own.
+
+The write path was left as it was. It is not this task and changing how the
+orchestrator talks to the database is a change that needs the quiz.
+
+Reverses if: a read has to cross students, which the counsellor console will
+need. That is a different role with its own policies, not this one widened.
+
+---
+
+### 073. Weeks and days are cut in Postgres, with the student's own timezone
+Aug 2026, Claude
+
+Decision: the boundary is `(created_at at time zone tz)::date` and the week
+starts at `date_trunc('week', now() at time zone tz)`, where tz is
+`students.timezone` and UTC when that is null. The week is always seven rows,
+built from `generate_series` and left joined to entries, so a week with nothing
+in it is seven zeros rather than a short list. Monday first comes free with
+`date_trunc('week')`, which is the ISO week. `moments` is the sum of the seven
+days rather than a count of its own.
+
+Why: a student in Los Angeles writes at eight in the evening on Sunday and that
+is Sunday. Anywhere else in the system that boundary would be a preference; on
+this screen it decides which week the entry appears in at all, and for the
+students furthest from the server it is wrong every night rather than
+occasionally. Postgres knows the rules, including the two days a year the
+offset changes, and doing it here means the app cannot draw a different week to
+the one the database counted.
+
+Seven rows always, because the empty state is the first one built. A ring with
+three dots on it is a broken looking screen, and the day one week has to look
+like the same week as any other.
+
+`moments` is summed from the days it is drawn from, so the number above the
+ring cannot disagree with the ring under it.
+
+Reverses if: a student can be in two timezones in one week, which is a trip
+rather than a move and would need the offset stored per entry.
+
+---
+
+### 074. A theme belongs to the week the entry was written in
+Aug 2026, Claude
+
+Decision: the themes on `/week` come from `tags` joined to `entries`, bounded
+by `entries.created_at`, never by `tags.created_at`.
+
+Why: the tagger runs after the student already has their response, so a tag can
+be written minutes or hours after the entry, and an entry written at eleven at
+night can be tagged after midnight. Bounding on the tag would move that theme
+into the next week, where the student would read a feeling that has no entry
+under it in the same seven days.
+
+Reverses if: nothing sensible. The tag time is the time we did the work, which
+is our fact about the entry rather than the student's.
+
+---
+
+### 075. A tag the tagger was unsure of does not reach a screen
+Aug 2026, Claude
+
+Decision: both read endpoints ignore tags below 0.6 confidence, the same floor
+`findCandidates` applies before a theme can support a pattern. Where an entry
+carries more than one tag above the floor, the newest wins.
+
+Why: the schema rule is that low confidence tags must not support a pattern
+claim, and a theme on the week screen and a feeling under an entry are the same
+kind of claim in a smaller font. The database already holds tags at 0.1 and
+0.2, and the honest answer for those entries is nothing rather than a guess in
+the student's own words back at them. Newest wins because a second tag on one
+entry means the tagger ran again, and the later run is the one that saw the
+current tagger version.
+
+The cost is that the number is now written in two files. They are the two
+places that decide what a tag is allowed to become, and a floor for a pattern
+that differs from the floor for a label would be worse than the repetition.
+
+Reverses if: the tagger's confidence becomes well calibrated enough to be worth
+showing a weak tag differently rather than not at all.
+
+---
+
+### 076. Instants cross the wire as UTC text the database wrote
+Aug 2026, Claude
+
+Decision: `at` and `confirmedAt` are formatted by `to_char` at time zone UTC,
+in the shape `2026-08-24T06:30:00.000Z`.
+
+Why: drizzle turns off date parsing on the connection it shares with the raw
+query path, so a timestamp arrives from the driver as the string Postgres
+printed, in the server's own offset. Formatting in the query means nothing on
+this side parses that string and nothing depends on a driver setting made
+somewhere else. UTC because the week and day boundaries were already drawn
+against the student's timezone, so nothing downstream has a boundary left to
+work out, which is also what decision 068 relies on.
+
+Reverses if: the day screen has to show clock times, which needs the offset the
+entry was written at rather than a normalised instant.
+
+---
+
+### 077. The runner claims only the types it can run
+Aug 2026, Claude
+
+Decision: the claim query filters on a list of handled types. `embed_entry` is
+not in it, so those rows sit pending until task 8 gives them a worker. The
+three rows that had already been claimed and marked done were set back to
+pending, because the entries behind them are still unembedded.
+
+Why: the case in the runner returned without doing anything and the row was
+then marked done, so the backlog the comment promised did not exist and three
+entries were quietly written off. Not claiming at all is the smallest way to
+say that: the rows stay due, `jobs` still reads as the truth about what is
+outstanding, and an old worker meeting a job type it has never heard of leaves
+it for the worker that can run it instead of failing it five times.
+
+Rejected: claiming the job and pushing `run_at` into the future. The runner
+would take a job it cannot do every hour, and every one of those is an attempt
+against a limit that exists for jobs that are actually failing.
+
+Reverses if: a typo in a job type needs to be loud. Today it waits silently,
+which is the same shape as a job type that has not shipped yet.
+
+---
+
+### 078. The sweep is a job, and it books its own next night
+Aug 2026, Claude
+
+Decision: `pattern_sweep` is a job type. The runner runs `sweep()` unchanged
+and then schedules the next one for three in the morning, server time. Exactly
+one sweep is pending at any moment, and the runner books one at startup if
+there is none, so the chain starts itself and cannot double when the worker
+restarts.
+
+Why: it was a script with a main block that nobody ran, so `pattern_candidates`
+was always empty and no pattern could ever be offered to a student. The whole
+loop past the tagger depended on somebody remembering to type a command. A job
+means the only thing that has to be running is the worker that is already
+running for tagging and check backs.
+
+The sweep is the one job with no student, because it is one query across all of
+them. Reading the student out of the row where it is used rather than before
+the switch is what lets that be true without a second runner.
+
+Three in the morning is the server's clock, not a student's. Students are in
+several timezones and the sweep is one query over all of them, so the hour is
+about when the database is quiet rather than when anybody is asleep. Nothing it
+writes is seen until the student next opens the app.
+
+Rejected: a timer inside the API process, which dies with a deploy and runs
+twice the moment there are two instances. Rejected: a cron entry, which is a
+second thing to install on every machine and is invisible from inside the
+product.
+
+Reverses if: the sweep grows long enough that one run for every student at one
+hour is too much, at which point it splits by district and each piece gets its
+own run time.
+
+---
+
+### 079. What the patterns screen counts, and what it leaves out
+Aug 2026, Claude
+
+Decision: `reflections` is every entry the student has ever written. `confirmed`
+excludes anything with `removed_at` set. `forming` is the candidates at pending
+and surfaced, newest first, and `supporting` is the number of entries behind
+each one rather than the ids.
+
+Why: a pattern the student took back with this is not me should be gone from
+the screen, not greyed out on it; the row stays in the database because a
+rejection is signal, and that is a different question from whether to show it.
+Surfaced counts as forming because a candidate that was offered and not
+answered is still waiting, and a student who tapped later is asking to be shown
+it again rather than saying no. The count is enough for the screen that exists;
+the ids matter when a student asks which entries, and that is the screen that
+shows the entries.
+
+Reverses if: the screen has to show which entries are behind a pattern, which
+needs the ids and probably the entries themselves rather than a number.
+
+---
+
+### 080. What the student chose lives on the screen, not on the wire
+Aug 2026, Claude
+
+Decision: `DayView.cards` carries exactly the five fields the contract names,
+so a card says that it was answered and never says what with. `DaysScreen`
+keeps a `CueCardAnswer` per card id for the cards answered in front of it, and
+a card answered on an earlier day shows the thing it was about and the single
+word answered.
+
+Why: the day shape was given and the client does not get to add fields to it on
+a guess. The words matter for the seconds after the student taps, which is
+where the card has to say what it now holds rather than snapping to a blank,
+and the map covers exactly that. Holding it on the screen rather than inside
+the card widget means the answer survives the day being read again, which
+answering a card causes.
+
+Rejected: parsing a chosen field that the contract does not promise. It would
+be dead code until the server happened to send it and would read as a contract
+that exists.
+
+Reverses if: the day starts returning what was chosen, at which point the map
+goes and the card reads the answer off the card like everything else.
+
+---
+
+### 081. One field, in both directions
+Aug 2026, Claude
+
+Decision: there is a single field under the three options. With an option
+selected it is anything the student wants to add and the label says so. With
+nothing selected it is their own words and becomes the whole answer, which is
+`optionIndex` null on the wire. Tapping a selected option again clears it,
+which is the way back from an option to their own words. The button is off
+until there is an option or some words, and off again past five hundred
+characters, under a line saying that is the most it holds.
+
+Why: the product turns on the gap between what was offered and what the student
+actually chose, so writing their own has to be as reachable as picking one of
+the three rather than sitting behind a fourth option called something else. A
+second field for their own words would ask them to understand the difference
+between two empty boxes before they could answer.
+
+Cutting their words down to five hundred characters silently was the other way
+to keep inside the contract, and a student who is mid sentence deserves to be
+told the field is full rather than to find the end of what they wrote missing.
+
+Reverses if: students pick an option and then type over the top of it, which
+would mean the field reads as an edit of the option rather than an addition.
+
+---
+
+### 082. Four days to choose from, not thirty
+Aug 2026, Claude
+
+Decision: the card offers tomorrow, in three days, in a week and in two weeks,
+which are horizons of 1, 3, 7 and 14. It starts on three days, the same horizon
+the Mirror path holds a decision for.
+
+Why: the endpoint takes 1 to 30 and a calendar for it would be the largest
+thing on the card, aimed at the smaller half of the question. Four named
+distances are the ones a student says out loud, and they cover the exam on
+Friday and the conversation that has been waiting a fortnight. Starting on a
+day rather than on nothing means a student with nothing to say about timing
+still has a card that works, and three matches what a held decision already
+means everywhere else in the app.
+
+Reverses if: check backs land wrong often enough that the day is worth asking
+for exactly, which is a calendar and a different card.
+
+---
+
+### 083. A card the server has already answered is not a failure
+Aug 2026, Claude
+
+Decision: a 409 or a 404 from the answer endpoint reads the day again and says
+nothing. Every other failure is thrown on to the card, which shows a line and a
+way to try again.
+
+Why: both of those mean the card is not open any more, either because it was
+answered somewhere else or because it is not this student's. Offering try again
+for those puts a student in front of a button that cannot work. Reading the day
+again brings the card back in the state it is actually in, which for an already
+answered card is the answered one. A dropped connection is the opposite case:
+nothing was written, and trying again is exactly right.
+
+Reverses if: the day read after a 409 becomes expensive enough to be worth
+telling the card directly that it is answered.
+
+---
+
+### 084. Try again inside an open day now tries again
+Aug 2026, Claude
+
+Decision: the failure line inside an open day calls the read, not `_openDay`.
+
+Why: `_openDay` closes the day it is already on, and the day is open while its
+failure line is showing, so the only thing try again did was shut the day. A
+student whose day did not load had no way to ask for it a second time short of
+tapping the row twice. Cue cards arrive inside that same read, so the one way
+back into a day that did not load had to work before anything was put in it.
+
+Reverses if: nothing.
+
+---
+
+### 085. A cue card belongs to the day of the entry it came from
+Aug 2026, Claude
+
+Decision: `/day/:date` bounds cards on `entries.created_at` in the student's
+own timezone, never on `cue_cards.created_at`.
+
+Why: the generation job runs after the tagger, which runs after the student
+already has their response. A card made from an entry written at half past
+eleven can be written after midnight, and bounding on the card would put it on
+a day with nothing behind it while the day it is about shows none. Same rule
+and same reason as the themes on the week, which are bounded by the entry and
+not by the tag.
+
+Also decided here, because the shape says at most two and does not say which
+two: unanswered first, then oldest first inside each group, which is the order
+the entries above them read in. An answered card stays on its day rather than
+vanishing from it, so a student can see what they said they would do.
+
+Reverses if: nothing. The card is about something in the entry, so the entry is
+what dates it.
+
+---
+
+### 086. offered_text holds the whole offer, all three options
+Aug 2026, Claude
+
+Decision: a decision written from a card stores `chosen_text` as the option the
+student took or the words they wrote instead, and `offered_text` as the three
+options joined one per line.
+
+Why: the gap between those two columns is the most interesting data in the
+system, and a card offers three things rather than one. A student who wrote
+their own turned down three specific sentences, and a row recording nothing as
+offered would say they were given nothing. Uniform either way, so asking
+whether the student took what was offered is asking whether `chosen_text` is
+one of the lines, rather than asking two different questions depending on how
+they answered.
+
+Nothing shows `offered_text` to a student today, so the column is free to be a
+record rather than a sentence.
+
+Rejected: storing only the option they picked, which loses the offer in exactly
+the case worth looking at. Rejected: a column of its own, which would be a
+change to the decisions table so that a card could be a different kind of
+decision, and the whole point is that it is not one.
+
+Reverses if: `offered_text` reaches a screen, at which point three lines in one
+column is the wrong shape and the card row is where the options should be read
+from.
+
+---
+
+### 087. Answering a card claims it under a lock, and the decision is the existing one
+Aug 2026, Claude
+
+Decision: `services/cards/answer.ts` opens a transaction, selects the card
+`for update` scoped by `student_id`, decides the 404 and the 409 under that
+lock, calls `createDecision`, and then writes the decision id, the chosen
+index, the detail and `answered_at` onto the card.
+
+Why: the card is claimed by the decision being written onto it, and the
+decision has to exist before it can be written. Without the lock a student
+tapping twice writes two decisions and is asked about the same thing twice,
+days later. `createDecision` rather than a copy of it, because a decision made
+from a card and one made from the Mirror have to be the same thing everywhere
+downstream, which includes the check back it schedules.
+
+Three smaller choices the contract does not make.
+
+An id that is not a uuid gets the same 404 as an id belonging to somebody else.
+It names no card of theirs either, and separating the two would tell a caller
+which of them they got wrong.
+
+`horizonDays` is required rather than defaulting to three the way `/decisions`
+does. The student names a day on the card, so a call without one is a client
+that lost it rather than a student who did not say.
+
+The write runs on the ordinary connection with `student_id` in the where
+clause, not inside `asStudent`. That is what every other write in the product
+does, and decision 072 left moving the write path under row level security as
+its own change with its own quiz. The read side is untouched, so the cards on
+`/day/:date` are read as `soul_student` like everything else on that screen.
+
+Reverses if: the write path moves under `asStudent`, which this should move
+with rather than be left behind by.
+
+---
+
+### 088. A card names the entry it came from, and the number is checked
+Aug 2026, Claude
+
+Decision: the entries are numbered in the message the model is given, every
+card has to return `from` as one of those numbers, and `cue_cards.entry_id` is
+the entry that number points at. A card whose number is outside the list is
+dropped and the other one is kept.
+
+Why: the whole feature rests on a card being about something the student
+actually named, and a model can be asked to prove that rather than be trusted
+with it. A number into a list it was just given is the cheapest proof it can
+offer and the only one this side can check without reading the entries again.
+It also makes the row honest: the card sits on the day of the entry it came
+from, per decision 085, and attributing every card to whichever entry
+triggered the job would have put a card about Friday on a Sunday.
+
+Dropping the one card rather than the whole reply, because the second card may
+be about a thing the student really did name and refusing it too would punish
+the good half of an answer.
+
+Reverses if: the model starts numbering reliably enough that a card can name
+the entry id itself, which would remove the mapping step rather than the check.
+
+---
+
+### 089. What the cue card row holds beyond the card
+Aug 2026, Claude
+
+Decision: `cue_cards` stores the prompt version and the model version that
+wrote it, and `answered_at` is what says a card has been dealt with.
+
+Why: the versions are already on the generation row, and they are here as well
+because a card outlives the day it was made. The first question about a bad
+card is which prompt wrote it, and answering that from a generations join
+means matching on a student and a minute rather than reading one row.
+
+`answered_at` rather than reading `decision_id`, because `chosen_index` is
+null when the student wrote their own words and null is a real answer there.
+The screen wants the unanswered ones first, which is an order, and an order
+wants a time.
+
+Reverses if: cards start being rewritten rather than written once, at which
+point the version belongs to a revision of the card and not to the row.
+
+---
+
+### 090. A dash in a card refuses the card
+Aug 2026, Claude
+
+Decision: the zod schema rejects any about, question or option containing a
+hyphen, an en dash or an em dash, and rejects three options that are not three
+different sentences. A card that fails is not repaired.
+
+Why: no hyphens in anything a human reads is a house rule, and the last moment
+it can be kept is before the row is written. Cleaning the text instead would
+put us in the business of editing what the model said, and a card is student
+facing copy that nobody reviews before it appears.
+
+Refusing costs almost nothing here, which is the part that makes it the right
+choice. The feature is built on no card being an acceptable answer, so a
+refused card is the same outcome as a quiet day.
+
+Reverses if: refusals start showing up often enough to be silencing real cards,
+which would mean the prompt is not carrying the rule and the prompt is what
+should change.
+
+---
+
+### 091. Two cards a day, in the student's own day, counted before the model is called
+Aug 2026, Claude
+
+Decision: the cap is two cards per student per day, the day is bounded by
+`students.timezone` the way the week and day screens are, and the count is read
+before the gateway call rather than after it.
+
+Why: a student who writes five times in an evening is five jobs, and four of
+them have nothing to do. Checking after the call would spend five model calls
+to write two rows, and the whole point of this being a job is that it is
+allowed to be slow, not that it is free.
+
+The student's own day, for the reason decision 073 gives: an entry written at
+nine on Sunday evening in Los Angeles is Sunday, and a card written against the
+server's clock would be the third of a day the student is still in.
+
+Reverses if: cards move to being made once a night for everybody, which makes
+the cap a property of the sweep rather than of the job.
+
+---
+
+### 092. Cards are made only from entries that passed the classifier
+Aug 2026, Claude
+
+Decision: both the entry the job names and every entry the model reads are
+joined to `safety_flags` and kept only at risk level none or low. An entry with
+no flag row has not passed anything and is not read.
+
+Why: a card asks a student what they want to do about something, and the one
+kind of entry that must never turn into that question is the one the classifier
+flagged. Requiring the row rather than checking for the absence of a bad one is
+what makes it fail closed: an entry the classifier never saw reads the same as
+one it stopped.
+
+This is why the demo student's ten entries were given safety rows by hand,
+carrying the same seeded classifier version the fixture already puts on its
+tags. The fixture writes rows straight into the database rather than going
+through `submit`, so it had never written the flag the write path always
+writes, and without it the demo student could produce no cards at all.
+`seed_demo.ts` should write them itself and belongs to whoever owns that file.
+
+Reverses if: nothing. This is the same shape as invariant 1 one step further
+down the line.
+
+---
+
+### 093. The tagger enqueues the card job, and the card call is the slowest one we have
+Aug 2026, Claude
+
+Decision: `tagEntry` enqueues `cue_cards` after the tag row is written. The
+purpose runs at temperature 0.3 with medium reasoning and a hundred and twenty
+second timeout, the same budget the Mirror has.
+
+Why: two jobs rather than one, so a card is never the reason an entry ends up
+untagged. Tags are what patterns, themes and the week screen are built on, and
+this call is the longest in the queue: the run against the demo student took
+fifty seven seconds and spent most of it thinking.
+
+Low temperature because a card has to quote the student rather than write a
+better sentence than the one they wrote. Medium reasoning because the answer
+this call gets wrong when it is hurried is the empty one: deciding that a week
+of entries points at nothing is harder than writing a card about it.
+
+Nobody is waiting for any of this. It happens after the student has read their
+line and gone.
+
+Reverses if: the queue grows a class of jobs that are actually urgent, at which
+point a hundred and twenty second job needs its own worker rather than a place
+in the same line.
+
+---
+
+### 094. The worked example in the prompt names a situation nobody wrote
+Aug 2026, Claude
+
+Decision: the good example in `cue_cards.v1.md` is a trial for a team on
+Tuesday, which appears in no entry any test student has written.
+
+Why: the first version of the prompt used three things due Friday, taken from
+the demo week because it read well. The model returned that card almost word
+for word, including two of the three options, and there was no way to tell
+whether it had read the student or copied the example. Changing the example to
+a situation the entries do not contain made the next run quote the student
+instead.
+
+An example in a prompt is training data for one call. If it overlaps the input,
+the output stops being evidence of anything, and this is the one prompt in the
+product whose failure mode is writing about something that was never said.
+
+Reverses if: nothing. Any example added here should be checked against the
+fixtures first.
+
+---
+
+### 096. The two outcome sections are titled as a record, not as a result
+Aug 2026, Claude
+
+Decision: on the Returning tab the two new groups read `What left you lighter`
+and `What left you heavier`, each under the small line `from what you said
+afterwards`. No other wording sits near them. The page is titled `So far`, the
+confirmed section keeps `What keeps returning`, and the candidates sit under
+`Still forming` with `not enough to say yet`.
+
+Why: the split is the student's own verdict, taken from `outcomes.felt`, and
+the screen has to look like it. A heading that named the app as the source, or
+any line offering what to do with a heavier theme, would turn a record of their
+words into advice and then into a telling off. The attribution line is the
+whole defence: it says where the group came from, once, and stops.
+
+Nothing on the screen praises the lighter group either. Praise for one half is
+what makes the other half a warning, and the two sections are deliberately the
+same shape, the same size and the same amount of language.
+
+`So far` for the page because `What keeps returning` moved down to become the
+heading of the confirmed section and the page needed a title that claims less
+than its parts.
+
+Reverses if: a student reads the heavier section as being told off anyway, in
+which case the fix is the section, not the sentence.
+
+---
+
+### 097. A proportion bar carries each row, in colours that are not a verdict
+Aug 2026, Claude
+
+Decision: every row on the tab is the theme, a bar, and one line of two facts,
+how many times and when the last one was. Bar colours are moss for lighter,
+violet for heavier, clay for confirmed and border2 for forming. The two verdict
+sections share one scale and the two pattern sections share another.
+
+Why: the tab had been stripped to plain text and read as a list rather than a
+screen. The bar is the same idea the week ring on home is built on, that the
+proportion answers which of these came back most before any number is read.
+
+Green against red was refused. A traffic light is the app grading the two
+groups, and the point of the split is that it is not grading anything. Moss and
+violet are two of the four theme colours the ring already uses, neither of them
+loaded, and violet in particular carries no alarm.
+
+Two scales because the verdict rows count answered check backs and the pattern
+rows count entries behind a claim. One shared scale would draw those two
+different things against each other and mean nothing. The fill is floored at
+nine percent so a count of one against a count of nine is still visible.
+
+Reverses if: a student is shown a theme in both groups at once and reads the
+two bars as a comparison. They are not comparable in that direction and would
+need splitting visually.
+
+---
+
+### 098. The device turns the two timestamps into whole days, and never finer
+Aug 2026, Claude
+
+Decision: `lastAt` and `confirmedAt` are rendered on the device as today,
+yesterday, a count of days, weeks or months. The difference is taken between
+two local midnights rather than in elapsed hours, and an unparseable string
+gives no phrase at all, leaving the line with one fact instead of two.
+
+Why: the founder asked for when it last happened and the wire carries an
+instant, so something on the device has to read it. `DayEntry.at` is held and
+deliberately not shown because a clock time would mean picking a timezone here,
+and that reasoning still holds. A whole day count does not: it survives a
+student travelling, and midnight to midnight is what makes an entry written at
+half past eleven read as yesterday rather than as today.
+
+The lists themselves are parsed through a missing group rather than a required
+one, though the contract sends both arrays always and the server already does.
+A client that is ahead of a server costs the student two sections that way, and
+costs them the whole tab otherwise.
+
+Reverses if: the server starts sending a rendered phrase, which would be the
+better answer since it already knows the student's timezone and the device is
+only guessing with the one it is set to.
+
+---
+
+### 096. Lighter and heavier come from outcomes.felt and from nothing else
+Aug 2026, Claude
+
+Decision: `GET /patterns` carries two more arrays. `lighter` and `heavier` are
+built by one query that joins `outcomes` to `decisions` to the `tags` row on the
+entry the decision came from, keeps `felt` of lighter or worse, and groups by
+theme and by verdict. `same`, an outcome the student never answered, and a
+decision with no outcome yet are all left out, so a theme nobody has answered
+about is in neither list and stays what it was.
+
+The confidence floor is `MIN_TAG_CONFIDENCE`, the same one the rest of the read
+side and the nightly sweep apply. A theme too uncertain to print under an entry
+is too uncertain to head a section.
+
+Why: the split had to be the student's verdict and not ours. The only column in
+the database that holds a verdict is `outcomes.felt`, which nothing but the
+student writes, so the query groups by it and does no reading of its own. It
+does not score an entry, it does not look at the feeling tag, and it cannot
+put a theme in a list the student did not put it in.
+
+The word on the wire is heavier rather than worse. Worse is the student's answer
+to what happened, in their own head. Heavier is what the app is willing to call
+a section, and the difference matters because a section named worse reads as a
+verdict on them rather than a record of what they said. Nothing downstream may
+turn that list into a warning: it holds what they said left them heavier and
+adding so maybe stop to it would be the app saying something they did not.
+
+Reverses if: outcomes gain a second signal the student sets themselves, at which
+point the grouping is over both and not over `felt` alone.
+
+---
+
+### 097. The two lists are ordered by when it was last said, and a theme can be in both
+Aug 2026, Claude
+
+Decision: rows in `lighter` and `heavier` are ordered by `lastAt` descending,
+not by `times`. A theme the student answered lighter once and worse once appears
+in both lists, once each, carrying only its own count.
+
+Why: ordering by count builds a chart of their worst theme at the top and holds
+it there for months. Ordering by recency means the list moves when their life
+moves, which is the only thing on this screen a student can affect.
+
+Letting a theme sit in both lists is the same argument. Picking a winner would
+mean deciding which of two things they said is the truer one, and the app has no
+grounds for that. Both rows are things they said, so both rows stay.
+
+`times` is the count of outcomes behind the row, distinct on the outcome, so a
+second tag on the same entry cannot inflate it.
+
+Reverses if: a student is shown both lists and reads a theme in both as the app
+contradicting itself. That is a question for task 7 and not one to answer from a
+desk.
+
+---
+
+### 098. Card decisions already reached the context builder, so nothing was added to it
+Aug 2026, Claude
+
+Decision: `buildContext.ts` gained a comment and no code. Answering a cue card
+already writes a `decisions` row, and the builder reads open decisions and past
+outcomes from that table with no filter on where the decision came from, so a
+thing chosen on a card has been in the model prompt since cards existed. The new
+`lighter` and `heavier` query counts them for the same reason.
+
+Why: the check was worth making and the result was worth writing down. Two
+places write a decision, `services/decisions/create.ts` and
+`services/cards/answer.ts`, and the second one writes it on its own transaction
+rather than calling the first, for the connection pool reason written up in that
+file. Two writers of one table is the
+shape most likely to drift, and the day one of them grows a column the other
+does not is the day a card answer stops being a decision everywhere downstream.
+The comment says what would have to be added back by hand if cards ever get a
+table of their own.
+
+Verified by answering both of the demo student's cue cards through
+`POST /cards/:id/answer` and rendering the context: the card answers came back
+under things they are currently holding, then under what happened when they
+acted before once outcomes were recorded, in the same list as the decision the
+seed wrote, with nothing to tell them apart.
+
+Reverses if: cards ever need something on the decision row the Mirror path does
+not write, in which case the two writers should become one before the column is
+added.
+
+---
+
+### 099. The two card cap goes, and so does the read bound that disagreed with it
+Aug 2026, Claude
+
+Decision: `generateCards` no longer counts what it has written today and
+`/day/:date` no longer limits what it returns. A day carries the cards it has,
+unanswered first.
+
+Why: the two numbers were the same number and they were counting different
+things. The job counted cards by the day they were written. The read counted
+them by the day of the entry they came from, which decision 085 is the reason
+for. A card made after midnight for an entry written at half past eleven
+belongs to yesterday, and if yesterday already showed two, that card was
+written, stored, and never seen by anybody. Nothing in the product could reach
+it. Taking one bound away would have left the other one, so both went.
+
+Beyond the disagreement, a cap is a cap on the wrong thing. The claim the
+feature makes is that a card exists only where something is open and somebody
+could say something back about it. Zero is the common answer and three is a
+real week. A number in front of that decides how many things a student is
+allowed to have going on, which nothing in this code is in a position to know.
+
+What it costs, and it is a real cost: the count was read before the gateway
+call, so a student who wrote five times in an evening spent one model call and
+was turned away at the door four times. Now they spend five. This is the
+slowest call in the queue per decision 093 and nobody is waiting for it, so the
+cost is spend and queue time rather than a student watching a spinner. It is
+worth a second look once more than a handful of students are writing.
+
+Reverses if: the spend is what hurts. The answer then is one sweep per student
+per night rather than a number, because a cap put back on the job brings the
+card nobody can see back with it.
+
+---
+
+### 100. The bar is four questions in the prompt, and nothing counts cards anywhere
+Aug 2026, Claude
+
+Decision: what a card has to clear is written in `cue_cards.v1.md` as four
+questions. They named it. It has not resolved. It is still ahead of them. A
+person could say something back about it. A thing that fails any one of the
+four is not a card. `cueCardsResult` has no length limit on the list.
+
+Why: the cap was doing two jobs and only one of them was real. It held the
+number down, and it stood in for a bar that was never written. Taking it out
+without writing the bar would have turned a quiet feature into a chatty one,
+so the gate moved into the prompt and the voice was left alone. The fourth
+question is the new one and it is the one that does the work: a thing can be
+named, open and ahead of them and still be nothing anybody could say a useful
+sentence about, and that is most of what a student writes.
+
+No number in the schema, because a length there would be the old cap living on
+in the one file nobody would think to look in, and it would refuse the third
+card of a genuinely full week rather than the thin one. The schema checks what
+a card is. Whether there should be one is the prompt's question.
+
+Checked against the demo student's ten days: with nothing on the already asked
+list the model wrote one card, not two. A student whose six entries were a walk
+home, a test already marked, a falling out with somebody who has moved away and
+some toast at eleven at night got none.
+
+Reverses if: a real week produces a screen that reads as a list of demands, at
+which point the thing to change is the fourth question rather than to put a
+number back.
+
+---
+
+### 101. The already asked guard compares the words that carry the thing
+Aug 2026, Claude
+
+Decision: `sameThing` in `services/cards/generate.ts` replaces the exact string
+match. Both cards are lowercased, stripped of punctuation, folded from plurals
+onto singulars, and emptied of the words a student wraps around a noun. What is
+left is compared as a set: they are one thing when the shared words are three
+fifths or more of the shorter card. One word in common counts only when it is
+the whole of the shorter card.
+
+Why: the old guard compared strings, so a card reworded by a single word was a
+second card about a thing the student had already been asked, days later, as if
+nobody had been listening. The model is told the same rule in stronger words
+and is the first thing that should catch this. This is the backstop, and a
+backstop that only catches a character for character repeat catches nothing.
+
+The threshold is set where it is because of the two cases that pull against
+each other. The coursework due Friday and the coursework due on Friday have to
+be one card. The exam on Tuesday and the exam on Friday have to be two, and the
+day is exactly what the prompt makes a card name, so the words that pin a thing
+down are the words that have to be able to separate two of them. Two words of
+three is the same thing. One word of two is not.
+
+It leans towards refusing on purpose. The cost of refusing wrongly is no card,
+which this feature already treats as an acceptable answer. The cost of letting
+one through is a student asked the same question twice.
+
+A word list rather than a library, and a set overlap rather than a distance,
+because no dependency was going to be added for this and a second model call to
+ask whether two short phrases mean the same thing would cost more than the card
+is worth. It will miss a rewording with no words in common. The prompt is what
+catches those, and it did on every run.
+
+`sameThing` is exported, which nothing in the product calls. It is the one
+piece of this file that can be checked without a model, and leaving it private
+would mean the only way to ask whether it is right is to spend a minute and a
+gateway call.
+
+Reverses if: a real student is refused a card they should have had. The list of
+empty words is the first thing to look at, then the threshold.
+
+---
+
+### 130. A card asks one question, and a no is an answer rather than a gap
+Aug 2026, Claude
+
+Decision: `POST /cards/:id/answer` takes `{ answer: "yes" | "no", detail?,
+horizonDays? }`. A yes writes the decision and books the check back exactly as
+the three option version did. A no writes the answer and the box and books
+nothing, and the route returns two hundred with `decisionId: null`.
+
+`chosen_text` on a yes is the card's question word for word. Turning it into a
+statement would read better on home, and it would be a sentence the student
+never saw. They said yes to those words, so those are the words the check back
+asks them about days later.
+
+`offered_text` is left empty on a decision made from a card. It exists for the
+gap between what was put in front of a student and what they did instead, and
+it used to hold all three options because a student who wrote their own had
+turned three specific things down. There is no gap in a yes: the offer and the
+answer are one sentence, and writing it into both columns would claim a
+difference that is not there.
+
+The box is stored on the card and nowhere else. A yes with something in the box
+still writes the question as the decision, so what the check back asks is the
+thing they agreed to rather than the aside they added to it. An empty box is
+stored as nothing, because an empty string is not something a student said.
+
+`horizonDays` is optional and defaults to three, the same as the Mirror path,
+and it is ignored on a no. A client that has nothing to say about when should
+not have to invent a day, and a no has no day to name.
+
+Why a no books nothing: the check back exists to ask how a thing went. Nothing
+went. Booking one anyway would ask a student in three days about something they
+already told us they were not going to do, which is the app not listening, and
+it would put a question on home that has no honest answer.
+
+Gone with the three options: the `no_such_option` result. A four hundred on this
+route now only ever comes from the boundary, which is where the shape of a body
+is decided everywhere else in this codebase.
+
+Every status proved with curl: yes two hundred with a decision id, no two
+hundred with null, four oh four on another student's card and on an id that is
+not a uuid, four oh nine on a second answer to either kind, four hundred on an
+answer that is not yes or no, on a missing answer, on a horizon outside one to
+thirty, on a box over five hundred characters, on a body that is not json, and
+on the old `optionIndex` shape. Counted either side of a no: no decision, no
+job, card answered.
+
+Ten answers fired at once still come back two hundred and the API keeps
+serving, and two taps on one card give one decision and one four oh nine. The
+decision and the job are still written on the transaction's own connection, for
+the reason the comment in `answer.ts` gives.
+
+Reverses if: students say no to almost everything, which would mean the
+question being asked is the wrong question. The fix then is in `cue_cards.v1.md`
+rather than here, because a no that books a check back is worse than a bad
+question.
+
+---
+
+### 131. The answer is written down, never worked out from the decision
+Aug 2026, Claude
+
+Decision: a yes writes `cue_cards.answered_yes` true and a no writes it false.
+Nothing infers the answer from whether a decision exists.
+
+Why: a no is a card with an answer, a time, sometimes a sentence, and no
+decision, so the answer could be read off the missing decision instead. It
+would be right today and wrong the first day a yes fails to write one, and on
+that day every one of those rows quietly becomes a no. What a student said is
+not something to derive from the behaviour of another table.
+
+`chosen_index` and `options` are left alone. Nothing writes to either now. They
+hold what the cards written before this were actually asking, and blanking them
+would rewrite that into three empty offers nobody ever made.
+
+The column arrived while this was being written, from the work changing the
+schema alongside it. The first version of this path put the answer on
+`chosen_index` as one and nought, because two of us generating migrations at
+once is a broken chain for everybody. That is gone and no row was ever written
+that way outside a proof.
+
+Reverses if: nothing. A column that says what happened is the floor.
+
+---
+
+### 140. The card is one question, and the box under it is never required
+Aug 2026, Claude
+
+Decision: `CueCardTile` asks the card's question with Yes and No side by side,
+the same size as each other, and one filled button under them that sends. The
+button reads `Answer it` and `Answering` while it goes, and it is dim until one
+of the two is picked. The box takes anything the student wants to say, is
+labelled `anything you want to say, or nothing`, and is never part of whether
+the button is live. The four day chips appear only under a Yes. An answered
+card says `you said`, then Yes or No, then their own words in a Quote if there
+were any, then the day it comes back on if there is one.
+
+Why the box is optional now: with three written options it was the only way to
+say something the card had not thought of, so an answer needed either a pick or
+words. A yes or a no is a complete answer on its own, and a box that holds the
+button hostage would make a student write something to get past a question they
+had already answered.
+
+Why a tap does not unpick: the three options toggled off, because getting from
+an option back to your own words was a thing a student needed to do. There is
+nowhere to go back to now. The only thing an unpick could do here is lose an
+answer somebody had already given, so the second tap on Yes leaves it on Yes.
+
+Why the day is under the Yes only: a no books nothing, and asking which day to
+come back on after a no would be the card refusing to hear it.
+
+`CueCardAnswer` carries `yes`, the box and a nullable `horizonDays`, null on a
+no because nothing was booked. The one call site in `day_screen.dart` changed
+with it, from `optionIndex: answer.optionIndex` to `yes: answer.yes`, and its
+comment says what a no does now. That file was outside this task and the build
+does not compile without it.
+
+`Answer it` rather than `Hold it` because the button now sends a no as often as
+a yes, and nothing is held on a no. It is the same shape as the rest of the
+buttons in the app, a short thing to do with an it on the end.
+
+Reverses if: students pick Yes to be agreeable. The signal would be a run of
+yes answers whose check backs all come back as nothing happened, and the fix is
+the question in `cue_cards.v1.md`, not a third button here.
+
+---
+
+### 141. The returning tab says which patterns are worth keeping and which are worth stopping
+Aug 2026, Claude
+
+Decision: the Returning tab is two named groups and what is still forming.
+`Worth keeping` sits over the good group with a moss dot, a moss tinted card
+and a moss outline. `Worth stopping` sits over the other one in clay. Under
+each theme is the sentence the server wrote, then one muted line of facts. The
+page keeps `So far` and `from N reflections`, forming keeps `Still forming` and
+`not enough to say yet` in the quiet colour with no outline, and the screen
+with nothing in it still says `Nothing has repeated yet` and stops.
+
+This reverses the second 096 and 097. Those said the sections were a record and
+not a result and that the colours were not a verdict. They are a verdict now,
+by founder decision, three times over.
+
+Why these two headings: they are the shortest true thing. `Worth keeping` does
+not say well done and `Worth stopping` does not say you keep getting this
+wrong. Both are four syllables of the same grammar, so neither is the prize and
+neither is the telling off, and the sentence under each theme is where the
+actual encouragement and the actual cost live, in that student's own situation.
+
+The two groups carry the same amount of language, the same type sizes and the
+same construction: one tint at seven percent, one outline at forty five, one
+dot. The only difference between them is hue. A section that got more words or
+a heavier frame than the other would be the app leaning.
+
+Clay for the costly group rather than red or violet. Red is not in this palette
+and a traffic light is a grade. Clay is the colour of every primary button in
+the app, so it reads as the app talking rather than as an alarm. Violet was the
+old heavier colour and it was chosen precisely because it carried no weight,
+which is the wrong choice now that the group is a claim.
+
+The proportion bars are gone. They were the right idea when every row was a
+count of something the student had said, and a long clay bar beside a theme the
+app has just called costly is a score. Nothing on this screen is a total or a
+ranking, and the count survives in words, where it reads as one fact among
+three rather than as a measurement.
+
+Rows are separated by a hairline in the group's own colour, because each row is
+three lines deep now and without it two themes read as one paragraph.
+
+A row whose sentence did not arrive is not shown at all, in either group. The
+sentence is the whole of what the app is saying: a theme sitting under Worth
+stopping with a blank under it would be the verdict without the reason, which
+is the one thing this screen is not allowed to be.
+
+
+Reverses if: a student reads the second group as being told off. The fix is the
+sentence the server writes, then the heading, and the colour last.
+
+---
+
+### 142. Every judged row says who decided, and an unknown source falls to the model
+Aug 2026, Claude
+
+Decision: the muted line under each sentence is three clauses, how many times,
+when the last one was, and where the verdict came from. `from how you said it
+went` for a theme the student's own outcomes settled, `from what you have
+written` for one the model read. Anything in `source` that is not exactly
+`outcomes` is taken as the model.
+
+Why the third clause: the app is asserting something about a student now, and
+their own recorded outcomes beating ours is the rule this whole feature rests
+on. A student is owed the difference between their verdict handed back to them
+and our reading of their entries, and one short clause is the cheapest place to
+put it. It stays inside the same muted line rather than becoming a fourth
+element in the row, because the sentence is what they are meant to read.
+
+Why the fallback goes to the model: the two are not symmetric. Claiming the
+student's own voice for a string we did not recognise would put words in their
+mouth. Claiming ours for one costs nothing but a shade of credit.
+
+Whole days for when, unchanged from 098, and a timestamp that will not parse
+drops that clause and leaves the other two.
+
+Reverses if: the server starts writing the whole line, which it should, since
+it already knows the student's timezone and this is the second screen guessing
+with the device one.
+
+---
+
+### 160. The card schema checks the shape of a yes or no question, and only the shape
+Aug 2026, Claude
+
+Decision: `services/cards/schema.ts` drops `options` and puts five checks on
+`question`. It has to end in a question mark, it can hold only one question
+mark, it cannot open with what, how, why, which, who, when or where, it cannot
+contain the word or, and it cannot carry a second comma.
+
+Why: the card now has a yes button and a no button, so a question the student
+cannot answer with either word is a card with nowhere to tap. What was asked
+for was the wh openers and the list. Who, when and where went in with the other
+four because they fail in exactly the same way: they ask for a fact back rather
+than for a yes. The question mark checks are what stop a statement or two
+questions being stored as one card.
+
+The word or is the list check that does the work. A list does not have to end
+in commas to be a list, and "will you tell Priya or start the poster" is three
+answers behind two buttons. One comma is left alone, because a question can put
+the day in a clause and still be one question. The second comma is what says
+the clause has become a list.
+
+What is not checked here is whether no is a real answer, which is the half that
+decides whether the card should exist at all. That test is a sentence about the
+student and it lives in the prompt, where it can be read as one. No regular
+expression can tell "will you tell your mum before Tuesday" from "will you
+finally start the coursework", and a check here that pretended to would refuse
+good cards and pass the bad one.
+
+A failing card still fails the whole reply, because the gateway validates the
+answer as one thing and falls through to the next provider. That was already
+true of the three option rule and no card remains an acceptable answer, so this
+leans the same way it always did.
+
+Reverses if: real runs show good cards refused by the or check, in which case
+the thing to narrow is the or, not the openers.
+
+---
+
+### 161. The options column stays, empty, on every card written from now on
+Aug 2026, Claude
+
+Decision: `options` loses its not null constraint and nothing writes to it.
+`chosen_index` stays for the same reason and is written by nothing. A new
+`answered_yes` boolean holds the answer and `detail` keeps holding whatever the
+student wrote in the box. Migration 0008.
+
+Why: twenty two rows in this database were written when a card offered three
+things, and those rows are the record of what a student was actually asked.
+Dropping the columns would rewrite that history into three blanks, and a card
+from July whose student picked option two would become a card nobody can
+explain. Keeping a column nobody writes to costs a line in the schema comment.
+
+`answered_yes` rather than reading the answer back off `decision_id`. A yes
+writes a decision and a no writes nothing, so the decision would be a proxy for
+the answer, and a proxy is wrong the first time a decision write fails or a
+decision is deleted. The answer the student gave is a fact about them and it is
+stored as one.
+
+Nullable rather than not null with a default, because a card that has not been
+answered has no answer, and false is an answer. Unanswered, yes and no are
+three states and the column holds three.
+
+Reverses if: the old rows are ever migrated or expired, at which point both
+columns can go in one migration with nothing lost.
+
+---
+
+### 180. The patterns screen judges, and it says whose judgement it is
+Aug 2026, Adnan, built by Claude
+
+Decision: `GET /patterns` returns `reflections`, `good`, `bad` and `forming`.
+`lighter`, `heavier` and `confirmed` are gone from the payload. A row in `good`
+or `bad` carries the theme, how many times it has come round, when the last one
+was, one sentence the student reads, and `source`, which is `outcomes` when the
+student's own check back answers decided it and `model` when we did. A theme
+with neither is in neither section.
+
+Why: the founder decided, three times, that a product which notices a student
+is repeating something and refuses to say whether it is helping them is not
+worth having. Decisions 096 and 097 built the opposite: two sections deliberately
+shaped so that neither could be read as a result, with a note in 096 saying
+nothing downstream may turn the heavier list into a warning. That is overruled.
+The heavier list is now the bad section, it does say so maybe stop, and it says
+it in a sentence rather than by implication.
+
+`confirmed` goes because a confirmed pattern is a theme like any other and now
+appears in whichever section its verdict puts it in, with a line under it. The
+rows are untouched and the confirm and reject endpoints are untouched. Nothing
+is proposed as a pattern without the student, and this only decides what to say
+about a theme that already keeps returning.
+
+`forming` drops any candidate whose theme is in a section. A theme cannot be
+under not enough to say yet on the same screen as a sentence telling the student
+to stop it, and of the two the sentence is the one the app now stands behind.
+The candidate row survives and is still confirmed or rejected wherever
+candidates are surfaced.
+
+Rejected: keeping `lighter` and `heavier` beside `good` and `bad`. Two pairs of
+sections drawn from the same outcomes, one hedged and one not, is the old
+behaviour surviving under a new name, and a screen that says both would be
+saying neither.
+
+Reverses if: task 7 shows a student reading the bad section as being told off.
+The fix is then the line, which is where the whole feature lives, and not the
+section.
+
+---
+
+### 181. The verdict comes from the student first and from the model second
+Aug 2026, Claude
+
+Decision: the verdict on a theme is `outcomes.felt` where the student has
+answered a check back about it, and a model call where they have not. A theme
+they answered lighter is good, worse is bad, and where they answered both ways
+it is whichever they said more often, with the more recent one winning a tie.
+The model is told the verdict when the student has set one and writes only the
+sentence, so it cannot return a verdict that contradicts them. `source` on the
+wire says which of the two it was.
+
+Why: their reading of their own life beats ours and the wire has to say so, or
+the student cannot tell the difference between being quoted and being judged.
+Telling the model the answer rather than asking it and then discarding the
+reply is what makes the guarantee structural: there is no path where a good
+line ends up under a bad heading because the two disagreed.
+
+The tie break supersedes decision 097, which let a theme sit in both lists on
+the grounds that picking a winner would mean deciding which of two things the
+student said is the truer one. That was right for a record and is impossible
+for a verdict: keep this and stop this cannot both be printed under one theme.
+Count first because it is the most of what they said, recency second because
+it is the latest of what they said.
+
+Reverses if: outcomes gain a second signal the student sets themselves, at which
+point the verdict is over both and not over `felt` alone.
+
+---
+
+### 182. Verdicts are appended, and a stale one is held back rather than shown
+Aug 2026, Claude
+
+Decision: `pattern_verdicts` holds one row per judgement, never updated, with
+the verdict, the source, the line, how many entries were behind the theme at the
+time, and the prompt and model versions. The newest row for a theme is the live
+one. The read compares that row's verdict against what the student's outcomes
+say now, and where they disagree the theme is shown in neither section until the
+next verdict run writes a new row.
+
+Why: a line is written for one verdict. If the student answers a check back
+tomorrow and turns a bad theme good, the stored sentence says the opposite of
+the heading it would sit under, and putting worth stopping over a sentence about
+what something does for them is the one failure on this screen that would be
+unforgivable. Holding it back costs a day. Showing it costs trust.
+
+The versions are on the row and not only on the `generations` row for the same
+reason the cue card carries them: the line outlives the day it was written and
+the first question about a bad one is which prompt wrote it. Appending rather
+than updating keeps the one before it, which is how a verdict that turned over
+gets read back later.
+
+`supporting` is what says a line is out of date. A theme that has grown since it
+was judged is judged again, because the sentence was written without the entries
+that arrived after it.
+
+Reverses if: holding a theme back for a day reads as the app losing track of
+something the student just told it, at which point the answer is to run the
+verdict job when an outcome is recorded rather than to print the stale line.
+
+---
+
+### 183. The verdict job runs on the back of the nightly sweep, one theme at a time
+Aug 2026, Claude
+
+Decision: a `pattern_verdicts` job, booked by the runner at the end of every
+`pattern_sweep` and run by the same runner. It reads every student's themes in
+one query, judges up to two hundred of them, one model call at a time, and
+writes a row for each. Themes with no verdict at all go first. A theme needs two
+entries above `MIN_TAG_CONFIDENCE`, not the three on three days the sweep needs
+before it proposes a pattern.
+
+Why: the sweep already runs nightly, already reschedules itself, and has just
+finished reading the tags the verdicts are about, so booking off the back of it
+means the only thing that has to be running is the runner. Nothing else changed
+about scheduling and no cron entry was added.
+
+Two rather than three because these are different claims. Three entries on three
+days is the bar for proposing a pattern to a student and asking them to own it.
+This is a sentence under a theme that is already on their screen, and below two
+there is nothing repeating to have a verdict about.
+
+One at a time and capped at two hundred because every theme is a model call on
+the slowest configuration we have and it runs unattended in the night. A tagger
+change that renamed every theme at once would otherwise be one call for every
+theme in the database, all at the same moment. What does not fit waits for
+tomorrow.
+
+Rejected: running it when an outcome is recorded. That is the right trigger and
+it belongs in the outcome path, which is another agent's file this week. The
+nightly run covers it within a day and decision 182 covers the gap.
+
+Reverses if: a student's verdicts are a day behind often enough to notice, at
+which point the outcome path books this job for that one student.
+
+---
+
+### 184. What `times` counts now, and why it changed
+Aug 2026, Claude
+
+Decision: `times` on a `good` or `bad` row is the number of entries behind the
+theme, and `lastAt` is the most recent of them. It used to be the number of
+outcomes behind the row.
+
+Why: the two sections used to be filled only from outcomes, so counting outcomes
+was the only thing they could count. They are now filled from two sources, and a
+number that meant answered check backs on one row and nothing comparable on the
+row under it is a screen that lies quietly. Entries behind the theme means the
+same thing whichever decided the verdict, and it is what a student reads the
+word times as: how many times this has come round.
+
+Reverses if: the screen ever shows both numbers, in which case they need two
+words and not one.
+
+---
+
+### 185. Storage for the verdict was added to the shared schema, deliberately
+Aug 2026, Claude
+
+Decision: `pattern_verdicts`, the `theme_verdict` and `verdict_source` enums,
+the `pattern_verdict` value on `generation_purpose`, migrations
+`0009_lucky_stardust` and `0010_quiet_shooting_star`, and two names appended to
+the arrays in `db/sql/rls.sql`.
+None of these files were in the list this task was scoped to.
+
+Why: the feature stores a verdict with its prompt version and model version, and
+there was no table to put it in. Every change here is an addition. Nothing
+existing was edited except the two array literals in the row level security file
+and the one enum in the schema, so a concurrent change elsewhere in those files
+survives it. The migration was renumbered from 0008 to 0009 mid task because
+another agent claimed 0008 while this was being written.
+
+`pattern_verdicts` is in the student scope policy list, so the read runs under
+row level security as every other read does.
+
+Reverses if: nothing. It is the storage the feature needs. It is logged because
+it went outside the file list it was given and that should be visible rather
+than discovered.
+
+---
+
+### 186. Unsettled is written down, and it is the answer that stops us asking again
+Aug 2026, Claude
+
+Decision: the verdict prompt may return `unsettled`, and `theme_verdict` carries
+it as a third value. An unsettled row is stored with an empty line and is never
+shown in either section. The theme is only asked about again when it gains an
+entry or when the student answers a check back about it.
+
+Why: the first version returned unsettled and wrote nothing, which meant the
+theme came back to the front of the queue every night until some run happened to
+say something. That is a model call per student per unsettled theme per night
+for as long as the theme exists, and it is worse than the cost: a refusal that
+is retried until it stops being a refusal is not a refusal. The demo student's
+`too much at once` was unsettled on one run and bad on the next, from the same
+two entries at temperature zero, which is exactly the failure. Writing the
+answer down makes it stick until something changes that could actually change
+it.
+
+An empty line rather than a nullable column, because the line is not optional
+for anything that is shown, and a null there would invite a reader to wonder
+whether a good row could have one too.
+
+The read refuses unsettled twice: the row cannot head a section, and it cannot
+be the sentence under a theme whose outcomes have since given it a verdict. The
+second is the same hold back as decision 182 and for the same reason.
+
+Reverses if: unsettled turns out to be most themes, in which case the bar in
+the prompt is too high and the prompt is what to change.

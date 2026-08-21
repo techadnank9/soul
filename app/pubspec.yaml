@@ -10,10 +10,27 @@ dependencies:
   flutter:
     sdk: flutter
   # Microphone capture. Flutter has no audio recording in the standard library,
-  # so this is the one runtime dependency the client carries. It records to a
-  # file we delete the moment the upload returns, and it collects nothing
-  # itself.
+  # so this is unavoidable if voice is a path at all. It records to a file we
+  # delete the moment the upload returns, and it collects nothing itself.
   record: ^6.1.2
+  # Location, for the where question. It reads the device position when the
+  # student allows it and collects nothing on its own. It is the second
+  # runtime dependency and it brought twenty five transitive packages with it,
+  # every one of which is now named in a district data agreement. The region
+  # picker works without it and remains the path when permission is refused.
+  geolocator: ^14.0.3
+  # Sign in with Apple. It is the only account this product offers and Apple's
+  # own sheet is the only way to reach it, so there is no writing around this
+  # one. It brought two transitive packages and it collects nothing: no scopes
+  # are asked for, so no name and no email ever arrives.
+  sign_in_with_apple: ^8.1.0
+  # The keychain, for the session token. That token is the one secret the app
+  # holds and a preferences file would leave it sitting in plain text. It is
+  # the fourth runtime dependency and it brought twenty three transitive
+  # packages with it, nearly all of them Windows and Linux implementations this
+  # app never runs, and every one of them is now named in a district data
+  # agreement.
+  flutter_secure_storage: ^11.0.0
 
 dev_dependencies:
   flutter_test:

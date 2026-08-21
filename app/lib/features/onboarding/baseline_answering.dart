@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
@@ -94,11 +96,22 @@ class _OrbFieldState extends State<OrbField> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final size = Size(box.maxWidth, box.maxHeight);
+        // Square, and centred in whatever room the question leaves.
+        //
+        // Filling the space made a tall panel with the four corners stretched
+        // to its ends, so leaning up cost a longer drag than leaning across
+        // and the light never sat where the finger expected. A square makes
+        // the four directions cost the same.
+        final side = math.min(box.maxWidth, box.maxHeight);
+        final size = Size(side, side);
         final colour =
             _near == null ? SoulColors.border2 : baselineColours[_near!];
 
-        return GestureDetector(
+        return Center(
+          child: SizedBox(
+            width: side,
+            height: side,
+            child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onPanUpdate: (d) => _move(d.localPosition, size),
           onPanEnd: (_) {
@@ -173,6 +186,8 @@ class _OrbFieldState extends State<OrbField> {
                   ),
                 ),
               ],
+            ),
+          ),
             ),
           ),
         );
@@ -277,17 +292,32 @@ class ScaleChoice extends StatefulWidget {
 }
 
 class _ScaleChoiceState extends State<ScaleChoice> {
-  late int _at = widget.chosen ?? 0;
+  /// Where the thumb actually is, from zero to one, following the finger
+  /// rather than jumping between stops. The stops are still what gets
+  /// answered; they just stop being what the hand feels.
+  late double _t =
+      (widget.chosen ?? 0) / math.max(1, widget.options.length - 1);
   bool _touched = false;
+  bool _dragging = false;
+
+  int get _at => (_t * (widget.options.length - 1))
+      .round()
+      .clamp(0, widget.options.length - 1);
 
   void _moveTo(double dx, double width) {
-    final stop = ((dx / width) * (widget.options.length - 1))
-        .round()
-        .clamp(0, widget.options.length - 1);
-    if (stop == _at && _touched) return;
     setState(() {
-      _at = stop;
+      _t = (dx / width).clamp(0.0, 1.0);
       _touched = true;
+      _dragging = true;
+    });
+  }
+
+  /// On release the thumb settles onto the nearest stop rather than staying
+  /// wherever the finger left it. The drag is continuous, the answer is not.
+  void _settle() {
+    setState(() {
+      _t = _at / math.max(1, widget.options.length - 1);
+      _dragging = false;
     });
   }
 
@@ -296,18 +326,40 @@ class _ScaleChoiceState extends State<ScaleChoice> {
     return LayoutBuilder(
       builder: (context, box) {
         final width = box.maxWidth - 56;
-        final position = width * (_at / (widget.options.length - 1));
+        final position = width * _t;
+
+        // The colour crosses between stops rather than switching at them.
+        // Snapping the hue at a boundary was most of what made this feel
+        // steppy, even after the thumb itself started following the finger.
+        final last = widget.options.length - 1;
+        final exact = (_t * last).clamp(0.0, last.toDouble());
+        final low = exact.floor().clamp(0, last);
+        final high = exact.ceil().clamp(0, last);
+        final colour = Color.lerp(
+          baselineColours[low],
+          baselineColours[high],
+          exact - low,
+        )!;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Enter(
               index: 0,
-              child: Text(
-                widget.options[_at],
-                style: SoulType.heading.copyWith(
-                  fontSize: 26,
-                  color: _touched ? baselineColours[_at] : SoulColors.text3,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                child: Text(
+                  widget.options[_at],
+                  key: ValueKey(_at),
+                  style: SoulType.heading.copyWith(
+                    fontSize: 26,
+                    color: _touched ? colour : SoulColors.text3,
+                  ),
                 ),
               ),
             ),
@@ -319,8 +371,12 @@ class _ScaleChoiceState extends State<ScaleChoice> {
                 // meant a student could not adjust, and when the release did
                 // not register the screen became a dead end with no way on.
                 onPanUpdate: (d) => _moveTo(d.localPosition.dx, width),
+                onPanEnd: (_) => _settle(),
+                onPanCancel: _settle,
                 onHorizontalDragUpdate: (d) => _moveTo(d.localPosition.dx, width),
+                onHorizontalDragEnd: (_) => _settle(),
                 onTapDown: (d) => _moveTo(d.localPosition.dx, width),
+                onTapUp: (_) => _settle(),
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   height: 76,
@@ -335,12 +391,14 @@ class _ScaleChoiceState extends State<ScaleChoice> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      Container(
+                      AnimatedContainer(
+                        duration: Duration(milliseconds: _dragging ? 0 : 260),
+                        curve: Curves.easeOutCubic,
                         margin: const EdgeInsets.only(left: 28),
                         width: position,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: baselineColours[_at],
+                          color: colour,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -361,20 +419,24 @@ class _ScaleChoiceState extends State<ScaleChoice> {
                           ),
                         ),
                       AnimatedPositioned(
-                        duration: const Duration(milliseconds: 140),
-                        curve: Curves.easeOut,
+                        duration: Duration(milliseconds: _dragging ? 0 : 260),
+                        curve: Curves.easeOutCubic,
                         left: position + 6,
-                        child: Container(
-                          width: 44,
-                          height: 44,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+                          // Grows under the finger, so the thumb reads as
+                          // picked up rather than pushed along.
+                          width: _dragging ? 50 : 44,
+                          height: _dragging ? 50 : 44,
                           decoration: BoxDecoration(
-                            color: baselineColours[_at],
+                            color: colour,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: baselineColours[_at]
-                                    .withValues(alpha: 0.45),
-                                blurRadius: 16,
+                                color: colour.withValues(
+                                    alpha: _dragging ? 0.55 : 0.45),
+                                blurRadius: _dragging ? 22 : 16,
                                 offset: const Offset(0, 6),
                               ),
                             ],
