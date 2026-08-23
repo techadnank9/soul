@@ -2883,3 +2883,46 @@ second is the same hold back as decision 182 and for the same reason.
 
 Reverses if: unsettled turns out to be most themes, in which case the bar in
 the prompt is too high and the prompt is what to change.
+
+---
+
+### 187. The public site lives in `www`, and every screenshot on it is a real one
+Aug 2026, Adnan, built by Claude
+
+Decision: the site at soulspacehealth.com is a folder in this repository called
+`www`, next to `app`, `api` and `db`. One file, `index.html`, with its styles
+and its script inline and no build step. `screens` holds photographs of the
+running app and `brand` holds the favicon, the share card and Apple's badge.
+
+Why `www` and not `site` or `landing`: every other top level folder here is
+named for what it is, and `app` is already taken by the Flutter client. A
+folder called `site` sitting next to a folder called `app` invites somebody to
+guess wrong about which one a phone runs. `www` is the web root and cannot be
+read as anything else.
+
+Why the screenshots are photographs of the running app rather than drawings of
+it: an earlier version of this page rebuilt the Returning screen by hand in
+HTML, which meant the marketing and the product could drift apart silently and
+the page could show a screen that has never existed. They are now captured off
+a booted simulator running this repository against a seeded database, and the
+sentences under the themes came from the pattern verdict job rather than from
+somebody writing what it might say. The file names match the tabs they were
+taken from so the next person knows what to retake.
+
+Why no framework and no build step: the page is one document. A bundler would
+add a dependency, a lockfile and a build to a thing that a browser already
+opens, and this repository has a standing rule about both.
+
+The verdict sweep was run once against the local database to produce the
+screenshots, because the demo student had no verdicts and the page would
+otherwise have shown a Returning tab with nothing in either section. That wrote
+four rows to `pattern_verdicts` for `student_demo` and touched nothing else.
+
+Two things on that page are Apple's rather than ours. The badge in `brand` is
+their artwork, unmodified, and their guidelines forbid recolouring it, so on the
+dark theme it sits on a light plate rather than being tinted. Only the black
+lockup is served from their asset URL. The white one is in Marketing Resources
+and needs a signed in browser.
+
+Reverses if: the site grows past one page, at which point it needs routing and a
+real static generator, and `www` becomes a project rather than a folder.

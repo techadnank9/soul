@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soul</title>
+<meta name="description" content="You say what just happened and get one line back. What keeps returning becomes a pattern only when you say it fits.">
+
+<link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/brand/favicon.svg">
+<link rel="canonical" href="https://soulspacehealth.com/">
+<meta name="theme-color" content="#FFF6EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Soul">
+<meta property="og:title" content="Soul">
+<meta property="og:description" content="You say what just happened and get one line back. What keeps returning becomes a pattern only when you say it fits.">
+<meta property="og:url" content="https://soulspacehealth.com/">
+<meta property="og:image" content="https://soulspacehealth.com/brand/share-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Soul">
+<meta name="twitter:description" content="You say what just happened and get one line back. What keeps returning becomes a pattern only when you say it fits.">
+<meta name="twitter:image" content="https://soulspacehealth.com/brand/share-card.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ---------------------------------------------------------------------------
+   Soul.
+
+   The palette is the app's own, from soul_theme.dart, with two corrections:
+   the muted ink and the button clay both failed 4.5:1 on the warm paper at
+   small sizes, so each is darkened along its own hue rather than replaced.
+   Every colour is a token defined on bare :root and redefined for both dark
+   paths, so the unstamped system state resolves as a complete set.
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #FFF6EC;
+  --s1: #FFFFFF;
+  --s2: #FBEEE0;
+  --border: #EEE0CF;
+  --border2: #DDC9B2;
+
+  --text: #201B15;
+  --text2: #6B6055;
+  --text3: #756A5E;
+
+  --clay: #EA5F17;
+  --clay-btn: #C65012;
+  --clay-btn-hover: #A63F09;
+  --clay-text: #B74911;
+  --clay-tint: rgba(234, 95, 23, 0.07);
+  --clay-line: rgba(234, 95, 23, 0.4);
+
+  --moss: #3F8B2E;
+  --moss-text: #377A28;
+  --moss-tint: rgba(63, 139, 46, 0.07);
+  --moss-line: rgba(63, 139, 46, 0.4);
+
+  --on-clay: #FFFFFF;
+  --lift: 0 2px 4px rgba(150, 96, 50, 0.05), 0 12px 32px rgba(150, 96, 50, 0.09);
+  --wave: rgba(234, 95, 23, 0.5);
+  --scroll: #E2D2BE;
+  --badge-plate: transparent;
+  --badge-pad: 0px;
+
+  --rail: 88px;
+  --measure: 30rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121110;
+    --s1: #1C1A17;
+    --s2: #232019;
+    --border: #322D26;
+    --border2: #4A4338;
+
+    --text: #F4EDE4;
+    --text2: #BCB1A3;
+    --text3: #90867A;
+
+    --clay: #F2762F;
+    --clay-btn: #F2762F;
+    --clay-btn-hover: #FF8F4D;
+    --clay-text: #FB8E51;
+    --clay-tint: rgba(242, 118, 47, 0.10);
+    --clay-line: rgba(242, 118, 47, 0.4);
+
+    --moss: #6FBF57;
+    --moss-text: #85CE6E;
+    --moss-tint: rgba(111, 191, 87, 0.10);
+    --moss-line: rgba(111, 191, 87, 0.4);
+
+    --on-clay: #1A0E06;
+    --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 36px rgba(0, 0, 0, 0.3);
+    --wave: rgba(242, 118, 47, 0.6);
+    --scroll: #3C362E;
+    --badge-plate: #FFFFFF;
+    --badge-pad: 9px;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121110;
+  --s1: #1C1A17;
+  --s2: #232019;
+  --border: #322D26;
+  --border2: #4A4338;
+
+  --text: #F4EDE4;
+  --text2: #BCB1A3;
+  --text3: #90867A;
+
+  --clay: #F2762F;
+  --clay-btn: #F2762F;
+  --clay-btn-hover: #FF8F4D;
+  --clay-text: #FB8E51;
+  --clay-tint: rgba(242, 118, 47, 0.10);
+  --clay-line: rgba(242, 118, 47, 0.4);
+
+  --moss: #6FBF57;
+  --moss-text: #85CE6E;
+  --moss-tint: rgba(111, 191, 87, 0.10);
+  --moss-line: rgba(111, 191, 87, 0.4);
+
+  --on-clay: #1A0E06;
+  --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 36px rgba(0, 0, 0, 0.3);
+  --wave: rgba(242, 118, 47, 0.6);
+  --scroll: #3C362E;
+  --badge-plate: #FFFFFF;
+  --badge-pad: 9px;
+
+  color-scheme: dark;
+}
+
+/* Browser surfaces. The parts nobody draws still belong to the page. ------- */
+
+::selection { background: var(--clay-tint); color: var(--text); }
+
+* { box-sizing: border-box; scrollbar-color: var(--scroll) transparent; }
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll);
+  border-radius: 99px;
+  border: 3px solid var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  caret-color: var(--clay);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2 {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  margin: 0;
+  line-height: 1.1;
+}
+
+p { margin: 0; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+:where(a, button, input):focus-visible {
+  outline: 2px solid var(--clay-text);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Data labels inside the product surfaces. Not page kickers. --------------- */
+.tag {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-variant-numeric: tabular-nums;
+}
+
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+.say { color: var(--text2); max-width: var(--measure); font-size: 17px; }
+
+/* Top ---------------------------------------------------------------------- */
+
+.top {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 220ms ease;
+}
+.top[data-stuck="true"] { border-bottom-color: var(--border); }
+
+.top__inner {
+  max-width: 1000px; margin: 0 auto; padding: 13px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+}
+
+.mark {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-size: 25px; text-decoration: none;
+  display: inline-flex; align-items: baseline; gap: 9px;
+}
+.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--clay); display: block; }
+
+/* Buttons ------------------------------------------------------------------ */
+
+.btn {
+  appearance: none; border: 0; border-radius: 99px;
+  background: var(--clay-btn); color: var(--on-clay);
+  font-family: inherit; font-size: 14.5px; font-weight: 500;
+  padding: 11px 21px; cursor: pointer; text-decoration: none;
+  display: inline-block;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+.btn:hover { background: var(--clay-btn-hover); }
+.btn:active { transform: translateY(1px); }
+
+.btn-quiet {
+  appearance: none; border: 1px solid var(--border2);
+  background: transparent; color: var(--text);
+  border-radius: 99px; cursor: pointer;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px; letter-spacing: 0.03em; padding: 10px 19px;
+  display: inline-block; text-decoration: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.btn-quiet:hover { border-color: var(--clay-line); background: var(--clay-tint); }
+
+/* The rail. Real intervals, because the product is its intervals. ---------- */
+
+.beat { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); column-gap: 28px; align-items: start; }
+
+.beat__mark {
+  position: relative; text-align: right;
+  padding: 3px 19px 72px 0;
+  border-right: 1px solid var(--border);
+  min-height: 100%;
+}
+.beat__mark span {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: 0.05em;
+  color: var(--text3); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.beat__mark::after {
+  content: ""; position: absolute; right: -3.5px; top: 10px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--bg); border: 1px solid var(--border2);
+}
+.beat--live .beat__mark::after { background: var(--clay); border-color: var(--clay); }
+
+.beat__body { padding-bottom: 72px; min-width: 0; }
+.beat:last-child .beat__mark { border-right-color: transparent; }
+
+@media (max-width: 720px) {
+  .beat { grid-template-columns: minmax(0, 1fr); }
+  .beat__mark {
+    text-align: left; border-right: 0; border-left: 1px solid var(--border);
+    padding: 0 0 14px 18px; min-height: 0;
+  }
+  .beat__mark::after { right: auto; left: -4px; top: 6px; }
+  .beat__body { padding-left: 18px; border-left: 1px solid var(--border); padding-bottom: 56px; }
+  .beat:last-child .beat__body { border-left-color: transparent; }
+}
+
+/* Hero --------------------------------------------------------------------- */
+
+/* padding-top and bottom only: a shorthand here would cancel .wrap's
+   horizontal padding and put the headline against the screen edge. */
+.hero { padding-top: 84px; padding-bottom: 34px; }
+.hero h1 { font-size: clamp(44px, 7.6vw, 76px); max-width: 14ch; margin: 0 0 22px; }
+.hero h1 em { font-style: italic; color: var(--clay-text); }
+.hero__row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; }
+.hero__row .mono { font-size: 13px; color: var(--text3); }
+
+.h2 { font-size: clamp(30px, 4.1vw, 41px); max-width: 22ch; margin: 0 0 14px; }
+
+/* Sections that are not points on the clock stand clear of the rail. */
+.block { padding: 4px 0 74px; }
+.block--thesis { padding: 10px 0 66px; }
+@media (max-width: 720px) { .block { padding-bottom: 56px; } }
+
+/* The record. The page's visual is the product, running. ------------------- */
+
+.panel {
+  background: var(--s1);
+  border-radius: 16px;
+  box-shadow: var(--lift);
+  padding: 22px 24px;
+}
+
+.panel__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-bottom: 15px;
+}
+
+.said {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-size: 21px; line-height: 1.42;
+}
+
+.wave { display: flex; align-items: center; gap: 3px; height: 34px; margin: 2px 0 17px; }
+.wave i {
+  display: block; width: 3px; border-radius: 2px;
+  background: var(--wave); height: 4px;
+}
+.wave--run i { animation: rise 500ms cubic-bezier(.2,.85,.3,1) both; }
+@keyframes rise { from { height: 3px; opacity: .2; filter: blur(1px); } to { height: var(--h); opacity: 1; filter: none; } }
+
+.reply { display: flex; gap: 15px; align-items: flex-start; }
+.reply i { width: 2px; align-self: stretch; border-radius: 2px; background: var(--clay); flex: 0 0 auto; }
+.reply p {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-size: 25px; line-height: 1.32;
+}
+
+.panel__foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-top: 21px;
+}
+
+.mirror { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 440ms cubic-bezier(.3,.9,.3,1); }
+.mirror[data-open="true"] { grid-template-rows: 1fr; }
+.mirror__in { overflow: hidden; }
+.mirror__pad {
+  margin-top: 21px; padding-top: 21px;
+  border-top: 1px solid var(--border);
+  display: grid; gap: 17px;
+  opacity: 0; filter: blur(3px);
+  transition: opacity 340ms ease 100ms, filter 340ms ease 100ms;
+}
+.mirror[data-open="true"] .mirror__pad { opacity: 1; filter: none; }
+
+.field { display: grid; gap: 5px; }
+.field p { font-size: 16.5px; line-height: 1.55; max-width: 40rem; }
+
+/* Offered against chosen --------------------------------------------------- */
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 22px; }
+
+.slot { background: var(--s2); border-radius: 14px; padding: 17px 18px; display: grid; gap: 9px; align-content: start; }
+.slot p { font-family: "Instrument Serif", Iowan Old Style, Georgia, serif; font-size: 19px; line-height: 1.38; }
+.slot--chosen { background: var(--clay-tint); }
+
+.chips { margin-top: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chip {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 99px;
+  border: 1px solid var(--border2); color: var(--text2);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--text3); }
+.chip--good { color: var(--moss-text); border-color: var(--moss-line); background: var(--moss-tint); }
+.chip--good::before { background: var(--moss); }
+
+/* It says, it never says. The voice, shown rather than described. ---------- */
+
+.voice { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 24px; }
+
+.column { border-radius: 16px; padding: 21px 22px; display: grid; gap: 16px; align-content: start; }
+.column--yes { background: var(--s1); box-shadow: var(--lift); }
+.column--no { background: var(--s2); }
+
+.column h3 { margin: 0; font-family: inherit; font-size: 12.5px; font-weight: 500; letter-spacing: .02em; }
+.column--yes h3 { color: var(--clay-text); }
+.column--no h3 { color: var(--text3); }
+
+.column ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+.column li { font-family: "Instrument Serif", Iowan Old Style, Georgia, serif; font-size: 18.5px; line-height: 1.4; }
+.column--no li { color: var(--text3); }
+
+/* Held --------------------------------------------------------------------- */
+
+.held { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px 44px; margin-top: 24px; }
+.held h3 { margin: 0 0 12px; font-family: inherit; font-size: 12.5px; font-weight: 500; letter-spacing: .02em; }
+.held--yes h3 { color: var(--text) }
+.held--no h3 { color: var(--text3); }
+.held ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.held li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 10px; font-size: 15.5px; line-height: 1.5; color: var(--text2); }
+.held li b { color: var(--text); font-weight: 500; }
+.held s { color: var(--moss-text); text-decoration: none; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+.held--no s { color: var(--clay-text); }
+
+
+/* Real screens from the app, not drawings of them. ------------------------ */
+
+.phone {
+  display: block; border-radius: 24px; overflow: hidden;
+  background: var(--s1); box-shadow: var(--lift);
+  border: 1px solid var(--border);
+}
+.phone img { display: block; width: 100%; height: auto; }
+
+.hero__grid {
+  display: grid; grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 56px; align-items: center;
+}
+@media (max-width: 880px) {
+  .hero__grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .hero__shot { max-width: 268px; }
+}
+
+.shot-pair {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 22px; align-items: start; margin-top: 26px; max-width: 620px;
+}
+.shot-pair figure { margin: 0; display: grid; gap: 11px; }
+.shot-pair figcaption { font-size: 13.5px; line-height: 1.5; color: var(--text3); }
+
+.gallery {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 22px; margin: 0 0 56px;
+}
+.gallery figure { margin: 0; display: grid; gap: 11px; }
+.gallery figcaption { font-size: 13.5px; line-height: 1.5; color: var(--text3); }
+
+
+/* The App Store badge.
+   Apple's own artwork, unmodified, from developer.apple.com. Their guidelines
+   ask for a minimum height and clear space around it, and forbid recolouring.
+   Only the black lockup is served from that URL, so on the dark theme it sits
+   on a light plate rather than being tinted. Swap in Apple's white lockup from
+   Marketing Resources if you would rather have it plain on dark. */
+.badge {
+  display: inline-flex; align-items: center;
+  background: var(--badge-plate);
+  padding: var(--badge-pad);
+  border-radius: calc(10px + var(--badge-pad));
+  transition: opacity 150ms ease;
+}
+.badge img { display: block; height: 48px; width: auto; }
+.badge:hover { opacity: 0.82; }
+.badge:focus-visible { outline: 2px solid var(--clay-text); outline-offset: 4px; }
+
+/* Close -------------------------------------------------------------------- */
+
+.close { background: var(--s2); border-radius: 20px; padding: 46px 42px; margin: 8px 0 60px; }
+.close h2 { font-size: clamp(31px, 4.4vw, 45px); max-width: 18ch; margin-bottom: 16px; }
+
+.stores { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 620px) { .close { padding: 32px 24px; border-radius: 16px; } }
+
+.foot {
+  border-top: 1px solid var(--border); padding: 24px 0 46px;
+  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  color: var(--text3); font-size: 13px;
+}
+
+/* One authored load moment, and nothing else moves on its own. ------------- */
+
+.fade { opacity: 0; transform: translateY(9px); }
+.fade--in { animation: fade 660ms cubic-bezier(.2,.85,.3,1) both; }
+@keyframes fade { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important; animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+  .fade { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="top__inner">
+    <a class="mark" href="#top"><i aria-hidden="true"></i>Soul</a>
+    <a class="btn" href="#get">Get the app</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="wrap hero">
+    <div class="hero__grid">
+      <div>
+        <h1 class="fade" data-seq="0">Reflections now, and the <em>patterns</em> you confirm later.</h1>
+        <p class="say fade" data-seq="1">
+          You say what just happened and get one line back. What keeps returning
+          becomes a pattern only when you say it fits.
+        </p>
+        <div class="hero__row fade" data-seq="2">
+          <a class="badge" href="#" aria-label="Download Soul on the App Store"><img src="/brand/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>
+          <span class="mono">For iPhone</span>
+        </div>
+      </div>
+      <div class="hero__shot fade" data-seq="3">
+        <span class="phone"><img src="/screens/returning.png" alt="The Returning screen in Soul, showing two themes under Worth keeping and two under Worth stopping." width="600" height="1305"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="block block--thesis" aria-label="Why it exists">
+      <h2 class="h2">Nothing fills the two minutes in the middle.</h2>
+      <p class="say">
+        Therapy fills the weeks after. Friends fill some of it. The minutes
+        while you are still in it belong to nobody.
+      </p>
+    </section>
+  </div>
+
+  <div class="wrap">
+
+    <section class="beat beat--live fade" data-seq="4" aria-label="What you said">
+      <div class="beat__mark"><span>0:00</span></div>
+      <div class="beat__body">
+        <div class="panel">
+          <div class="panel__head">
+            <span class="tag">What you said</span>
+            <span class="tag">0:27 &middot; Tuesday</span>
+          </div>
+          <div class="wave" id="wave" aria-hidden="true"></div>
+          <p class="said">
+            I said yes to covering Marta's shift again and I have been annoyed
+            about it all afternoon. I do not know why I did not just say no.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="beat beat--live fade" data-seq="5" aria-label="What came back">
+      <div class="beat__mark"><span>+ 2s</span></div>
+      <div class="beat__body">
+        <div class="panel">
+          <div class="reply">
+            <i aria-hidden="true"></i>
+            <p>You said yes before you had decided anything.</p>
+          </div>
+
+          <div class="mirror" id="mirror" data-open="false">
+            <div class="mirror__in">
+              <div class="mirror__pad">
+                <div class="field">
+                  <span class="tag">Tension</span>
+                  <p>Wanting the shift covered without a row, and wanting the afternoon back.</p>
+                </div>
+                <div class="field">
+                  <span class="tag">Underneath</span>
+                  <p>This may have landed as the asking being the hard part rather than the shift. Does that fit?</p>
+                </div>
+                <div class="field">
+                  <span class="tag">A question to sit with</span>
+                  <p>What would you have needed in order to say you would come back to her?</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel__foot">
+            <button class="btn-quiet" id="closer" aria-expanded="false" aria-controls="mirror">Look closer</button>
+            <span class="tag">Only if you ask</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="beat" aria-label="What you might do">
+      <div class="beat__mark"><span>+ 2 min</span></div>
+      <div class="beat__body">
+        <h2 class="h2">It keeps what was offered and what you chose.</h2>
+        <p class="say">Both, always. The gap between them is the useful part.</p>
+        <div class="pair">
+          <div class="slot">
+            <span class="tag">Offered</span>
+            <p>Tell Marta you cannot do Saturday.</p>
+          </div>
+          <div class="slot slot--chosen">
+            <span class="tag">You chose</span>
+            <p>Ask Marta to swap rather than saying no outright.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="beat" aria-label="Days later">
+      <div class="beat__mark"><span>+ 3 days</span></div>
+      <div class="beat__body">
+        <h2 class="h2">Then it asks how that went, once.</h2>
+        <p class="say">
+          On the day you named, and never again after. Ignoring it is an answer
+          and it counts too.
+        </p>
+        <div class="chips">
+          <span class="chip">She swapped Saturday for Thursday</span>
+          <span class="chip chip--good">Felt lighter</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="beat" aria-label="Over months">
+      <div class="beat__mark"><span>+ 11 weeks</span></div>
+      <div class="beat__body">
+        <h2 class="h2">What repeats gets sorted, and you get the say.</h2>
+        <p class="say">
+          Where your own answers already told it how something went, that is the
+          verdict. Where you have not said, it says so.
+        </p>
+
+        <div class="shot-pair">
+          <figure>
+            <span class="phone"><img src="/screens/returning.png" alt="Two themes under Worth keeping and two under Worth stopping." width="600" height="1305" loading="lazy"></span>
+            <figcaption>Sorted into worth keeping and worth stopping, over seventeen reflections.</figcaption>
+          </figure>
+          <figure>
+            <span class="phone"><img src="/screens/returning-theme.png" alt="One theme opened, showing the sentence and the two entries it came from." width="600" height="1305" loading="lazy"></span>
+            <figcaption>Open one and the entries it came from are underneath it, dated.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-label="The voice">
+        <h2 class="h2">It describes what happened. Never what you are.</h2>
+        <p class="say">A situation can change. A label follows somebody for years.</p>
+
+        <div class="voice">
+          <div class="column column--yes">
+            <h3>It says</h3>
+            <ul>
+              <li>You wrote the email and you didn't send it.</li>
+              <li>Three weeks is long enough to start writing a story about it.</li>
+              <li>Going quiet when you are not credited.</li>
+            </ul>
+          </div>
+          <div class="column column--no">
+            <h3>It never says</h3>
+            <ul>
+              <li>It sounds like you're feeling frustrated.</li>
+              <li>That must have been so difficult.</li>
+              <li>Conflict avoidant.</li>
+            </ul>
+          </div>
+        </div>
+    </section>
+
+    <section class="block" aria-label="What it holds">
+        <h2 class="h2">You can see all of it, and empty any of it.</h2>
+
+        <div class="held">
+          <div class="held--yes">
+            <h3>It holds</h3>
+            <ul>
+              <li><s aria-hidden="true">+</s><span>Your words, as sent</span></li>
+              <li><s aria-hidden="true">+</s><span>What you decided, and what happened</span></li>
+              <li><s aria-hidden="true">+</s><span>Patterns you confirmed yourself</span></li>
+              <li><s aria-hidden="true">+</s><span>A first name, if you give one</span></li>
+            </ul>
+          </div>
+          <div class="held--no">
+            <h3>It does not hold</h3>
+            <ul>
+              <li><s aria-hidden="true">&minus;</s><span><b>The audio.</b> Deleted the moment the words come back</span></li>
+              <li><s aria-hidden="true">&minus;</s><span>A surname or a birthdate</span></li>
+              <li><s aria-hidden="true">&minus;</s><span>Analytics or crash trackers</span></li>
+              <li><s aria-hidden="true">&minus;</s><span>Anything it cannot show you the source of</span></li>
+            </ul>
+          </div>
+        </div>
+    </section>
+
+  </div>
+
+  <div class="wrap">
+    <section class="gallery" aria-label="More of the app">
+      <figure>
+        <span class="phone"><img src="/screens/first-run.png" alt="The opening screen, headed What reflection actually is." width="600" height="1305" loading="lazy"></span>
+        <figcaption>It says what it is before it asks for anything.</figcaption>
+      </figure>
+      <figure>
+        <span class="phone"><img src="/screens/capture.png" alt="The capture screen, asking what just happened, with a text field and a microphone." width="600" height="1305" loading="lazy"></span>
+        <figcaption>Speak it or type it. Both are the same path.</figcaption>
+      </figure>
+      <figure>
+        <span class="phone"><img src="/screens/this-week.png" alt="The week screen, showing ten moments and the themes they divide into." width="600" height="1305" loading="lazy"></span>
+        <figcaption>The week you have had, counted from real entries only.</figcaption>
+      </figure>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="close" id="get">
+      <h2>It is not therapy, and it is not somebody to talk to.</h2>
+      <p class="say">
+        Thirty seconds, one line, and a question days later. That is the whole
+        of it.
+      </p>
+      <!-- TODO: replace the badge href with the real App Store listing once it exists. -->
+      <div class="stores">
+        <a class="badge" href="#" aria-label="Download Soul on the App Store"><img src="/brand/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Soul</span>
+      <span>If something serious is happening, it stops and points you at a person.</span>
+    </footer>
+  </div>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Fixed amplitudes, so it reads as speech with pauses rather than as noise
+     and looks identical on every load. */
+  var amps = [
+    4,7,13,22,31,26,18,24,35,41,33,21,12,7,5,9,17,28,38,44,
+    36,25,15,8,6,11,20,33,42,39,29,19,10,6,4,8,16,27,36,43,
+    40,30,20,13,9,14,23,32,38,34,24,16,9,6,4,3
+  ];
+  var wave = document.getElementById('wave');
+  amps.forEach(function (a, i) {
+    var bar = document.createElement('i');
+    bar.style.setProperty('--h', a + 'px');
+    bar.style.height = a + 'px';
+    if (!reduce) { bar.style.height = '4px'; bar.style.animationDelay = (i * 13) + 'ms'; }
+    wave.appendChild(bar);
+  });
+  if (!reduce) {
+    window.setTimeout(function () {
+      wave.classList.add('wave--run');
+      amps.forEach(function (a, i) { wave.children[i].style.height = a + 'px'; });
+    }, 560);
+  }
+
+  document.querySelectorAll('[data-seq]').forEach(function (el) {
+    if (reduce) { el.classList.remove('fade'); return; }
+    el.style.animationDelay = (Number(el.dataset.seq) * 100) + 'ms';
+    el.classList.add('fade--in');
+  });
+
+  var button = document.getElementById('closer');
+  var mirror = document.getElementById('mirror');
+  button.addEventListener('click', function () {
+    var open = mirror.dataset.open === 'true';
+    mirror.dataset.open = open ? 'false' : 'true';
+    button.setAttribute('aria-expanded', open ? 'false' : 'true');
+    button.textContent = open ? 'Look closer' : 'Close';
+  });
+
+  var top = document.getElementById('top');
+  var onScroll = function () { top.dataset.stuck = window.scrollY > 8 ? 'true' : 'false'; };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+})();
+</script>
+
+</body>
+</html>
