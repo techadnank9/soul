@@ -66,8 +66,6 @@
   --lift: 0 2px 4px rgba(150, 96, 50, 0.05), 0 12px 32px rgba(150, 96, 50, 0.09);
   --wave: rgba(234, 95, 23, 0.5);
   --scroll: #E2D2BE;
-  --badge-plate: transparent;
-  --badge-pad: 0px;
 
   --rail: 88px;
   --measure: 30rem;
@@ -101,8 +99,6 @@
     --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 36px rgba(0, 0, 0, 0.3);
     --wave: rgba(242, 118, 47, 0.6);
     --scroll: #3C362E;
-    --badge-plate: #FFFFFF;
-    --badge-pad: 9px;
 
     color-scheme: dark;
   }
@@ -135,8 +131,6 @@
   --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 36px rgba(0, 0, 0, 0.3);
   --wave: rgba(242, 118, 47, 0.6);
   --scroll: #3C362E;
-  --badge-plate: #FFFFFF;
-  --badge-pad: 9px;
 
   color-scheme: dark;
 }
@@ -440,21 +434,22 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
 
 
 /* The App Store badge.
-   Apple's own artwork, unmodified, from developer.apple.com. Their guidelines
-   ask for a minimum height and clear space around it, and forbid recolouring.
-   Only the black lockup is served from that URL, so on the dark theme it sits
-   on a light plate rather than being tinted. Swap in Apple's white lockup from
-   Marketing Resources if you would rather have it plain on dark. */
-.badge {
-  display: inline-flex; align-items: center;
-  background: var(--badge-plate);
-  padding: var(--badge-pad);
-  border-radius: calc(10px + var(--badge-pad));
-  transition: opacity 150ms ease;
-}
+   Apple's own artwork, unmodified, from their Marketing Tools API. They ship a
+   black lockup and a white one; the theme decides which is shown rather than
+   anything here recolouring either, which their guidelines forbid. Minimum
+   height and clear space are theirs too. */
+.badge { display: inline-flex; align-items: center; transition: opacity 150ms ease; }
 .badge img { display: block; height: 48px; width: auto; }
-.badge:hover { opacity: 0.82; }
-.badge:focus-visible { outline: 2px solid var(--clay-text); outline-offset: 4px; }
+.badge:hover { opacity: 0.8; }
+.badge:focus-visible { outline: 2px solid var(--clay-text); outline-offset: 5px; border-radius: 10px; }
+
+.badge .badge__on-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .badge .badge__on-light { display: none; }
+  :root:not([data-theme="light"]) .badge .badge__on-dark { display: block; }
+}
+:root[data-theme="dark"] .badge .badge__on-light { display: none; }
+:root[data-theme="dark"] .badge .badge__on-dark { display: block; }
 
 /* Close -------------------------------------------------------------------- */
 
@@ -506,8 +501,7 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
           becomes a pattern only when you say it fits.
         </p>
         <div class="hero__row fade" data-seq="2">
-          <a class="badge" href="#" aria-label="Download Soul on the App Store"><img src="/brand/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>
-          <span class="mono">For iPhone</span>
+          <a class="badge" href="#" aria-label="Download Soul on the App Store"><img class="badge__on-light" src="/brand/app-store-badge-black.svg" alt="" width="120" height="40"><img class="badge__on-dark" src="/brand/app-store-badge-white.svg" alt="" width="120" height="40"></a>
         </div>
       </div>
       <div class="hero__shot fade" data-seq="3">
@@ -713,7 +707,7 @@ a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; 
       </p>
       <!-- TODO: replace the badge href with the real App Store listing once it exists. -->
       <div class="stores">
-        <a class="badge" href="#" aria-label="Download Soul on the App Store"><img src="/brand/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>
+        <a class="badge" href="#" aria-label="Download Soul on the App Store"><img class="badge__on-light" src="/brand/app-store-badge-black.svg" alt="" width="120" height="40"><img class="badge__on-dark" src="/brand/app-store-badge-white.svg" alt="" width="120" height="40"></a>
       </div>
     </section>
 

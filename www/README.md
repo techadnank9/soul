@@ -29,12 +29,18 @@ matching the tab it came from.
 
 ## The App Store badge
 
-`brand/app-store-badge.svg` is Apple's own artwork, downloaded unmodified from
-developer.apple.com. Apple's marketing guidelines forbid recolouring it and ask
-for a minimum height with clear space around it, which the `.badge` rule holds.
-Only the black lockup is served from that URL, so on the dark theme it sits on a
-light plate. To use Apple's white lockup instead, take it from Marketing
-Resources and drop `--badge-plate`.
+`brand/app-store-badge-black.svg` and `brand/app-store-badge-white.svg` are
+Apple's own artwork, unmodified, from their Marketing Tools API:
+
+```
+https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us
+https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/en-us
+```
+
+Apple ships both lockups so neither has to be recoloured, which their
+guidelines forbid. The theme picks one and hides the other. Note that the
+`.badge img` rule is more specific than a bare class, so the rules that hide a
+lockup are scoped to `.badge` or both would show at once.
 
 ## Running it
 

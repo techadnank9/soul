@@ -2918,11 +2918,18 @@ screenshots, because the demo student had no verdicts and the page would
 otherwise have shown a Returning tab with nothing in either section. That wrote
 four rows to `pattern_verdicts` for `student_demo` and touched nothing else.
 
-Two things on that page are Apple's rather than ours. The badge in `brand` is
-their artwork, unmodified, and their guidelines forbid recolouring it, so on the
-dark theme it sits on a light plate rather than being tinted. Only the black
-lockup is served from their asset URL. The white one is in Marketing Resources
-and needs a signed in browser.
+Two things on that page are Apple's rather than ours. Both badges in `brand` are
+their artwork, unmodified. Their guidelines forbid recolouring it, so the theme
+picks between the black lockup and the white one rather than tinting either.
+
+An earlier version of this page carried only the black lockup and sat it on a
+light plate on the dark theme, because the asset path under developer.apple.com
+serves only that one. It read as a patch and the founder said so. Both lockups
+come from Apple's Marketing Tools API instead, which serves either colour with
+no sign in:
+
+    toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us
+    toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/en-us
 
 Reverses if: the site grows past one page, at which point it needs routing and a
 real static generator, and `www` becomes a project rather than a folder.
