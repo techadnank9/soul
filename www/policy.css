@@ -1,0 +1,73 @@
+/* Shared by terms.html and privacy.html. The landing page keeps its own
+   styles inline because it is one document with a lot of layout. These two are
+   plain reading pages and share everything. */
+:root {
+  --bg: #FFF6EC; --s2: #FBEEE0; --border: #EEE0CF;
+  --text: #201B15; --text2: #6B6055; --text3: #756A5E;
+  --clay: #EA5F17; --clay-text: #B74911;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121110; --s2: #232019; --border: #322D26;
+    --text: #F4EDE4; --text2: #BCB1A3; --text3: #90867A;
+    --clay: #F2762F; --clay-text: #FB8E51;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121110; --s2: #232019; --border: #322D26;
+  --text: #F4EDE4; --text2: #BCB1A3; --text3: #90867A;
+  --clay: #F2762F; --clay-text: #FB8E51;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+::selection { background: rgba(234, 95, 23, .12); color: var(--text); }
+
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16.5px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 24px; }
+
+.top { border-bottom: 1px solid var(--border); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; padding-bottom: 14px; }
+.mark {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-size: 25px; text-decoration: none; color: var(--text);
+  display: inline-flex; align-items: baseline; gap: 9px;
+}
+.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--clay); display: block; }
+.top a.back { color: var(--text3); font-size: 14px; text-decoration: none; }
+.top a.back:hover { color: var(--clay-text); }
+
+main { padding: 56px 0 72px; }
+
+h1 {
+  font-family: "Instrument Serif", Iowan Old Style, Georgia, serif;
+  font-weight: 400; font-size: clamp(34px, 6vw, 46px); line-height: 1.1;
+  letter-spacing: -0.022em; margin: 0 0 10px;
+}
+h2 {
+  font-family: "Inter", sans-serif; font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--clay-text);
+  margin: 40px 0 12px;
+}
+p { margin: 0 0 16px; color: var(--text2); }
+p.lead { color: var(--text); font-size: 18px; }
+a { color: var(--clay-text); text-underline-offset: 3px; }
+
+.stamp {
+  background: var(--s2); border-radius: 12px; padding: 14px 16px;
+  font-size: 14.5px; color: var(--text2); margin: 0 0 8px;
+}
+
+.foot {
+  border-top: 1px solid var(--border); padding: 24px 0 48px;
+  color: var(--text3); font-size: 13.5px;
+}
+.foot .wrap { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.foot a { color: var(--text3); }
+
+:where(a):focus-visible { outline: 2px solid var(--clay-text); outline-offset: 3px; border-radius: 6px; }
