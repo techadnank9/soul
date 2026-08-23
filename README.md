@@ -96,6 +96,7 @@ runs before either, blocking, on every entry.
 /app          Flutter client
 /api          TypeScript service
 /db           Drizzle schema and migrations
+/www          The public site at soulspacehealth.com
 /prompts      Versioned prompt text, seeded into the database
 /eval         Evaluation runners and the hand judged fixture set
 /docs         Architecture, screens, staff roles
