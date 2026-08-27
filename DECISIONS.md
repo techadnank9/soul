@@ -2933,3 +2933,69 @@ no sign in:
 
 Reverses if: the site grows past one page, at which point it needs routing and a
 real static generator, and `www` becomes a project rather than a folder.
+
+---
+
+### 188. Three write paths took an id from the request without the student
+Aug 2026, found and fixed by Claude
+
+Decision: `generate/mirror.ts`, `services/patterns/answer.ts` and
+`services/decisions/recordOutcome.ts` now scope every read and every write by
+`session.studentId` as well as by the id. `recordIgnored`, which nothing calls
+yet, takes a session so that whatever calls it later has to resolve a student
+first. A new test, `api/src/tenancy.test.ts`, holds all of it.
+
+Why it was wrong: decision 072 put the read side inside `asStudent`, where row
+level security scopes the query and a missing where clause cannot leak. The
+write side was never moved. It runs on the pooled handle as the owning role,
+where the policies do not apply, so on those three paths the where clause was
+the only guard and it was not there.
+
+What that allowed. Any signed in student could post another student's entry id
+to `/entries/:id/mirror` and have that entry read back to them through the
+model. They could answer somebody else's pattern candidate, which copied that
+student's theme and supporting entry ids into their own `confirmed_patterns`.
+They could close somebody else's decision, which ends a check back that student
+was waiting on and changes what their patterns screen later says.
+
+The test is the part worth keeping. Removing the scoping from the Mirror and
+running it again does not produce a tidy failure: the request reaches the model
+gateway carrying the other student's entry text, and only stops because the
+test environment has no provider keys. That is what the hole actually was.
+
+Not found rather than forbidden, on all three. Forbidden confirms to somebody
+guessing that the id they guessed is real, which is the same reasoning
+decision 130 used for cue cards.
+
+What this does not do: the write path still runs outside `asStudent`. Scoping
+three queries fixes the three that were wrong. Moving writes inside the student
+role would make the whole class impossible rather than these three instances,
+and it is the better fix. It is also a change to every write in the service and
+it is not this change.
+
+Reverses if: nothing.
+
+---
+
+### 189. The roster identifier is no longer a bearer token by default
+Aug 2026, found and fixed by Claude
+
+Decision: `resolveSession` accepts a roster identifier only when
+`SOUL_ROSTER_TOKENS` is exactly the word `allow`. Anything else, including the
+variable being absent, refuses. The flag is in `.env.example` and is set in
+local development.
+
+Why: a rostering identifier is minted by a district and shared with their own
+systems. It is an identifier, not a credential, and it was accepted as a bearer
+token in every environment including production. Anybody holding a roster list
+held a working key to every student on it.
+
+Why a flag that has to be turned on rather than a check for production: an
+environment that has not thought about this refuses. `NODE_ENV` is not set by
+`tsx`, so keying off it would have meant the insecure path was the default
+everywhere it was not explicitly overridden, which is the failure this is meant
+to remove. Same reasoning as decision 031, where a classifier that cannot
+answer is treated as high risk rather than as a pass.
+
+Reverses if: sign in becomes the only path into the product, at which point the
+flag and the roster branch both go.

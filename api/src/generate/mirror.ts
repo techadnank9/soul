@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db, entries } from '../db.js'
 import { call } from '../gateway/call.js'
 import { loadContext, renderContext } from '../memory/buildContext.js'
@@ -27,10 +27,22 @@ export async function mirror(
   entryId: string,
   session: Session,
 ): Promise<MirrorResult> {
+  /**
+   * Scoped to the student, not just to the id.
+   *
+   * This runs on the pooled handle rather than inside asStudent, so row level
+   * security is not the thing keeping one student out of another's entry. The
+   * where clause is. Without the student here, anybody signed in could post
+   * somebody else's entry id to /entries/:id/mirror and have the whole of that
+   * entry read back to them through the model.
+   *
+   * Not found rather than forbidden, so a guessed id cannot be confirmed as
+   * real. Same reasoning as the cue card path.
+   */
   const rows = await db
     .select({ text: entries.text })
     .from(entries)
-    .where(eq(entries.id, entryId))
+    .where(and(eq(entries.id, entryId), eq(entries.studentId, session.studentId)))
     .limit(1)
 
   const entry = rows[0]

@@ -1,5 +1,6 @@
 import type { TransactionSql } from 'postgres'
 import { sql } from './db.js'
+import { env } from './env.js'
 import { SESSION_TOKEN_PREFIX, hashSessionToken } from './auth/tokens.js'
 
 /**
@@ -20,12 +21,19 @@ export type Session = {
  *
  * A signed in device sends a session token. A debug build with no sign in
  * behind it sends the roster reference, which is how the product has been
- * driven from a laptop since the first day and is still how it is driven now.
- * The roster path is the development path and it stays.
+ * driven from a laptop since the first day.
+ *
+ * That second path is now behind a flag. A roster identifier is minted by a
+ * district and shared with their own systems, so it is not a secret and it is
+ * not a credential. Accepting one as a bearer meant anybody holding a roster
+ * list held a key to every one of those students. The flag is off unless it is
+ * turned on, so an environment that forgets to think about it refuses rather
+ * than allows.
  */
 export async function resolveSession(token: string | undefined): Promise<Session | null> {
   if (!token) return null
   if (token.startsWith(SESSION_TOKEN_PREFIX)) return resolveSessionToken(token)
+  if (!env.allowRosterTokens()) return null
 
   const rows = await sql<{ id: string; school_id: string; district_id: string }[]>`
     select id, school_id, district_id

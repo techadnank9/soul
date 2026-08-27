@@ -25,6 +25,17 @@ export const env = {
    */
   appleBundleId: () => required('APPLE_BUNDLE_ID'),
 
+  /**
+   * Whether the roster identifier is accepted as a bearer token.
+   *
+   * A rostering identifier is shared with a district's own systems and is not
+   * a secret, so treating it as one is a way in. It is how the product has been
+   * driven from a laptop since the first day, which is worth keeping, so it is
+   * a flag that has to be turned on rather than a default that has to be
+   * remembered. Off unless SOUL_ROSTER_TOKENS is exactly the word allow.
+   */
+  allowRosterTokens: (): boolean => process.env.SOUL_ROSTER_TOKENS === 'allow',
+
   providers: {
     openaiKey: optional('OPENAI_API_KEY'),
     geminiKey: optional('GEMINI_API_KEY'),

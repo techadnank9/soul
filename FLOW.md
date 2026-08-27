@@ -297,6 +297,12 @@ times into a London student and sliding half the week.
 
 No path takes a student id. There is no id to get wrong.
 
+The write side is a different shape and worth stating plainly. It runs on the
+pooled handle rather than inside `asStudent`, so row level security is not
+scoping it and the where clause is. Anywhere a write takes an id from the
+request, that id is matched against the session's student as well. Decision 188
+is the three places where it was not, and what that allowed.
+
 ---
 
 ## What runs in the background
