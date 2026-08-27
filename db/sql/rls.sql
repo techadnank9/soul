@@ -54,7 +54,8 @@ begin
     'entry_embeddings','decisions','outcomes','cue_cards','pattern_candidates',
     'confirmed_patterns','pattern_rejections','pattern_verdicts','safety_flags',
     'people','entry_people',
-    'generations','prompts','jobs','audit_log'
+    'generations','prompts','jobs','audit_log',
+    'legacy_feedback','legacy_users'
   ]
   loop
     execute format('alter table %I enable row level security', t);
@@ -144,6 +145,14 @@ create policy jobs_student_scope on jobs to soul_student
 -- soul_student, so the student role never needs it. Leaving it readable would
 -- put every device's token hash one missing where clause away from a student
 -- who already has a token of their own.
+
+-- The two legacy tables hold people from the previous website. They are not
+-- students, nothing in the product is about them, and no request path has any
+-- business reading them. Row level security is forced with no policy, which
+-- denies every row, and the grants are revoked as well so the denial does not
+-- depend on the policy list staying empty.
+revoke all on table legacy_feedback from soul_student;
+revoke all on table legacy_users from soul_student;
 
 revoke select, insert, update on table prompts from soul_student;
 revoke select, insert, update on table sessions from soul_student;

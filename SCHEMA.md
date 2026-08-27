@@ -291,3 +291,30 @@ distinct days, keep rows where both are at least three, exclude anything in
 
 It is a query on purpose. When the app tells a student this is the third time,
 we can show exactly which three entries and why.
+
+---
+
+## The two legacy tables
+
+`legacy_feedback` and `legacy_users` hold people from the previous Soul Space
+website: 135 survey answers and 50 accounts. They are here because they answered
+questions about this product and some of them may already know who we are.
+
+They are unlike every other table in this file and the difference is the point.
+
+They carry no student, school or district column, because these people are none
+of those things. They have no consent recorded here and they never agreed to
+anything about this app.
+
+Row level security is forced on both and the student role has no policy and no
+grant on either, so the request path cannot read them at all. That is stricter
+than `prompts` and the same intent as decision 027. Trying it as `soul_student`
+returns permission denied rather than an empty result.
+
+Each row keeps a `raw` column holding the original record exactly as exported.
+The parsed columns are for querying, and `raw` is so that a field nobody thought
+to map is still there later without going back to a file on somebody's laptop.
+
+The source files are not in this repository and should not be. They contain
+names, email addresses and phone numbers. `npm run import:legacy -w @soul/api`
+takes their paths as arguments and is idempotent by source.

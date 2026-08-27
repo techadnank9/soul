@@ -2999,3 +2999,40 @@ answer is treated as high risk rather than as a pass.
 
 Reverses if: sign in becomes the only path into the product, at which point the
 flag and the roster branch both go.
+
+---
+
+### 190. The old website's people are kept, and the product cannot read them
+Aug 2026, Adnan, built by Claude
+
+Decision: two tables, `legacy_feedback` and `legacy_users`, holding 135 survey
+answers and 50 accounts exported from the previous Soul Space website. Forced
+row level security with no policy and no grant for `soul_student`, so no request
+path can reach either one.
+
+Why keep them at all: they answered questions about this product, the ratings
+are the only outside opinion of it that exists, and some of them may recognise
+the name later. Deleting that to keep the schema tidy would be throwing away the
+only evidence we have that is not our own.
+
+Why they are quarantined: they are not students. They have no district, no
+school, and no consent recorded in this system. Every other table here is scoped
+to a student because a student agreed to be here. These people did not, so the
+safe shape is a table the product cannot see, that a human queries deliberately.
+Revoking the grants as well as leaving the policy list empty means the denial
+does not quietly depend on nobody adding a policy later.
+
+Why `raw` alongside parsed columns: the parsed columns are a guess at what
+matters. The raw record is what actually arrived. A guess that turns out wrong
+should cost a query and not a reimport.
+
+Why the files are not committed: they hold names, email addresses and phone
+numbers. The import script takes paths and is idempotent by source, so the data
+lives in the database and the files stay wherever they were downloaded.
+
+What is still open: nobody has decided how long these are kept or what happens
+if one of these people asks to be removed. There is no retention rule on either
+table and there should be one before anything is ever sent to these addresses.
+
+Reverses if: a lawyer says holding them without a basis is not defensible, in
+which case they go, and the ratings can be kept as counts without the people.

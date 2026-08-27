@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed:fixtures": "tsx --env-file-if-exists=../.env src/scripts/seed_fixtures.ts",
-    "seed:demo": "tsx --env-file-if-exists=../.env src/scripts/seed_demo.ts"
+    "seed:demo": "tsx --env-file-if-exists=../.env src/scripts/seed_demo.ts",
+    "import:legacy": "tsx --env-file-if-exists=../.env src/scripts/import_legacy.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",

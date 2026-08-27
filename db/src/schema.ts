@@ -8,6 +8,8 @@ import {
   smallint,
   boolean,
   timestamp,
+  date,
+  jsonb,
   real,
   doublePrecision,
   index,
@@ -699,4 +701,67 @@ export const auditLog = pgTable(
     createdAt: now(),
   },
   (t) => [index('audit_log_subject_student_created_idx').on(t.subjectStudentId, t.createdAt.desc())],
+)
+
+/**
+ * Everything below this line came from the previous website and belongs to
+ * nobody in this product.
+ *
+ * These are people who filled in a survey or made an account on the old Soul
+ * Space site. They are not students, they have no district and no school, and
+ * they never signed anything about this app. So they carry none of the tenancy
+ * columns, and the row level security file gives the student role no policy on
+ * either table, which means the request path cannot read them at all. That is
+ * the same treatment prompts and audit_log get in decision 027.
+ *
+ * The parsed columns are for querying. `raw` keeps the original record exactly
+ * as it arrived, because a field nobody thought to map is still evidence and a
+ * reimport should never be needed to get it back.
+ */
+
+export const legacyFeedback = pgTable(
+  'legacy_feedback',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Where the export came from, taken from the file rather than assumed. */
+    source: text('source').notNull(),
+    submittedOn: date('submitted_on'),
+    guestEmail: text('guest_email'),
+    rating: smallint('rating'),
+    ease: text('ease'),
+    recommend: text('recommend'),
+    useFrequency: text('use_frequency'),
+    personalOrGeneric: text('personal_or_generic'),
+    whatConfusedThem: text('what_confused_them'),
+    wouldUseAgain: text('would_use_again'),
+    freeText: text('free_text'),
+    /** A marker the old panel wrote, shaped like "2 of 4", for repeat senders. */
+    duplicate: text('duplicate'),
+    raw: jsonb('raw').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    index('legacy_feedback_email_idx').on(t.guestEmail),
+    index('legacy_feedback_submitted_idx').on(t.submittedOn.desc()),
+  ],
+)
+
+export const legacyUsers = pgTable(
+  'legacy_users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    source: text('source').notNull(),
+    name: text('name'),
+    email: text('email').notNull(),
+    phone: text('phone'),
+    age: smallint('age'),
+    gender: text('gender'),
+    plan: text('plan'),
+    profileComplete: boolean('profile_complete'),
+    sessions: integer('sessions'),
+    joinedOn: date('joined_on'),
+    raw: jsonb('raw').notNull(),
+    createdAt: now(),
+  },
+  (t) => [uniqueIndex('legacy_users_email_idx').on(t.email)],
 )
