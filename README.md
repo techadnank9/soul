@@ -109,7 +109,7 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | Task | State |
 | --- | --- |
 | 0 Two experiments | **Not done.** Needs real devices and forty recordings of real students. Nothing here substitutes for it. |
-| 1 Schema | Done. Eighteen tables, row level security forced, tenancy test passing. |
+| 1 Schema | Done. Twenty five tables, row level security forced on every one, tenancy tests passing against the live database. |
 | 2 API skeleton | Done. |
 | 3 Transcription | Built and proven with real speech. Audio is deleted after every attempt. |
 | 4 Safety classifier | Done. Blocking, written on every entry, fails closed. |
@@ -127,6 +127,9 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | Reflections | Good and bad patterns, one line each, opening on the entries behind them. |
 | People | Everyone they write about, with a profile the model writes. |
 | Sign in with Apple | Built, and unusable until the capability has a team behind it. |
+| The public site | Live. `www`, deployed from `main`, with terms, a privacy policy and a contact address. |
+| Production database | Supabase, migrated and seeded. The service that talks to it is not hosted anywhere yet. |
+| Hosting | **Not done, and deliberately.** See below. |
 
 What is real: all of it. The sample file is deleted, every screen reads the
 student's own rows, and nothing in the app is invented content any more.
@@ -134,6 +137,31 @@ student's own rows, and nothing in the app is invented content any more.
 What has never been tested on a real student: all of it. Task 0 and task 7 are
 both still open, and the eval directory that would answer task 7 is still
 empty.
+
+## Where this runs
+
+The database is on Supabase. Everything else runs on a laptop, which is a
+decision rather than an oversight, and it has a trigger.
+
+Nothing can ship until there is an Apple developer team, task 7 has been done
+and the account model is settled. Until one of those changes there is no user to
+be offline for, so paying for hosting buys nothing. **When the app is published,
+the service moves to Render**, a web service for the API and a background worker
+for the queue. The `Dockerfile` and `POST /jobs/drain` are already in the
+repository, so that move is configuration rather than building.
+
+What this costs while it lasts: the job queue only drains while somebody's
+machine is awake. Check backs scheduled for a day when the laptop is closed do
+not fire on time, they fire whenever the worker next runs. That is survivable in
+development and it is exactly what stops being survivable on the day a real
+person installs the app.
+
+Both processes have to be running for the product to work, not just the API:
+
+```
+npm start -w @soul/api     # the HTTP API
+npm run worker -w @soul/api # the queue: tagging, cue cards, sweeps, check backs
+```
 
 ## First run
 

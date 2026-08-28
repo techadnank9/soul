@@ -3083,3 +3083,40 @@ remove the thing that runs it.
 
 Reverses if: the service is compiled to JavaScript ahead of time, at which point
 `tsx` leaves the runtime and the image runs `node` directly.
+
+---
+
+### 192. The service stays on a laptop until the app is published, then it goes to Render
+Aug 2026, Adnan
+
+Decision: the database is on Supabase. The API and the job runner keep running
+locally until the app is actually published, at which point both move to Render,
+a web service for the API and a background worker for the queue.
+
+Why not now: nothing can ship. There is no Apple developer team, task 7 has not
+been done, and whether an account is created by a district or by a person
+downloading it is undecided. There is no user to be offline for, so hosting
+would be paying to keep an empty service warm.
+
+Why Render rather than AWS. Fargate needs a load balancer, which is about
+sixteen dollars a month before a container starts, at zero traffic, and the
+hundred dollars of credit on the account expires. App Runner is the cheaper AWS
+shape but it enforces a hard hundred and twenty second request timeout that
+covers reading the request through writing the response, and `mirror` is
+configured at exactly a hundred and twenty seconds, so a slow Mirror would have
+the connection cut at the same instant our own timeout fires and the student
+would get a dead socket instead of a handled error. Going that way means
+lowering the Mirror first. Render's background worker runs `loop()` as written,
+which is the shape the runner already has.
+
+Not the free tier for the web service when that day comes. Render spins a free
+instance down after fifteen minutes and it takes about a minute to wake. Beat
+one is built around three seconds.
+
+What this costs in the meantime: the queue only drains while a machine is awake.
+A check back booked for a day the laptop is closed fires late rather than on the
+day the student named, which is the one part of the product that cannot be
+caught up convincingly.
+
+Reverses if: anybody outside the team installs the app, at which point this is
+no longer a tradeoff, it is an outage.
