@@ -36,6 +36,13 @@ export const env = {
    */
   allowRosterTokens: (): boolean => process.env.SOUL_ROSTER_TOKENS === 'allow',
 
+  /**
+   * The shared secret a scheduler presents to drain the job queue. Unset means
+   * the drain endpoint refuses everybody, which is the right default for a
+   * machine to machine route.
+   */
+  jobsSecret: (): string | undefined => optional('SOUL_JOBS_SECRET'),
+
   providers: {
     openaiKey: optional('OPENAI_API_KEY'),
     geminiKey: optional('GEMINI_API_KEY'),

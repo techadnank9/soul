@@ -10,6 +10,7 @@ import { consent } from './routes/consent.js'
 import { profile } from './routes/profile.js'
 import { peopleRoutes } from './routes/people.js'
 import { auth } from './routes/auth.js'
+import { jobs } from './routes/jobs.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -21,8 +22,17 @@ app.get('/health', (c) => c.json({ ok: true }))
  * Every route below this line has a student. There is no anonymous path into
  * the product, because every row in the database is scoped to one.
  */
+/**
+ * Two routes have no student. /health answers a load balancer, and /jobs/drain
+ * is driven by a scheduler and carries its own shared secret. Everything else
+ * below the middleware has a student, because every row does.
+ */
+const noSession = new Set(['/health', '/jobs/drain'])
+
+app.route('/', jobs)
+
 app.use('*', async (c, next) => {
-  if (c.req.path === '/health') return next()
+  if (noSession.has(c.req.path)) return next()
 
   const header = c.req.header('authorization')
   const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined

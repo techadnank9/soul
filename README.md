@@ -186,6 +186,55 @@ flutter run --dart-define=SOUL_API=http://localhost:8080 \
 Without provider keys the safety classifier cannot answer, so every entry
 returns the help screen. That is the designed behaviour, not a failure.
 
+## Running it somewhere real
+
+A laptop is not a deployment. When it sleeps the API stops answering and, worse,
+the job runner stops: check backs never fire on the day a student named, the
+nightly sweep never books its next night, and entries are never tagged. None of
+that recovers by itself.
+
+The service is two processes and they have different needs.
+
+**The API.** `Dockerfile` at the repository root builds it and is host neutral.
+It runs on Fly, Railway, Render, App Runner, Cloud Run or a plain virtual
+machine. Nothing in it is specific to one of them. Every secret comes from the
+environment: `DATABASE_URL`, the provider keys, `APPLE_BUNDLE_ID`. Do not set
+`SOUL_ROSTER_TOKENS` anywhere real.
+
+**The job queue.** Two ways to drain it, and the code is the same either way.
+
+Run the worker as a second process, which is `loop()` and is right on a host
+that stays up:
+
+```
+npm run worker -w @soul/api
+```
+
+Or let a scheduler drive it, which is right anywhere that sleeps or bills by
+the hour:
+
+```
+curl -X POST https://your-api/jobs/drain \
+  -H "Authorization: Bearer $SOUL_JOBS_SECRET"
+```
+
+`POST /jobs/drain` runs up to twenty five jobs and stops early when the queue is
+empty, so a quiet minute costs one query. It has no session, because a scheduler
+is not a student. It carries a shared secret instead, and with
+`SOUL_JOBS_SECRET` unset it refuses every caller rather than running jobs for
+anybody who finds the URL.
+
+Supabase can schedule this itself. `pg_cron` and `pg_net` are both available on
+the project and `pg_cron` runs to the minute, which is far better than the once
+a day most free platform crons offer. That matters: a queue drained daily means
+a student waits a day for the tags everything downstream is built on.
+
+What Supabase cannot do is host the API. Its only compute is Edge Functions,
+which are Deno, and this is a Node service with npm workspaces and Node imports.
+The Mirror and cue card calls also allow up to a hundred and twenty seconds,
+which sits badly with Edge Function limits. Supabase holds the data and can hold
+the clock. Something else has to hold the service.
+
 ## Sign in with Apple
 
 The capability is already wired into the project. `app/ios/Runner/Runner.entitlements`

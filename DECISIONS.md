@@ -3036,3 +3036,50 @@ table and there should be one before anything is ever sent to these addresses.
 
 Reverses if: a lawyer says holding them without a basis is not defensible, in
 which case they go, and the ratings can be kept as counts without the people.
+
+---
+
+### 191. The queue can be drained over HTTP, so the worker is not tied to a machine that stays up
+Aug 2026, Adnan asked where this actually runs, built by Claude
+
+Decision: `POST /jobs/drain` runs the same `tick()` the worker loop runs, up to
+twenty five jobs, stopping early when the queue is empty. It carries a shared
+secret in `SOUL_JOBS_SECRET` rather than a session, and it is the only route
+excluded from the student middleware. With no secret set it answers 503 to
+everybody. A root `Dockerfile` builds the service for any container host.
+
+Why: the API and the job runner only existed on a laptop. That is fine for
+development and it is not a deployment. When the machine sleeps the queue stops,
+and the queue is where the product's slow mechanics live: a check back fires on
+the day a student named it, the sweep books its own next night, and tags feed
+every pattern downstream. None of it recovers on its own, and none of it is
+visible when it fails.
+
+Why an endpoint rather than only the loop: `loop()` is right on a host that
+stays up and wrong on one that sleeps or bills by the hour. `tick()` was already
+exported separately, so both shapes are the same code and neither is a fork.
+Supabase can drive it: `pg_cron` and `pg_net` are available on the project and
+`pg_cron` runs to the minute, which matters because most free platform crons run
+once a day and a queue drained daily makes a student wait a day for their tags.
+
+Why it fails closed: it is a machine to machine route with no student behind it.
+Unset meaning open would have made every deployment that had not yet thought
+about scheduling into an open job runner. Same reasoning as decisions 031 and
+189.
+
+Why the secret is compared in constant time: it is three lines and the
+alternative leaks length and prefix information to anybody willing to measure.
+
+What this does not settle: where the API runs. Supabase holds the data and can
+hold the clock, but its only compute is Edge Functions, which are Deno, and this
+is a Node service with npm workspaces and Node imports whose longest model calls
+allow a hundred and twenty seconds. Porting the safety path to a different
+runtime for hosting convenience is the wrong trade. A host still has to be
+chosen, and the Dockerfile is deliberately neutral about which.
+
+Also moved `tsx` from devDependencies to dependencies. It is how the service
+starts in every environment, so `npm ci --omit=dev` in the image was about to
+remove the thing that runs it.
+
+Reverses if: the service is compiled to JavaScript ahead of time, at which point
+`tsx` leaves the runtime and the image runs `node` directly.

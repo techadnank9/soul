@@ -10,7 +10,7 @@ change the path, change this file in the same commit.
 
 ## Entry points
 
-There are only nine ways anything starts running.
+There are only ten ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
@@ -23,8 +23,16 @@ There are only nine ways anything starts running.
 | Student opens a day | Human | `app/lib/features/day/days_screen.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
+| A scheduler drains the queue | Time | `api/src/routes/jobs.ts`, calling the same `tick()` |
 
-Everything else in the system is called by one of these nine.
+Everything else in the system is called by one of these ten.
+
+The tenth is the same work as the eighth and ninth, reached differently.
+`npm run worker` runs `tick()` in a loop forever, which suits a host that stays
+up. `POST /jobs/drain` runs the same `tick()` a bounded number of times when
+something with a clock asks it to, which suits a host that does not. It is the
+only route with no student on it, and it carries a shared secret instead. With
+no secret configured it refuses everybody.
 
 ---
 
