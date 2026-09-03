@@ -77,6 +77,10 @@ class _CaptureScreenState extends State<CaptureScreen>
   final _recorder = AudioRecorder();
   final _api = SoulApi.fromEnvironment();
 
+  /// When the mic was started, so the report can say how long the person
+  /// spoke against how long the transcriber thought the clip was.
+  DateTime? _recordingSince;
+
   /// The last few seconds of what the microphone heard, newest last, one
   /// value per bar between 0 and 1. The waves are drawn from this and from
   /// nothing else, so silence is flat and a word is a spike, the way a voice
@@ -169,6 +173,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     );
 
     if (!mounted) return;
+    _recordingSince = DateTime.now();
     setState(() {
       _recording = true;
       _failure = null;
@@ -212,6 +217,9 @@ class _CaptureScreenState extends State<CaptureScreen>
 
     final file = File(path);
     final startedAt = DateTime.now();
+    final recordedMs = _recordingSince == null
+        ? null
+        : startedAt.difference(_recordingSince!).inMilliseconds;
     var bytes = 0;
     try {
       await _settled(file);
@@ -220,6 +228,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       final transcript = await _api.transcribe(audio, 'audio/wav');
       _api.event('transcribe_ok', {
         'bytes': bytes,
+        'recorded_ms': recordedMs,
         'ms': DateTime.now().difference(startedAt).inMilliseconds,
         'words': transcript.text.trim().split(RegExp(r'\s+')).length,
         'tone': transcript.toneId != null,
@@ -242,6 +251,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       _api.event('transcribe_failed', {
         'status': status,
         'bytes': bytes,
+        'recorded_ms': recordedMs,
         'ms': DateTime.now().difference(startedAt).inMilliseconds,
         'error': status == null ? error.runtimeType.toString() : null,
       });
