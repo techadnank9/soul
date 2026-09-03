@@ -26,7 +26,7 @@ services:
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: SENTRY_DSN
-        sync: false
+        value: https://a2473c98efd8c05fbb8570017b1a669b@o4512024433393664.ingest.us.sentry.io/4512024454430720
       - key: SOUL_JOBS_SECRET
         generateValue: true
       - key: RESEND_API_KEY
@@ -51,4 +51,4 @@ services:
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: SENTRY_DSN
-        sync: false
+        value: https://a2473c98efd8c05fbb8570017b1a669b@o4512024433393664.ingest.us.sentry.io/4512024454430720
