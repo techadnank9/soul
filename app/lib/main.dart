@@ -36,7 +36,11 @@ import 'theme/widgets.dart';
 /// Where crashes and errors are reported. An address, not a secret, and
 /// empty means nothing is reported and nothing else changes. Set at build
 /// time with SENTRY_DSN or pasted here once the project exists.
-const _sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
+const _sentryDsn = String.fromEnvironment(
+  'SENTRY_DSN',
+  defaultValue:
+      'https://a2473c98efd8c05fbb8570017b1a669b@o4512024433393664.ingest.us.sentry.io/4512024454430720',
+);
 
 Future<void> main() async {
   if (_sentryDsn.isEmpty) {
