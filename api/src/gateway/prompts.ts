@@ -12,6 +12,7 @@ export type Purpose =
   | 'person_profile'
   | 'voice_tone'
   | 'facts'
+  | 'consolidate'
 
 /**
  * Prompt text comes from the database, never from the binary.

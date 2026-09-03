@@ -12,6 +12,7 @@ export type JobType =
   | 'check_back'
   | 'pattern_sweep'
   | 'pattern_verdicts'
+  | 'consolidate_memory'
   | 'cue_cards'
   | 'people'
   | 'person_profile'
@@ -75,6 +76,28 @@ export async function scheduleVerdicts(runAt: Date = new Date()): Promise<void> 
     select 'pattern_verdicts', '{}', ${runAt.toISOString()}::timestamptz
     where not exists (
       select 1 from jobs where type = 'pattern_verdicts' and status = 'pending'
+    )`
+}
+
+/**
+ * The nightly consolidation, booked the way the sweep is.
+ *
+ * No student on the row. One run reads every person who has new facts since
+ * their last consolidation and takes them one at a time, so there is nothing
+ * to scope the job to. One pending at a time for the same reason as the
+ * sweep: the runner books the next night at the end of every run, and an
+ * insert that did not check would double the chain on every restart.
+ *
+ * It is booked for the same hour as the sweep rather than chained behind it.
+ * The two read different tables and neither needs the other to have run, and
+ * the runner takes one job at a time, so they cannot collide.
+ */
+export async function scheduleConsolidation(runAt: Date = nextNight()): Promise<void> {
+  await sql`
+    insert into jobs (type, payload, run_at)
+    select 'consolidate_memory', '{}', ${runAt.toISOString()}::timestamptz
+    where not exists (
+      select 1 from jobs where type = 'consolidate_memory' and status = 'pending'
     )`
 }
 

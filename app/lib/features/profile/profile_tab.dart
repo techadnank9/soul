@@ -141,9 +141,9 @@ class _ProfileTabState extends State<ProfileTab> {
     return Screen(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       body: [
-        Text(_name ?? 'Profile', style: SoulType.heading),
+        const Text('Profile', style: SoulType.heading),
         const SizedBox(height: 6),
-        const Label('what the app holds'),
+        Label(_name ?? 'what the app holds'),
         const SizedBox(height: 18),
         SoulCard(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -192,19 +192,11 @@ class _ProfileTabState extends State<ProfileTab> {
           Text(_note!, style: SoulType.muted),
         ],
         const SizedBox(height: 20),
-        Inset(
-          label: 'what it does not hold',
-          body: 'No surname and no birthdate. Your recordings are never kept, '
-              'only the words. '
-              '${_position == null ? 'Your location is not stored unless you share it.' : 'Your location is stored, and removing it here removes it for good.'} '
-              'Everything above can be changed or emptied here.',
-        ),
         const SizedBox(height: 24),
         // Log out forgets this phone's session. The account stays, and
         // signing in with the same Apple account or email brings it back.
         SoulButton(
           'Log out',
-          kind: SoulButtonKind.ghost,
           onPressed: () => _logOut(context),
         ),
         const SizedBox(height: 90),
@@ -360,11 +352,10 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+    // The row reads. The pencil edits. A row that opened an editor on any
+    // touch turned reading the profile into a minefield.
+    return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
         child: Row(
           children: [
             SizedBox(width: 78, child: Label(label)),
@@ -385,10 +376,13 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: SoulColors.text3),
+            IconButton(
+              onPressed: onTap,
+              icon: const Icon(Icons.edit_outlined, size: 20, color: SoulColors.text3),
+              tooltip: 'Change',
+            ),
           ],
         ),
-      ),
     );
   }
 }

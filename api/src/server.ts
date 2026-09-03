@@ -21,6 +21,7 @@ if (env.sentryDsn()) {
 import { resolveSession, type Session } from './session.js'
 import { entries } from './routes/entries.js'
 import { reads } from './routes/reads.js'
+import { graph } from './routes/graph.js'
 import { cards } from './routes/cards.js'
 import { transcription } from './routes/transcribe.js'
 import { consent } from './routes/consent.js'
@@ -79,6 +80,7 @@ app.route('/', auth)
 
 app.route('/', entries)
 app.route('/', reads)
+app.route('/', graph)
 app.route('/', cards)
 app.route('/', transcription)
 app.route('/', consent)

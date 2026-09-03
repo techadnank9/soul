@@ -65,6 +65,7 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'voice_tone',
   'facts',
   'embedding',
+  'consolidate',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])

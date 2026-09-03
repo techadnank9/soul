@@ -99,6 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Profile _profile = const Profile();
   int _index = 0;
   int? _pressed;
+  // Kept for the moment the fade comes back. Nothing reads it today.
+  // ignore: unused_field
   bool _leaving = false;
   bool _advancing = false;
   bool _locating = false;
@@ -302,8 +304,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 34),
                 AnimatedOpacity(
-                  opacity: _leaving ? 0 : 1,
-                  duration: const Duration(milliseconds: 140),
+                  opacity: 1,
+                  duration: Duration.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -321,8 +323,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 28),
                 Expanded(
                   child: AnimatedOpacity(
-                    opacity: _leaving ? 0 : 1,
-                    duration: const Duration(milliseconds: 140),
+                    opacity: 1,
+                    duration: Duration.zero,
                     child: KeyedSubtree(
                       key: ValueKey(_index),
                       child: switch (_step) {

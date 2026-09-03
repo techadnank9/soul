@@ -408,3 +408,76 @@ export const factsResult = z.object({
     .max(8),
 })
 export type FactsResult = z.infer<typeof factsResult>
+
+/**
+ * What the nightly consolidation must return. Anything else is discarded.
+ *
+ * At most three observations, each drawn from two or more of the numbered
+ * facts it was shown. The numbers are checked in code against the list that
+ * was sent, so an observation that points at a fact that was not there is
+ * dropped rather than written with nothing behind it. Same register as a
+ * fact: a situation in the person's words, and no dashes.
+ */
+export const consolidateResult = z.object({
+  observations: z
+    .array(
+      z.object({
+        subject: z.string().trim().min(1).max(60).regex(NO_DASH),
+        predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
+        object: z.string().trim().min(1).max(160).regex(NO_DASH),
+        sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
+        drawnFrom: z.array(z.number().int().positive()).min(2).max(40),
+        confidence: z.number().min(0).max(1),
+      }),
+    )
+    .max(3),
+})
+export type ConsolidateResult = z.infer<typeof consolidateResult>
+
+/**
+ * The graph. One person as rows with ids pointing at other rows, which is
+ * the shape docs/memory.md says the memory should have and the reason it
+ * lives in our database.
+ *
+ * Every node has an id and a type, and the rest depends on the type. Edges
+ * are pairs of node ids. The person node is the root and has an edge to
+ * everything, so a screen can lay it out from one place; the other edges
+ * are the ones that carry meaning: a decision to what came of it, a fact to
+ * the person it names. Every fact node carries its entry ids so it can be
+ * opened to the words behind it, the property the doc names as the reason
+ * for holding the memory ourselves.
+ */
+export const graphNode = z.discriminatedUnion('type', [
+  z.object({ id: z.string().uuid(), type: z.literal('person'), name: z.string().nullable() }),
+  z.object({
+    id: z.string().uuid(),
+    type: z.literal('fact'),
+    sentence: z.string(),
+    tier: z.number().int().min(0),
+    validFrom: z.string(),
+    entryIds: z.array(z.string().uuid()),
+  }),
+  z.object({ id: z.string().uuid(), type: z.literal('person_named'), name: z.string() }),
+  z.object({ id: z.string().uuid(), type: z.literal('pattern'), theme: z.string() }),
+  z.object({
+    id: z.string().uuid(),
+    type: z.literal('decision'),
+    chose: z.string(),
+    status: z.enum(['open', 'closed']),
+  }),
+  z.object({
+    id: z.string().uuid(),
+    type: z.literal('outcome'),
+    felt: z.enum(['lighter', 'same', 'worse']).nullable(),
+  }),
+])
+export type GraphNode = z.infer<typeof graphNode>
+
+export const graphEdge = z.object({ from: z.string().uuid(), to: z.string().uuid() })
+export type GraphEdge = z.infer<typeof graphEdge>
+
+export const graphView = z.object({
+  nodes: z.array(graphNode),
+  edges: z.array(graphEdge),
+})
+export type GraphView = z.infer<typeof graphView>

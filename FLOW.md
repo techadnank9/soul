@@ -10,7 +10,7 @@ change the path, change this file in the same commit.
 
 ## Entry points
 
-There are only ten ways anything starts running.
+There are only eleven ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
@@ -23,11 +23,13 @@ There are only ten ways anything starts running.
 | Student opens a day | Human | `app/lib/features/day/days_screen.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
+| Nightly consolidation | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
 | A scheduler drains the queue | Time | `api/src/routes/jobs.ts`, calling the same `tick()` |
 
-Everything else in the system is called by one of these ten.
+Everything else in the system is called by one of these eleven.
 
-The tenth is the same work as the eighth and ninth, reached differently.
+The eleventh is the same work as the eighth, ninth and tenth, reached
+differently.
 `npm run worker` runs `tick()` in a loop forever, which suits a host that stays
 up. `POST /jobs/drain` runs the same `tick()` a bounded number of times when
 something with a clock asks it to, which suits a host that does not. It is the
@@ -328,6 +330,39 @@ runner named the type.
 
 ---
 
+## Flow 7: consolidation, nightly
+
+```
+jobs/runner.ts fires consolidate_memory
+  └─ services/memory/consolidate.ts
+       ├─ SQL: everybody with an open tier 0 fact learned since their last
+       │    consolidation, which is their newest generations row with the
+       │    purpose consolidate, or ever when they have none
+       └─ for each person, one at a time, consent checked first
+            ├─ loads the new facts, the older open tier 0 facts, and the
+            │    tier 1 observations already written
+            ├─ gateway.call('consolidate', the three lists, numbered)
+            ├─ parseStructured() → { observations: [subject, predicate,
+            │    object, sentence, drawnFrom numbers, confidence] }, at most 3
+            ├─ an observation drawn from fewer than two facts, or from none
+            │    of tonight's, is dropped
+            ├─ said again at tier 1 → the entry ids join the open observation
+            ├─ turned over (same subject and predicate, new object) → the old
+            │    tier 1 row gets valid_to. Tier 1 never closes tier 0
+            ├─ gateway.embed(sentence) → the observation's vector, null if it fails
+            └─ insert facts row, tier 1, entry_ids = every entry behind the
+                 facts it was drawn from, valid_from = the earliest of them
+  └─ books itself for the next night, the way the sweep does
+```
+
+The episodic to semantic step in docs/memory.md. It writes into the same
+facts table, so a tier 1 row is opened to its entries like any other fact
+and is read by `buildContext` like any other open fact. One person's failure
+is logged and the night goes on; their facts are still new tomorrow. Nothing
+here is on a request path.
+
+---
+
 ## What the app reports
 
 The app has no analytics or crash reporting SDK and never will. Instead it
@@ -368,9 +403,14 @@ GET /reflection → services/reads/reflection.ts one theme, and the entries
 GET /people     → services/people/read.ts      who they write about
 GET /people/:id → services/people/read.ts      one person, and where they
                                                come up
+GET /graph      → routes/graph.ts              the person as nodes and edges:
+                                               open facts, people, patterns,
+                                               decisions and outcomes. The
+                                               map tab and a later admin
+                                               screen read it
 ```
 
-Three things hold across all of them.
+Three things hold across all of them, the graph included.
 
 They run inside `asStudent()`, so the row level security role is doing the
 scoping and not only the where clause. This is the first code on the request
@@ -405,6 +445,9 @@ person_profile   what happens between the student and somebody, once that
                  person has come up twice
 pattern_sweep    the nightly candidate query, which books the verdicts
 pattern_verdicts whether a theme is doing them good or costing them
+consolidate_memory
+                 nightly, per person with new facts: at most three things that
+                 hold across several facts, written as tier 1 facts
 check_back       days later, on the day they named
 embed_entry      one vector per entry, booked by submit and by release
 ```
@@ -456,6 +499,7 @@ deterministic code or a background job.
 | `tagger` | Flow 4 | No | Patterns downstream are noise |
 | `facts` | Flow 4 | No | The Mirror is told something they did not say |
 | `embedding` | Flow 6 | No | The wrong earlier entries are read back |
+| `consolidate` | Flow 7 | No | The Mirror is told a pattern across weeks that the facts do not carry |
 
 Pattern detection is **not** on this list. It is a database query. That is
 deliberate, so we can always show a student the exact entries behind any claim.

@@ -110,8 +110,6 @@ class _PeopleScreenState extends State<PeopleScreen> {
             ),
           ),
         ] else if (people.isEmpty) ...[
-          const SizedBox(height: 30),
-          const Text('Nobody yet', style: SoulType.heading),
           const SizedBox(height: 14),
           const Text(
             'When you name someone in what you say, they show up here.',

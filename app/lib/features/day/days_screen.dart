@@ -105,6 +105,10 @@ class _DaysScreenState extends State<DaysScreen> {
         const Text('Days', style: SoulType.heading),
         const SizedBox(height: 6),
         Label(_countLine(days)),
+        if (days != null && days.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _Legend(days: days),
+        ],
         const SizedBox(height: 18),
         if (_failed) ...[
           const SizedBox(height: 30),
@@ -266,3 +270,50 @@ class _DayRow extends StatelessWidget {
 
 /// What is inside the open day. The same words, in the same order they were
 /// said, with nothing added, and under them whatever the day is asking about.
+
+/// What the dots on the days mean. The first four feelings across the days,
+/// in the order they appear, each with the colour its dot carries.
+class _Legend extends StatelessWidget {
+  const _Legend({required this.days});
+  final List<DayCount> days;
+
+  static const _palette = [
+    SoulColors.clay,
+    SoulColors.amber,
+    SoulColors.violet,
+    SoulColors.moss,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final names = <String>[];
+    for (final day in days) {
+      for (final feeling in day.feelings) {
+        if (!names.contains(feeling) && names.length < 4) names.add(feeling);
+      }
+    }
+    if (names.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 14,
+      runSpacing: 4,
+      children: [
+        for (var i = 0; i < names.length; i++)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: _palette[i],
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Text(names[i], style: SoulType.muted),
+            ],
+          ),
+      ],
+    );
+  }
+}

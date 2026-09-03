@@ -215,6 +215,29 @@ const config: Record<Purpose, PurposeConfig> = {
     json: true,
     reasoning: 'medium',
   },
+  /**
+   * The nightly consolidation. Several facts about one person, read together,
+   * and at most three things written that hold across them.
+   *
+   * Zero temperature, like facts, because the output is a record and the
+   * same night read twice should settle the same things. Medium reasoning
+   * because the whole call is a comparison across weeks, and the hard part is
+   * declining to write anything, which is the answer it gets wrong when
+   * hurried. It runs in the night, once per person, and nobody is waiting.
+   */
+  consolidate: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
+    },
+    temperature: 0,
+    maxTokens: 4000,
+    timeoutMs: 120_000,
+    json: true,
+    reasoning: 'medium',
+  },
   cue_cards: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {

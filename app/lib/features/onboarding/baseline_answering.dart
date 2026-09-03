@@ -17,20 +17,11 @@ class Enter extends StatelessWidget {
   final int index;
   final Widget child;
 
+  /// Used to stagger each option in with a fade and a rise. On a phone that
+  /// read as the screen fluttering every time a question changed, so it now
+  /// shows the child as it is.
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      key: ValueKey(child.hashCode + index),
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 260 + index * 70),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, inner) => Opacity(
-        opacity: t.clamp(0, 1),
-        child: Transform.translate(offset: Offset(0, 18 * (1 - t)), child: inner),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => child;
 }
 
 /// A field you drag a light across.

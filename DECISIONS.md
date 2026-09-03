@@ -3644,3 +3644,89 @@ background and nothing that was in the background moved.
 Reverses if: the twelve nearest entries turn out to pad the prompt with
 unrelated months on a student with a long record, in which case a distance
 cap is the fix and it goes here, not in the prompt.
+
+---
+
+### 209. Consolidation is one job for everybody, its last run is a generations row, and a tier 1 fact stands on at least two
+Sep 2026, Claude
+
+Decision: consolidate_memory is booked the way the sweep is, one pending row
+with no student on it, self booked for the next night at the end of every
+run and once when the worker starts. It runs at the sweep's hour rather than
+chained behind the verdicts, because the two read different tables and the
+runner takes one job at a time. One run finds everybody with an open tier 0
+fact learned since their last consolidation and takes them one at a time,
+consent checked first, a failure logged and the night going on.
+
+The last consolidation for a person is their newest generations row with
+the purpose consolidate. The gateway writes one on every call whether or not
+anything was written, so a night that read the facts and settled nothing
+still counts as a night that ran, and the same facts are not read again
+tomorrow for the same empty answer. No new column and no new table.
+
+The model is shown three lists, the new facts, the older open tier 0 facts
+newest forty, and the tier 1 observations already written, with the first
+two numbered in one sequence. It answers with numbers. An observation is
+written only when it points at two or more facts that were sent and at
+least one of them arrived since the last run. Its entry ids are the union
+of the entry ids behind those facts and its valid_from is the earliest of
+them, so a tier 1 row opens to the same words a tier 0 row does. Said again
+at tier 1 joins the open observation. Same subject and predicate with a new
+object closes the earlier tier 1 rows with valid_to. Tier 1 never closes
+tier 0: an observation across several facts does not get to end what
+somebody said.
+
+Why the generations table: it is already the record that a person's words
+went to a provider, it already carries the purpose and the student, and the
+question asked here is exactly when that last happened. A last_consolidated
+column on students would have said the same thing twice.
+
+Why at least two: the doc calls this the episodic to semantic step, and one
+fact is already episodic. An observation from one fact is that fact
+paraphrased, which is the one rewrite the memory layer promises never to do.
+
+Why the context builder reads tier 1 unchanged: docs/memory.md keeps both
+tiers in one table so both are showable, and loadFacts already selects open
+facts without a tier test. Nothing was added to make them appear and nothing
+was added to hide them.
+
+Reverses if: a run of consolidation shows the model padding three
+observations a night out of thin facts, in which case the confidence floor
+moves up in code and the ceiling stays. Or if a person's fact count grows
+past the forty shown, in which case the held list becomes the nearest by
+meaning rather than the newest.
+
+---
+
+### 210. The graph is one route, the person is the root, and a name match is a whole match
+Sep 2026, Claude
+
+Decision: GET /graph lives in api/src/routes/graph.ts with its read in the
+same file rather than under services/reads, because it is the one read that
+is not a screen shape of its own but the memory laid bare, and the doc
+comment on that file names who reads it. It runs inside asStudent like the
+other reads. The person node's id is the student id, and every other node's
+id is its own row id, so ids are unique across types without a prefix.
+
+What is in it: the person, every open fact at either tier with its entry
+ids, everybody in the people table, every confirmed pattern not removed,
+every decision that is open or closed, and every outcome on those decisions.
+Abandoned decisions are left out with their outcomes, because they are what
+the person walked away from and are not part of what they did. Nothing on
+the node says good or bad, and nothing on it is a verdict.
+
+Edges are pairs of ids and carry no label. The person has one to every other
+node, a decision has one to each of its outcomes, and a fact has one to a
+named person when its subject or its object equals that person's name, case
+insensitively, as a whole. Not a substring: the extractor writes the name
+the person used as the whole subject or object, the people job writes the
+same name, and Sam inside Samira is not Sam.
+
+Rejected: a labelled edge type. The two ends already say what the edge is,
+and a label is one more thing for two clients to keep in step. A person node
+with counts on it, for the same reason the fact node does not carry a count:
+the screen can count what it is given.
+
+Reverses if: the map tab needs a fact to reach a person it merely mentions
+inside the object, in which case the whole word test from buildContext is
+the right tool and it goes here, not in the extractor.

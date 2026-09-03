@@ -201,28 +201,17 @@ class _HomeScreenState extends State<HomeScreen> {
       // four numbers side by side say how much of each, and the ring says
       // how the week divided. The proportion is the point, so it is drawn as
       // one shape rather than four.
+      // The same header every tab has: the tab's name in serif, one muted
+      // line under it. The card holds the ring and nothing else.
+      const Text('This week', style: SoulType.heading),
+      const SizedBox(height: 6),
+      Label(_momentLine(week.moments)),
+      const SizedBox(height: 18),
       SoulCard(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                const Text(
-                  'This week',
-                  style: TextStyle(
-                    fontFamily: SoulType.serif,
-                    fontSize: 26,
-                    color: SoulColors.text,
-                  ),
-                ),
-                Label(_momentLine(week.moments)),
-              ],
-            ),
-            const SizedBox(height: 14),
             Center(
               child: SizedBox(
                 width: 132,

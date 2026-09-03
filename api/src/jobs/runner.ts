@@ -9,9 +9,10 @@ import { extractPeople } from '../services/people/extract.js'
 import { writeProfile } from '../services/people/profile.js'
 import { embedEntry } from '../services/memory/embed.js'
 import { extractFacts } from '../services/memory/facts.js'
+import { consolidateAll } from '../services/memory/consolidate.js'
 import { sweep } from './pattern_sweep.js'
 import { sweepVerdicts } from '../services/verdicts/sweep.js'
-import { scheduleSweep, scheduleVerdicts } from './enqueue.js'
+import { scheduleSweep, scheduleVerdicts, scheduleConsolidation } from './enqueue.js'
 import type { Session } from '../session.js'
 
 /**
@@ -40,6 +41,7 @@ const HANDLED = [
   'check_back',
   'pattern_sweep',
   'pattern_verdicts',
+  'consolidate_memory',
   'cue_cards',
   'people',
   'person_profile',
@@ -153,6 +155,17 @@ async function run(job: Job): Promise<void> {
       console.log(`${judged} verdicts written, ${skipped} left without one`)
       return
     }
+    case 'consolidate_memory': {
+      // Most nights most people have nothing new, and a person with new facts
+      // often settles nothing across them. Both are counted so a week of
+      // zeros can be told from a week the job did not run.
+      const { people, written } = await consolidateAll()
+      console.log(`${people} people read, ${written} observations written`)
+      // Booked here, like the sweep, so the only thing that has to be running
+      // for it to keep happening is this runner.
+      await scheduleConsolidation()
+      return
+    }
     default:
       throw new Error(`unknown job type ${job.type}`)
   }
@@ -189,8 +202,10 @@ if (env.sentryDsn()) {
 }
 
 async function loop(): Promise<void> {
-  // The sweep keeps itself going once it has run once. This is the once.
+  // The sweep and the consolidation keep themselves going once they have run
+  // once. This is the once.
   await scheduleSweep()
+  await scheduleConsolidation()
 
   for (;;) {
     const worked = await tick()

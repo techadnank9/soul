@@ -113,8 +113,8 @@ class _BaselineScreenState extends State<BaselineScreen> {
               ),
               const SizedBox(height: 28),
               AnimatedOpacity(
-                opacity: _leaving ? 0 : 1,
-                duration: const Duration(milliseconds: 140),
+                opacity: 1,
+                duration: Duration.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -134,8 +134,8 @@ class _BaselineScreenState extends State<BaselineScreen> {
               const SizedBox(height: 28),
               Expanded(
                 child: AnimatedOpacity(
-                  opacity: _leaving ? 0 : 1,
-                  duration: const Duration(milliseconds: 140),
+                  opacity: 1,
+                  duration: Duration.zero,
                   child: KeyedSubtree(
                     key: ValueKey(_index),
                     child: ListChoices(

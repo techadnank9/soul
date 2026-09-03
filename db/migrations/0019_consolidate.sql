@@ -1,0 +1,1 @@
+ALTER TYPE "public"."generation_purpose" ADD VALUE 'consolidate';

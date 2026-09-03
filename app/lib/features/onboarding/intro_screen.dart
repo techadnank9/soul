@@ -39,7 +39,7 @@ class IntroScreen extends StatelessWidget {
         // screen, where it is a fact about what you are about to do rather
         // than a claim on a screen that has not asked for anything yet.
         Text(
-          'What reflection\nactually is.',
+          'A bridge between\njournaling and therapy.',
           style: SoulType.heading.copyWith(height: 1.15),
         ),
         const SizedBox(height: 26),

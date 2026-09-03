@@ -11,7 +11,6 @@ import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
-import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/baseline.dart';
 import 'features/onboarding/baseline_screen.dart';
 import 'features/onboarding/intro_screen.dart';
@@ -447,7 +446,7 @@ class Session extends StatefulWidget {
   State<Session> createState() => _SessionState();
 }
 
-enum _Beat { waiting, one, mirror, help, failed }
+enum _Beat { waiting, one, help, failed }
 
 class _SessionState extends State<Session> {
   final _api = SoulApi.fromEnvironment();
@@ -489,6 +488,8 @@ class _SessionState extends State<Session> {
             _line = line;
             _beat = _Beat.one;
           });
+          // The question follows the line on its own. Nobody has to ask.
+          _lookCloser();
         case api.HelpNeeded help:
           setState(() {
             _help = help;
@@ -525,11 +526,24 @@ class _SessionState extends State<Session> {
       setState(() {
         _mirror = mirror;
         _loadingMirror = false;
-        _beat = _Beat.mirror;
       });
-    } catch (_) {
+    } catch (error) {
+      _api.event('mirror_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
       if (mounted) setState(() => _loadingMirror = false);
     }
+  }
+
+  /// Done. What they wrote is held as a decision when there is anything to
+  /// hold. A yes with nothing written holds the thing the Mirror offered.
+  Future<void> _finish({bool? answer, required String said}) async {
+    _api.event('question_answered', {
+      'answer': answer,
+      'said': said.isNotEmpty,
+    });
+    final chosen = said.isNotEmpty ? said : (answer == true ? (_mirror?.offered ?? '') : '');
+    await _hold(chosen);
   }
 
   Future<void> _hold(String chosen) async {
@@ -555,22 +569,13 @@ class _SessionState extends State<Session> {
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,
           line: _line!,
-          // Nothing measures this yet, so nothing is claimed. It said forty one
-          // seconds for every voice entry ever made, which is the same kind of
-          // invented content the sample file was deleted for.
+          // Nothing measures this yet, so nothing is claimed.
           spokenSeconds: null,
           timeOfDay: TimeOfDay.now().format(context),
-          loadingCloser: _loadingMirror,
-          onLookCloser: _lookCloser,
-          onDone: widget.onFinished,
-        ),
-      _Beat.mirror => MirrorScreen(
-          tension: _mirror!.tension,
-          underneath: _mirror!.underneath,
-          question: _mirror!.question,
-          offered: _mirror!.offered ?? '',
-          onHold: _hold,
-          onNothingYet: widget.onFinished,
+          loadingQuestion: _loadingMirror,
+          underneath: _mirror?.underneath,
+          question: _mirror?.question,
+          onDone: _finish,
         ),
       _Beat.help => HelpScreen(help: _help!, onDone: widget.onFinished),
       _Beat.failed => _Failed(

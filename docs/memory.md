@@ -3,7 +3,8 @@
 How Soul should remember a person over months, so that a line back can say
 "the last three times this happened, you did this, and it went like this",
 and so that an admin screen can one day show a person as a graph. Research
-notes and the design that follows from them. Nothing here is built yet.
+notes and the design that follows from them. The order of work at the end
+says what is built and where.
 
 ## What the field has settled on, September 2026
 
@@ -131,11 +132,31 @@ live in our database rather than theirs.
 
 ## Order of work
 
+All six are built. What each one became, and where it lives:
+
 1. Turn on the embedding job. One purpose in the gateway, one column that
-   already exists.
-2. The facts table and the extraction step in the tagger's job.
-3. Retrieval in the context builder, the three sources fused.
-4. Beat one and the Mirror told the outcomes of the last times.
-5. Nightly consolidation.
-6. The graph endpoint, nodes and edges, which the app's fifth tab and the
-   admin screen both read.
+   already exists. Built: `api/src/services/memory/embed.ts`, the `embed`
+   function in `api/src/gateway/call.ts`, the `embed_entry` job in
+   `api/src/jobs/runner.ts`. Decision 205.
+2. The facts table and the extraction step in the tagger's job. Built:
+   `facts` in `db/src/schema.ts`, `api/src/services/memory/facts.ts`,
+   `prompts/facts.v1.md`, the `extract_facts` job booked by the tagger.
+   Decisions 206 and 207.
+3. Retrieval in the context builder, the three sources fused. Built:
+   `loadContext` and `loadFacts` in `api/src/memory/buildContext.ts`.
+   Decision 208.
+4. Beat one and the Mirror told the outcomes of the last times. Built for
+   the Mirror, in the same file: every fact is rendered with the outcomes of
+   decisions on the entries behind it. Beat one is still told only the entry
+   and how it sounded, on purpose, per CLAUDE.md.
+5. Nightly consolidation. Built: `api/src/services/memory/consolidate.ts`,
+   `prompts/consolidate.v1.md`, the `consolidate_memory` job booked by
+   `scheduleConsolidation` in `api/src/jobs/enqueue.ts`, the `consolidate`
+   purpose in the gateway. Decision 209.
+6. The graph endpoint, nodes and edges, which the app's map tab and the
+   admin screen both read. Built: `GET /graph` in `api/src/routes/graph.ts`,
+   the `graphView` contract in `api/src/contracts.ts`. Decision 210.
+
+What has not been done: nothing here has been seen with months of real
+entries behind it, and forgetting on entry deletion, retiring every fact that
+stood on that entry alone, is still to write.

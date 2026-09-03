@@ -59,6 +59,7 @@ runs before either, blocking, on every entry.
 | Database | Postgres 17 with pgvector, row level security. Supabase in production, local Postgres in development |
 | Schema | Drizzle |
 | Jobs | Durable, Postgres backed |
+| Memory | A temporal graph in the same Postgres: facts with validity windows, nightly consolidation, an embedding per entry and per fact, and a graph endpoint. docs/memory.md |
 | Errors | Sentry, app and service, on only when a DSN is set |
 | Models | OpenAI primary, Gemini second, OpenRouter fallback. gpt-5 for beat one, the Mirror and the tagger, gpt-5-mini for safety |
 | Observability | Prompt and model version stored on every generated row |
@@ -131,6 +132,7 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | Sign in with Apple | Built, and unusable until the capability has a team behind it. |
 | The public site | Live. `www`, deployed from `main`, with terms, a privacy policy and a contact address. |
 | Production database | Supabase, migrated and seeded. The service that talks to it is not hosted anywhere yet. |
+| Memory layer | Built, steps 1 to 6 of docs/memory.md. Embeddings, facts, retrieval in the context builder, nightly consolidation and `GET /graph`. Not yet seen with months of real entries behind it. |
 | Hosting | **Not done, and deliberately.** See below. |
 
 What is real: all of it. The sample file is deleted, every screen reads the

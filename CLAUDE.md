@@ -5,9 +5,13 @@ then DECISIONS.md, then FLOW.md, then CONTEXT.md.
 
 ## What this is
 
-Soul, a reflection app for students in schools, including under 13. A
-student speaks for thirty seconds, gets one short line back, and can go deeper
-if they want. Over months, recurring themes are offered back as patterns the
+Soul, a reflection app for anybody. It began as a product for students in
+schools, including under 13, and the database, the consent gate and the
+district tables still say student because they were built for that. Since
+decisions 196 and 201 a phone gets an account on first launch, using the app
+is the agreement, and the rostered path is one way in rather than the only
+one. A person speaks for thirty seconds, gets one short line back, and can go
+deeper if they want. Over months, recurring themes are offered back as patterns the
 student confirms or rejects, and the ones that keep returning are sorted into
 what is doing them good and what is costing them, with one sentence under each
 saying to keep it or to stop it.
@@ -42,6 +46,7 @@ product works, and no amount of code substitutes for it.
 | FLOW.md | Execution paths, call order, invariants |
 | CONTEXT.md | Clinical constraints and the voice rules |
 | SCHEMA.md | The data model |
+| docs/memory.md | The memory layer: facts, consolidation, the graph, and why it lives in our Postgres |
 | BUILD_PLAN.md | Ordered tasks with done conditions |
 | docs/screens.html | The original ten screens, open in a browser |
 | docs/architecture.svg | System architecture |
@@ -122,6 +127,15 @@ the request path to make the code simpler.
 **Rejected patterns are stored.** They are not failures, they are training
 signal and they stop us repeating a wrong guess.
 
+**The memory layer is a temporal graph inside the same Postgres, not a memory
+vendor.** docs/memory.md has the research and the design. Facts are extracted
+after the tagger with a validity window, a contradicted fact is closed rather
+than deleted, a nightly job writes at most three observations across several
+facts into the same table at tier 1, and the Mirror is told the open facts an
+entry touches with what came of acting on them. `GET /graph` returns all of it
+as nodes and edges. Do not move any of it to a hosted memory service and do
+not paraphrase a fact into a trait anywhere it is rendered.
+
 **Empty states get built before populated ones.** Every mockup shows a full week
 of data. No student has that on day one.
 
@@ -130,7 +144,9 @@ of data. No student has that on day one.
 Postgres and the API in one terminal, the app in another. README.md has the
 commands. The client reads `SOUL_API` and `SOUL_STUDENT` at build time, so a
 debug build points at a laptop and a release build cannot point anywhere by
-accident.
+accident. The app is run with `flutter run --flavor soul ...`, because the
+Xcode scheme is named Soul and Flutter only finds it when told the flavor.
+The full command is in README.md.
 
 Two test students exist: `student_with_consent` and `student_no_consent`. The
 second one is how you check the gate without editing code. They are created by
@@ -146,6 +162,13 @@ The second one covers exact coordinates, which the client asks the device for
 and the database stores. Nothing in the product needs them and the reasoning
 for holding them anyway is recorded there. Read it before adding anything to
 that row.
+
+When something fails, two places say so. Sentry holds the errors from the
+app, the API and the worker, on whenever a DSN is set, with the app's own
+events as breadcrumbs. The `app_events` table holds every small event the
+app posts, a fixed name and a status code or a count, never anything a person
+wrote or said, and reading it alongside the service logs shows the whole path
+of a session. There is no analytics SDK in the app and there will not be one.
 
 The iOS simulator has no microphone unless the Mac has one. Voice paths have to
 be checked against a real device or a plugged in mic; the simulator returns an

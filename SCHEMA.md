@@ -189,7 +189,9 @@ one closes the old one by setting `valid_to`. Nothing is deleted. Open means
 current.
 
 `tier` is 0 for a fact read from one entry, 1 for one the nightly
-consolidation writes over several. `embedding` is nullable: the fact is the
+`consolidate_memory` job writes over several. A tier 1 row carries the entry
+ids of every fact it was drawn from and `valid_from` is the earliest of them,
+so it opens to the same words. `embedding` is nullable: the fact is the
 record and the vector is one of two ways to find it.
 
 ---
