@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import 'baseline.dart';
 import 'baseline_answering.dart';
-import 'baseline_more.dart';
 
 /// The baseline set, asked one question at a time.
 ///
@@ -41,16 +40,6 @@ class _BaselineScreenState extends State<BaselineScreen> {
   BaselineQuestion get _question => baseline[_index];
 
   /// How to answer this one, when the control is not obvious on sight.
-  String? get _hint => switch (_question.style) {
-        Answering.orb => 'Move the light toward what fits',
-        Answering.scale => 'Drag to where it sits',
-        Answering.blank => 'Finish the sentence',
-        Answering.constellation => 'Pick the one you wait for',
-        Answering.stack => 'Bring one to the front',
-        Answering.deck => 'Tap the one that fits',
-        Answering.dial => 'Turn it toward what you are ready for',
-        _ => null,
-      };
 
   Future<void> _choose(int option) async {
     if (_leaving) return;
@@ -130,24 +119,14 @@ class _BaselineScreenState extends State<BaselineScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _SectionMark(section: _question.section, show: showSection),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 14),
                     Text(
                       _question.text,
-                      textAlign: TextAlign.center,
-                      style: SoulType.heading.copyWith(fontSize: 27),
+                      style: SoulType.heading.copyWith(fontSize: 28, height: 1.15),
                     ),
-                    if (_hint != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _hint!,
-                        textAlign: TextAlign.center,
-                        style: SoulType.secondary.copyWith(
-                          fontFamily: SoulType.serif,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 16,
-                          color: SoulColors.text3,
-                        ),
-                      ),
+                    if (_question.lead != null) ...[
+                      const SizedBox(height: 10),
+                      Text(_question.lead!, style: SoulType.secondary),
                     ],
                   ],
                 ),
@@ -159,60 +138,11 @@ class _BaselineScreenState extends State<BaselineScreen> {
                   duration: const Duration(milliseconds: 140),
                   child: KeyedSubtree(
                     key: ValueKey(_index),
-                    child: switch (_question.style) {
-                      Answering.orb => OrbField(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.blank => BlankSentence(
-                          lead: _question.lead ?? '',
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.list => ListChoices(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.scale => ScaleChoice(
-                          options: _question.options,
-                          chosen: _pressed,
-                          ends: _question.ends,
-                          onChoose: _choose,
-                        ),
-                      Answering.constellation => Constellation(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.stack => CardStack(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.ripples => Ripples(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.deck => SwipeDeck(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.dial => Dial(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                      Answering.words => WordChoices(
-                          options: _question.options,
-                          chosen: _pressed,
-                          onChoose: _choose,
-                        ),
-                    },
+                    child: ListChoices(
+                      options: _question.options,
+                      chosen: _pressed,
+                      onChoose: _choose,
+                    ),
                   ),
                 ),
               ),
@@ -266,32 +196,18 @@ class _SectionMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mark = sectionMarks[section] ?? (Icons.circle_outlined, SoulColors.clay);
-
     return AnimatedOpacity(
-      opacity: show ? 1 : 0.4,
+      opacity: show ? 1 : 0.5,
       duration: const Duration(milliseconds: 300),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: mark.$2, shape: BoxShape.circle),
-            child: Icon(mark.$1, size: 15, color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            section.toUpperCase(),
-            style: TextStyle(
-              fontFamily: SoulType.sans,
-              fontSize: 11,
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w500,
-              color: mark.$2,
-            ),
-          ),
-        ],
+      child: Text(
+        section.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: SoulType.sans,
+          fontSize: 11,
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w500,
+          color: SoulColors.text3,
+        ),
       ),
     );
   }

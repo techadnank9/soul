@@ -309,21 +309,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Text(
                         _question,
-                        textAlign: TextAlign.center,
-                        style: SoulType.heading.copyWith(fontSize: 27),
+                        style: SoulType.heading.copyWith(fontSize: 28, height: 1.15),
                       ),
                       if (_because != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          _because!,
-                          textAlign: TextAlign.center,
-                          style: SoulType.secondary.copyWith(
-                            fontFamily: SoulType.serif,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 16,
-                            color: SoulColors.text3,
-                          ),
-                        ),
+                        const SizedBox(height: 10),
+                        Text(_because!, style: SoulType.secondary),
                       ],
                     ],
                   ),
@@ -340,8 +330,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _name,
                             onDone: _takeName,
                           ),
-                        _Step.age => _ChoiceList(
-                            among: ageBands,
+                        _Step.age => ListChoices(
+                            options: [for (final a in ageBands) a.label],
                             chosen: _pressed,
                             onChoose: (i) {
                               _profile =
@@ -375,7 +365,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Text(
                                   'The phone did not give a location. '
                                   'Pick from the list instead.',
-                                  textAlign: TextAlign.center,
                                   style: SoulType.muted,
                                 ),
                               ],
@@ -393,8 +382,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 14),
                               Expanded(
-                                child: _ChoiceList(
-                                  among: regions,
+                                child: ListChoices(
+                                  options: [for (final r in regions) r.label],
                                   chosen: _pressed,
                                   onChoose: (i) {
                                     _profile = _profile.copyWith(
@@ -454,8 +443,11 @@ class _Name extends StatelessWidget {
           TextField(
               controller: controller,
               autofocus: true,
-              textAlign: TextAlign.center,
-              style: SoulType.field.copyWith(fontSize: 24),
+              style: const TextStyle(
+                fontFamily: SoulType.sans,
+                fontSize: 18,
+                color: SoulColors.text,
+              ),
               cursorColor: SoulColors.clay,
               maxLength: 40,
               textCapitalization: TextCapitalization.words,
@@ -467,17 +459,20 @@ class _Name extends StatelessWidget {
                 filled: true,
                 fillColor: SoulColors.s1,
                 hintText: 'First name',
-                hintStyle: SoulType.field
-                    .copyWith(fontSize: 24, color: SoulColors.text3),
+                hintStyle: const TextStyle(
+                  fontFamily: SoulType.sans,
+                  fontSize: 18,
+                  color: SoulColors.text3,
+                ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: const BorderSide(color: SoulColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(color: SoulColors.clay, width: 2),
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: const BorderSide(color: SoulColors.clay, width: 1.5),
                 ),
               ),
             ),
@@ -487,50 +482,6 @@ class _Name extends StatelessWidget {
   }
 }
 
-/// A long question, answered from a list.
-///
-/// Four options get the colour tiles. Six and sixteen do not fit as tiles on a
-/// small phone without either shrinking them or running off the bottom, so the
-/// age bands and the regions scroll instead.
-class _ChoiceList extends StatelessWidget {
-  const _ChoiceList({
-    required this.among,
-    required this.chosen,
-    required this.onChoose,
-  });
-
-  final List<Choice> among;
-  final int? chosen;
-  final ValueChanged<int> onChoose;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      // Room under the last region for the skip button, which floats over
-      // this list rather than sitting below it.
-      padding: const EdgeInsets.only(bottom: 12),
-      itemCount: among.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final picked = chosen == i;
-        return SoulCard(
-          onTap: () => onChoose(i),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          background: picked ? SoulColors.clay : SoulColors.s1,
-          child: Text(
-            among[i].label,
-            style: TextStyle(
-              fontFamily: SoulType.sans,
-              fontSize: 16,
-              fontWeight: picked ? FontWeight.w500 : FontWeight.w400,
-              color: picked ? Colors.white : SoulColors.text,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
 
 /// One segment per question, filling as they are answered. The same bar the
 /// baseline set uses, so first run reads as one thing of a known length.

@@ -212,56 +212,55 @@ class ListChoices extends StatelessWidget {
   final int? chosen;
   final ValueChanged<int> onChoose;
 
+  /// The one way a question is answered in first run.
+  ///
+  /// White cards, one per option, under the question, the same on every
+  /// screen. The chosen one fills with the accent and gets a mark. Nothing
+  /// else moves, because a person answering fifteen questions should not
+  /// have to learn a new control for each.
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < options.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
-          Enter(
-            index: i,
-            child: _Pressable(
-              height: 74,
-              radius: 20,
-              onTap: () => onChoose(i),
-              chosen: chosen == i,
-              dimmed: chosen != null && chosen != i,
-              colour: chosen == i ? baselineColours[i] : SoulColors.s1,
-              padding: EdgeInsets.zero,
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    width: chosen == i ? 0 : 6,
-                    decoration: BoxDecoration(
-                      color: baselineColours[i],
-                      borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < options.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            Enter(
+              index: i,
+              child: _Pressable(
+                height: 60,
+                radius: 18,
+                onTap: () => onChoose(i),
+                chosen: chosen == i,
+                dimmed: chosen != null && chosen != i,
+                colour: chosen == i ? SoulColors.clay : SoulColors.s1,
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        options[i],
+                        style: TextStyle(
+                          fontFamily: SoulType.sans,
+                          fontSize: 16,
+                          height: 1.3,
+                          fontWeight:
+                              chosen == i ? FontWeight.w500 : FontWeight.w400,
+                          color: chosen == i ? Colors.white : SoulColors.text,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      options[i],
-                      style: TextStyle(
-                        fontFamily: SoulType.sans,
-                        fontSize: 16,
-                        height: 1.3,
-                        fontWeight:
-                            chosen == i ? FontWeight.w500 : FontWeight.w400,
-                        color: chosen == i ? Colors.white : SoulColors.text,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
+                    if (chosen == i)
+                      const Icon(Icons.check, size: 20, color: Colors.white),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
