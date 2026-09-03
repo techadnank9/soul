@@ -323,6 +323,8 @@ than assumed.
 ### 017. Deepgram over OpenAI Whisper
 Aug 2026, Adnan
 
+Reversed by decision 193. Kept because 016 and 018 refer to it.
+
 Decision: Deepgram for transcription.
 
 Why: existing credit, and cost is not a real factor either way. At roughly a
@@ -3120,3 +3122,142 @@ caught up convincingly.
 
 Reverses if: anybody outside the team installs the app, at which point this is
 no longer a tradeoff, it is an outage.
+
+---
+
+### 193. ElevenLabs Scribe replaces Deepgram
+Sep 2026, Adnan, Claude writing it up
+
+Decision: transcription runs through ElevenLabs Scribe. Deepgram is gone from
+the code, the configuration, the policies, and the stack table. The key is
+`ELEVENLABS_API_KEY` and nothing else changed shape: same one function, same
+consent check before audio leaves, same immediate deletion.
+
+Why: the founder asked for it. Decision 017 was a credit decision and said so,
+which is exactly the kind of choice that should be easy to reverse, and 018 was
+made so that reversing it is a config change. It was: the provider file, one
+line in env.ts, and the two places students are told who hears their voice.
+
+What is different about the call: Scribe wants multipart, one part named file,
+rather than a raw body. Audio event tags and speaker labels are turned off so
+the transcript holds the student's words and nothing about the room. Deepgram
+had a per request opt out from provider training and ElevenLabs does not
+expose one on the request. Its terms say API inputs are not used for training,
+and zero retention is an account setting rather than a parameter. The district
+data agreement has to name ElevenLabs as the sub processor now, and that
+setting has to be confirmed on the account before a school is onboarded. That
+is a contract task, not a code one, and it is open.
+
+Task 0b still has not been run. It now compares Scribe against Whisper on real
+student audio, and the caveat on 017 carries over unchanged: this is a
+preference until it is measured.
+
+Rejected: keeping Deepgram behind a second provider value. Two providers is two
+sub processors in every data agreement for no benefit.
+
+Reverses if: measured meaning change rate on real student audio favours another
+provider, or a district objects to the vendor.
+
+---
+
+### 194. A spoken entry is judged for how it sounded, and that is stored
+Sep 2026, Adnan, against the assistant's advice, Claude writing it up
+
+Decision: every spoken entry, the introduction in first run and every entry
+from the plus button alike, is heard once by an audio model and described:
+an emotion from a fixed list of twelve, an intent from a fixed list of eight,
+one sentence about the voice, an intensity and a confidence. Alongside it the
+transcriber's word timings are measured into words a minute, long pauses,
+hesitations, audio events such as a laugh or a sigh, and the language
+detected. All of it is a `voice_tones` row. Beat one, the Mirror and the
+tagger are told it. The founder's reason: tone determines intent and emotion,
+and the words alone miss both.
+
+The advice against it, recorded so it can be weighed: the voice rules say do
+not name their feeling for them, everything the app holds was until now words
+the student chose to send, and a description derived from a child's voice is
+a new category of data that every district agreement has to name. The founder
+heard that and asked for it anyway. This entry is the record that it was a
+choice.
+
+What holds it inside the rules that did not move:
+
+The transcript the student confirms is still only their words. Audio events
+are stripped out of the text and kept as a list on the tone row.
+
+Nothing from the tone is shown to the student, and the prompts are told to
+use it for register and never to say it back. "You sound" is banned in all
+three. When the voice and the words disagree, the words win.
+
+The audio still goes nowhere. The same bytes go to two places at once, the
+transcriber and the audio model, in the only moment they exist, and the row
+that comes back is words and numbers. Both places check consent themselves.
+
+The tone call is allowed to fail. A student who spoke gets their transcript
+whether or not anything managed to listen to it, so the call is started in
+parallel and its absence costs nothing but a null.
+
+The row exists before the entry does, because the audio is gone before the
+student has decided to send. So it is written with a null `entry_id`, linked
+in `submit()` scoped to the student and to unlinked rows, deleted through
+`DELETE /transcribe/:toneId` on discard, and any orphan is swept the next
+time the same student records. An id lifted from another device links
+nothing.
+
+The fixed vocabularies are deliberate. A free label cannot be counted across
+months, and counting is the only thing that would make this more than a note
+on one entry. The one free field describes the recording, not the person, and
+the prompt is built the same way the tagger's is: situations, never traits.
+
+ElevenLabs was read first. Scribe has no emotion or tone field; it gives per
+word log probabilities, timings and audio event tags, and its own page says
+emotion is an audio event, not a score. So the measured half comes from
+ElevenLabs and the judged half from an OpenAI audio model, which keeps the
+vendor count where it was. OpenRouter is not in the order for that call
+because audio input there depends on the model behind it.
+
+Invariant one is read as before: the tone call is a classification, not a
+generation, and nothing a student reads is written until `classify()` has
+passed on the words. Invariant nine is amended in FLOW.md to say what a
+recording leaves behind.
+
+The privacy policy and the in app policy now say the recording is described
+for how it sounded and name OpenAI for it. The district data agreement has to
+say the same before a school is onboarded, and nothing in this entry does
+that.
+
+Rejected: reading tone from the words alone, which the tagger already does
+and which the founder said was not enough. Turning the ElevenLabs audio event
+tags into the emotion, which would have made a sigh into a verdict. Showing
+the tone to the student, which is a separate decision nobody has taken.
+
+Reverses if: the clinical review for under 13 says a voice derived label
+should not be held about a child, a district refuses the sub processing, or
+task 7 shows the lines got no better for it.
+
+---
+
+### 195. A Render blueprint, so hosting is one click when the account exists
+Sep 2026, Claude
+
+Decision: `render.yaml` at the repository root describes the web service and
+the worker that decision 192 chose. Every secret is marked to be asked for in
+the dashboard, never read from the file.
+
+Why: the founder asked for a first TestFlight build. A device build has to
+point at an API that is not a laptop, and the thing standing between the code
+and a host was a form. The blueprint fills the form. Nothing in it changes the
+Dockerfile, which stays host neutral.
+
+Two things it leaves to a person. The Apple Developer Program membership,
+because this Mac has no signing identity and Xcode has no team, and the keys
+themselves. The README now has the order, under shipping the first TestFlight
+build.
+
+`SOUL_ROSTER_TOKENS` is deliberately absent from the blueprint. A roster
+identifier is not a secret, and the flag exists so that an environment which
+forgets to think about it refuses. An internal test with no district sign in
+sets it by hand and removes it before the app leaves the team.
+
+Reverses if: the host changes, in which case the file goes with it and the
+Dockerfile stays.

@@ -1,0 +1,51 @@
+# The API and the job runner on Render, as decision 192 said they would be.
+#
+# One image, two services. The web service answers the app and the worker
+# drains the queue, and both read the same environment. Every secret is
+# sync: false, which means Render asks for it in the dashboard on first deploy
+# and never reads it from this file. Nothing secret is in this repository.
+#
+# Not the free plan for the web service. Render spins a free instance down
+# after fifteen minutes and takes about a minute to wake, and beat one is
+# built around three seconds.
+services:
+  - type: web
+    name: soul-api
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: APPLE_BUNDLE_ID
+        value: space.soul.soul
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: SOUL_JOBS_SECRET
+        generateValue: true
+      # Development only. Left unset here on purpose. A roster identifier is
+      # not a secret and must never be accepted as a bearer anywhere real.
+      # For an internal TestFlight with no Apple sign in wired to a district
+      # yet, set it to the word allow in the dashboard, and remove it before
+      # anybody outside the team installs the app.
+
+  - type: worker
+    name: soul-worker
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerCommand: npm run worker -w @soul/api
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: APPLE_BUNDLE_ID
+        value: space.soul.soul
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false

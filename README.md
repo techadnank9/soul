@@ -53,7 +53,8 @@ runs before either, blocking, on every entry.
 | Layer | Choice |
 | --- | --- |
 | App | Flutter, iOS and Android. One runtime dependency, `record`, for the microphone |
-| Transcription | Deepgram, audio deleted immediately, never stored |
+| Transcription | ElevenLabs Scribe, audio deleted immediately, never stored |
+| Tone | The same recording heard once by an OpenAI audio model, judged for emotion and intent, stored as words and numbers, never as audio |
 | API | TypeScript and Node |
 | Database | Postgres 17 with pgvector, row level security. Supabase in production, local Postgres in development |
 | Schema | Drizzle |
@@ -213,6 +214,53 @@ flutter run --dart-define=SOUL_API=http://localhost:8080 \
 
 Without provider keys the safety classifier cannot answer, so every entry
 returns the help screen. That is the designed behaviour, not a failure.
+
+## Shipping the first TestFlight build
+
+Everything below is in order, and each step is blocked by the one before it.
+The code is ready. What is missing is accounts and keys, and none of those can
+be created by an assistant.
+
+1. **An Apple Developer Program membership.** This Mac has no signing identity
+   and Xcode has no team. Join at developer.apple.com, then in Xcode open
+   `app/ios/Runner.xcworkspace`, select the Runner target, Signing and
+   Capabilities, and pick the team. Automatic signing is already on and the
+   bundle identifier is `space.soul.soul`. Add the Sign in with Apple
+   capability on the same screen. Register the bundle identifier in App Store
+   Connect and create the app record there.
+
+2. **The API on Render.** `render.yaml` at the repository root is a blueprint
+   for a web service and a worker. In Render, New, Blueprint, point it at this
+   repository, and it asks for the four secrets: `DATABASE_URL`, the Supabase
+   connection string already in `.env`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`,
+   and it generates `SOUL_JOBS_SECRET` itself. For an internal test with no
+   district sign in yet, also set `SOUL_ROSTER_TOKENS` to `allow` on the web
+   service, and remove it before anybody outside the team installs the app.
+   When it is up, `https://soul-api.onrender.com/health` answers.
+
+3. **An ElevenLabs key.** Without it every spoken entry fails with a clear
+   message and typed entries work. Put it in the Render dashboard and, for
+   local runs, in `.env`.
+
+4. **The build.** From `app`, with the real API host:
+
+   ```
+   flutter build ipa \
+     --dart-define=SOUL_API=https://soul-api.onrender.com \
+     --dart-define=SOUL_STUDENT=student_with_consent
+   ```
+
+   That writes `build/ios/ipa/soul.ipa`. Upload it with the Transporter app
+   or `xcrun altool`, then add internal testers in App Store Connect. The
+   student token baked in is the test student with consent, which is right
+   for an internal build and wrong for anything else.
+
+5. **On the device.** First run is the intro, the profile questions, the ten
+   baseline questions, the spoken introduction, then sign in. The simulator
+   has no microphone, so this is the first time the voice path, the transcript
+   confirm step, and the tone judgement can be seen for real. Every model call
+   is written to the `generations` table with its latency, which is how to
+   read whether beat one lands inside three seconds on school wifi.
 
 ## Running it somewhere real
 
