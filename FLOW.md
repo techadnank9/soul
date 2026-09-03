@@ -165,7 +165,7 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        │
        └─ 5. jobs/enqueue.ts
              enqueue('tag_entry', { entryId })    ← async, nobody waits
-             enqueue('embed_entry', { entryId })  ← async, lands with task 8
+             enqueue('embed_entry', { entryId })  ← async, flow 6
 ```
 
 Two things to notice. Consent comes before storage, safety comes before
@@ -192,9 +192,15 @@ api/src/routes/entries.ts
        │     confirmed patterns (verbatim)
        │     kept lines
        │     open decisions and past outcomes
+       │     open facts this entry touches, in their words, oldest first,
+       │        each with the outcomes of decisions on the entries behind it.
+       │        Touched means the subject or object is a word in the entry,
+       │        or the fact's embedding is near the entry's
+       │     the nearest twelve earlier entries by embedding, from any time,
+       │        never one of the recent eight and empty until the entry has
+       │        been embedded in the background
        │     recent entries, each with one clause on how it sounded if spoken
        │     services/tone/store.ts loadTone(entryId) for this entry
-       │     pgvector neighbours of this entry
        │     returns a stable prefix, ordered identically every time
        │
        ├─ 2. generate/mirror.ts
@@ -208,6 +214,11 @@ api/src/routes/entries.ts
 `buildContext` is a pure function: student and entry in, prompt string out.
 Everything about memory quality lives there. It is the first place to look when
 a response feels wrong, and it must stay testable and loggable.
+
+Three sources fused, the way docs/memory.md describes: time is the recent
+eight, meaning is the nearest twelve by vector, and the graph is the open
+facts with their outcomes. Only the Mirror reads it. Beat one still gets the
+current entry and how it sounded, nothing more, and that is deliberate.
 
 ---
 
@@ -247,12 +258,29 @@ jobs/runner.ts fires tag_entry
        ├─ services/tone/store.ts loadTone(entryId), null for a typed entry
        ├─ gateway.call('tagger', entryText + how it sounded)
        ├─ parseStructured() → { trigger, feeling, coping, confidence }
-       └─ insert tags row
+       ├─ insert tags row
+       └─ enqueue cue_cards, people, extract_facts   ← each its own job
+
+jobs/runner.ts fires extract_facts
+  └─ services/memory/facts.ts
+       ├─ loads the open facts already held, newest forty
+       ├─ gateway.call('facts', entryText + the held facts)
+       ├─ parseStructured() → { facts: [subject, predicate, object, sentence, confidence] }
+       ├─ said again (same subject, predicate, object) → entry id joins the open fact
+       ├─ contradicted (same subject and predicate, new object)
+       │     → old fact gets valid_to, never deleted
+       ├─ gateway.embed(sentence) → the fact's vector, null if it fails
+       └─ insert facts row, tier 0, valid_from = the entry's time
 ```
 
 Runs after the student has already seen their response, so tagging quality never
 costs latency. Low confidence tags must not be allowed to support a pattern
 claim downstream.
+
+The facts step is booked by the tagger rather than run inside it, so an entry
+is never left untagged because a fact could not be written. Everything a fact
+says is a situation in the student's words, never a trait, under the same
+rule the tagger runs under.
 
 ---
 
@@ -281,6 +309,22 @@ services/patterns/answer.ts    → one entry point, three answers
 
 A confirmed pattern immediately becomes part of `buildContext`, which is how the
 loop closes and why the product gets better the longer someone uses it.
+
+---
+
+## Flow 6: embedding, async
+
+```
+jobs/runner.ts fires embed_entry
+  └─ services/memory/embed.ts
+       ├─ gateway.embed(entryText)        ← OpenAI, text-embedding-3-small
+       └─ upsert entry_embeddings row, model_version on it
+```
+
+Booked by submit and by release alongside the tagger. Until it has run the
+entry is simply not found by meaning, and nothing waits on it. The rows that
+queued between task 8 and this job existing were run the first time the
+runner named the type.
 
 ---
 
@@ -353,16 +397,16 @@ Nothing below is on the request path. The runner claims one job at a time with
 a row lock, so two workers never run the same one.
 
 ```
-tag_entry        the tagger, and it books the two below
+tag_entry        the tagger, and it books the three below
 cue_cards        a yes or no question about something they said is coming up
 people           the people named in one entry, from its own words
+extract_facts    what the entry says is so, closing what it contradicts
 person_profile   what happens between the student and somebody, once that
                  person has come up twice
 pattern_sweep    the nightly candidate query, which books the verdicts
 pattern_verdicts whether a theme is doing them good or costing them
 check_back       days later, on the day they named
-embed_entry      never claimed. The runner only claims what it can run, so
-                 these stay pending until task 8 gives them a worker
+embed_entry      one vector per entry, booked by submit and by release
 ```
 
 Two of these write about somebody who is not a user of this product. See the
@@ -387,11 +431,22 @@ gateway.call(purpose, input)
 
 If you need a model call, add a purpose. Do not add an SDK import.
 
+```
+gateway.embed(text)
+  ├─ OpenAI only, text-embedding-3-small, cut to the column's 1536
+  ├─ no prompt and no schema: the check is that the numbers are the right count
+  └─ writes a generations row: purpose embedding, prompt_version none
+```
+
+Every vector in the database comes from that one model. A second model would
+need every row embedded again, not a config change.
+
 ---
 
 ## Where the AI has been in this cycle
 
-Four places, and only four. Everything else is deterministic code.
+Four places, and only four, on the request path. Everything else is
+deterministic code or a background job.
 
 | Purpose | Where | Blocking | What happens if it is wrong |
 | --- | --- | --- | --- |
@@ -399,6 +454,8 @@ Four places, and only four. Everything else is deterministic code.
 | `beat_one` | Flow 1, step 4 | Yes | Response reads generic, student does not return |
 | `mirror` | Flow 2, step 2 | Yes | Rejected by the schema, or reads as advice |
 | `tagger` | Flow 4 | No | Patterns downstream are noise |
+| `facts` | Flow 4 | No | The Mirror is told something they did not say |
+| `embedding` | Flow 6 | No | The wrong earlier entries are read back |
 
 Pattern detection is **not** on this list. It is a database query. That is
 deliberate, so we can always show a student the exact entries behind any claim.

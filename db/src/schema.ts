@@ -63,6 +63,8 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'people',
   'person_profile',
   'voice_tone',
+  'facts',
+  'embedding',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
@@ -417,7 +419,11 @@ export const voiceTones = pgTable(
   ],
 )
 
-/** The semantic fallback, queried by background jobs, never on the request path. */
+/**
+ * The semantic layer. Written by a background job, one row per entry, and
+ * read by the context builder when the Mirror asks for the entries that read
+ * like the one in front of it. Never read for beat one.
+ */
 export const entryEmbeddings = pgTable(
   'entry_embeddings',
   {
@@ -432,6 +438,61 @@ export const entryEmbeddings = pgTable(
   (t) => [
     index('entry_embeddings_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
     index('entry_embeddings_student_idx').on(t.studentId),
+  ],
+)
+
+/* --------------------------------------------------------------- facts -- */
+
+/**
+ * What a student has said is so, one row per thing, with the time it held.
+ *
+ * subject, predicate and object are the three parts of a fact, in the words
+ * the student used. sentence is the whole of it as they would say it back,
+ * and it is what the Mirror is shown. Every fact describes a situation and
+ * never a trait, the same rule the tagger runs under.
+ *
+ * entry_ids are the entries it came from, so a fact can always be opened to
+ * the words behind it, and so that deleting an entry can retire every fact
+ * that stood on that entry alone.
+ *
+ * Four times, because a person's life is not a bag of facts that are true
+ * forever. valid_from and valid_to are when it held in their life. learned_at
+ * and retired_at are when this system came to know it and when it stopped
+ * treating it as current. A fact that is contradicted is closed with valid_to
+ * rather than deleted, so the record can say both what is so now and what
+ * was so in March.
+ *
+ * tier is 0 for a fact read straight out of an entry and 1 for one written
+ * by the nightly consolidation over several tier 0 facts. Both live here so
+ * both are showable. The embedding is nullable because the fact is the
+ * record and the vector is how it is found: a fact whose embedding could not
+ * be written is still true and still matchable by name.
+ */
+export const facts = pgTable(
+  'facts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    subject: text('subject').notNull(),
+    predicate: text('predicate').notNull(),
+    object: text('object').notNull(),
+    sentence: text('sentence').notNull(),
+    entryIds: uuid('entry_ids').array().notNull(),
+    validFrom: timestamp('valid_from', { withTimezone: true }).notNull(),
+    validTo: timestamp('valid_to', { withTimezone: true }),
+    learnedAt: timestamp('learned_at', { withTimezone: true }).notNull().defaultNow(),
+    retiredAt: timestamp('retired_at', { withTimezone: true }),
+    confidence: real('confidence').notNull(),
+    tier: integer('tier').notNull().default(0),
+    embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS }),
+    createdAt: now(),
+  },
+  (t) => [
+    index('facts_student_open_idx').on(t.studentId, t.validTo, t.retiredAt),
+    index('facts_student_subject_idx').on(t.studentId, t.subject, t.predicate),
+    index('facts_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
   ],
 )
 

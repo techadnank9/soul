@@ -7,6 +7,8 @@ import { checkBack } from '../services/decisions/checkBack.js'
 import { generateCards } from '../services/cards/generate.js'
 import { extractPeople } from '../services/people/extract.js'
 import { writeProfile } from '../services/people/profile.js'
+import { embedEntry } from '../services/memory/embed.js'
+import { extractFacts } from '../services/memory/facts.js'
 import { sweep } from './pattern_sweep.js'
 import { sweepVerdicts } from '../services/verdicts/sweep.js'
 import { scheduleSweep, scheduleVerdicts } from './enqueue.js'
@@ -25,13 +27,16 @@ const POLL_MS = 2000
 /**
  * The types this runner can run.
  *
- * A job of any other type is left where it is rather than claimed. That is
- * what makes embed_entry a backlog: those rows wait, pending, until task 8
- * gives them a worker. Claiming one and returning would mark it done and the
- * entry would never be embedded by anything.
+ * A job of any other type is left where it is rather than claimed. Claiming
+ * one and returning would mark it done and the work would never happen. That
+ * is how the embed_entry rows waited from task 8 until the embedding job
+ * existed: pending, untouched, and all run the first time this list named
+ * them.
  */
 const HANDLED = [
   'tag_entry',
+  'embed_entry',
+  'extract_facts',
   'check_back',
   'pattern_sweep',
   'pattern_verdicts',
@@ -89,6 +94,18 @@ async function run(job: Job): Promise<void> {
     case 'tag_entry':
       await tagEntry(payload.entryId!, studentOf(job))
       return
+    case 'embed_entry': {
+      const embedded = await embedEntry(payload.entryId!, studentOf(job))
+      console.log(embedded ? 'entry embedded' : 'entry not found')
+      return
+    }
+    case 'extract_facts': {
+      // Often zero. Most entries settle nothing, and an entry that settles
+      // nothing must produce nothing.
+      const found = await extractFacts(payload.entryId!, studentOf(job))
+      console.log(`${found} facts written`)
+      return
+    }
     case 'release_held': {
       const released = await releaseHeld(studentOf(job))
       console.log(`${released} held entries released`)

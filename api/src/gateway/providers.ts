@@ -181,3 +181,50 @@ export const providers: Record<
     }
   },
 }
+
+/* ---------------------------------------------------------- embeddings -- */
+
+/**
+ * A vector for a piece of text, from OpenAI's embeddings endpoint.
+ *
+ * Only OpenAI. The column is sized to text-embedding-3-small, and a vector
+ * from a second model would sit in the same column and mean something else,
+ * so there is no fallback order here: a failure is a retry later, not a
+ * different provider. The dimensions are sent explicitly so a model that
+ * defaults wider is cut to the column rather than refused by it.
+ */
+export type EmbeddingCall = {
+  text: string
+  model: string
+  dimensions: number
+  signal: AbortSignal
+}
+
+export type EmbeddingReply = {
+  vector: number[]
+  inputTokens?: number
+}
+
+export async function openaiEmbedding(key: string, call: EmbeddingCall): Promise<EmbeddingReply> {
+  const data = await postJson(
+    'https://api.openai.com/v1/embeddings',
+    key,
+    {
+      model: call.model,
+      input: call.text,
+      dimensions: call.dimensions,
+      encoding_format: 'float',
+    },
+    call.signal,
+  )
+
+  const vector = data?.data?.[0]?.embedding
+  if (!Array.isArray(vector) || vector.length !== call.dimensions) {
+    throw new Error('embedding had the wrong shape')
+  }
+
+  return {
+    vector: vector as number[],
+    inputTokens: data?.usage?.prompt_tokens,
+  }
+}

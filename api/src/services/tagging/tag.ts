@@ -66,4 +66,10 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   // same reason the cards are: the tagger is the last thing that has to
   // succeed, and neither of these can be the reason an entry goes untagged.
   await enqueue('people', { entryId }, session)
+
+  // The facts in the entry, what they said is so and since when. Its own job
+  // for the same reason again, and because it reads the facts already held
+  // and closes the ones this entry contradicts, which is not work the tagger
+  // should be retried for.
+  await enqueue('extract_facts', { entryId }, session)
 }

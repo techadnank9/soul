@@ -51,7 +51,7 @@ begin
   foreach t in array array[
     'districts','schools','students','sessions','entries','kept_lines','tags',
     'voice_tones','baseline_answers',
-    'entry_embeddings','decisions','outcomes','cue_cards','pattern_candidates',
+    'entry_embeddings','facts','decisions','outcomes','cue_cards','pattern_candidates',
     'confirmed_patterns','pattern_rejections','pattern_verdicts','safety_flags',
     'people','entry_people',
     'generations','prompts','jobs','audit_log','email_codes','app_events',
@@ -71,7 +71,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'entries','kept_lines','tags','voice_tones','entry_embeddings','decisions','outcomes',
+    'entries','kept_lines','tags','voice_tones','entry_embeddings','facts','decisions','outcomes',
     'baseline_answers','cue_cards',
     'pattern_candidates','confirmed_patterns','pattern_rejections',
     'pattern_verdicts','safety_flags','generations','people','entry_people',
@@ -103,7 +103,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'entries','kept_lines','tags','voice_tones','entry_embeddings','decisions','outcomes',
+    'entries','kept_lines','tags','voice_tones','entry_embeddings','facts','decisions','outcomes',
     'baseline_answers','cue_cards',
     'pattern_candidates','confirmed_patterns','pattern_rejections',
     'pattern_verdicts','people','entry_people'

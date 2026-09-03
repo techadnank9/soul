@@ -8,8 +8,13 @@ export function connectionString(): string {
   return url
 }
 
+/**
+ * Four connections per process. The Supabase session pooler allows fifteen
+ * across everything, and the API, the worker, a laptop and a script all
+ * share them. Ten each was enough to have a probe refused mid query.
+ */
 export function createClient(url = connectionString()) {
-  const sql = postgres(url, { max: 10 })
+  const sql = postgres(url, { max: 4 })
   return { sql, db: drizzle(sql, { schema }) }
 }
 

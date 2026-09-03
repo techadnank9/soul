@@ -384,3 +384,27 @@ export const safetyResult = z.object({
   riskLevel: z.enum(['none', 'low', 'medium', 'high']),
   categories: z.array(z.string().max(60)).max(8),
 })
+
+/**
+ * What the fact extractor must return. Anything else is discarded.
+ *
+ * Every fact is three parts and a sentence, all in the student's words. The
+ * sentence is what the Mirror reads back, so it is the one that carries the
+ * register. No dashes, for the same reason as everywhere else a person reads.
+ */
+const NO_DASH = /^[^-‐-―−]*$/
+
+export const factsResult = z.object({
+  facts: z
+    .array(
+      z.object({
+        subject: z.string().trim().min(1).max(60).regex(NO_DASH),
+        predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
+        object: z.string().trim().min(1).max(160).regex(NO_DASH),
+        sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
+        confidence: z.number().min(0).max(1),
+      }),
+    )
+    .max(8),
+})
+export type FactsResult = z.infer<typeof factsResult>

@@ -25,6 +25,7 @@ const purposes = [
   'people',
   'person_profile',
   'voice_tone',
+  'facts',
 ] as const
 
 async function main() {

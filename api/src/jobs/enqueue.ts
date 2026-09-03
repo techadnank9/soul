@@ -8,6 +8,7 @@ import type { Session } from '../session.js'
 export type JobType =
   | 'tag_entry'
   | 'embed_entry'
+  | 'extract_facts'
   | 'check_back'
   | 'pattern_sweep'
   | 'pattern_verdicts'

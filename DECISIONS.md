@@ -3498,3 +3498,149 @@ session, making an account if the Apple account has none.
 
 Why: US West is not an answer to where are you. The geocoder is on the phone
 and costs no package and no vendor. A log out is table stakes.
+
+---
+
+### 205. Embeddings come from one model, over the gateway, and each call is a generations row
+Sep 2026, Claude
+
+Decision: the gateway gains a second function beside call, embed, which
+posts to OpenAI's embeddings endpoint over plain fetch and returns a vector
+cut to the 1536 the column holds. Only OpenAI, only text-embedding-3-small,
+no provider order. Every embedding call writes a generations row with the
+purpose embedding, the model as its model version and the word none as its
+prompt version, because it has no prompt. The embed_entry job, queued since
+task 8 and never claimed, is handled by the runner and upserts one row in
+entry_embeddings. The entries that queued in the meantime run the first time
+the runner sees the type.
+
+Why one model with no fallback: a cosine distance between vectors from two
+models is a number that means nothing, so a call that fell over to Gemini
+would poison every query that touched the row. A failed embedding is a retry
+later, which the queue already does. Changing the model means embedding
+every row again, so it is a constant on the gateway and stamped on each row rather
+than a config entry that looks cheap to change.
+
+Why a generations row anyway: the row is the only record that a student's
+words went to a provider, and the list of times that happened should not
+have a hole in it because one kind of call returns numbers instead of text.
+The purpose enum gains embedding for it. The prompt version has to be
+something, since the column refuses null and invariant five wants one on
+every generation, and none is at least honest.
+
+Reverses if: a second model is ever needed, in which case the model version
+column is how the rows from each are told apart and embedding every row again is planned
+rather than accidental.
+
+---
+
+### 206. The shape of a fact
+Sep 2026, Claude
+
+Decision: the facts table is as docs/memory.md describes, with these
+choices made where it was silent. tier is an integer, 0 for a fact read from
+an entry and 1 for one consolidation writes later. The embedding is nullable:
+the fact is the record and the vector is one of two ways to find it, so a
+fact whose vector could not be had is still written and is still found by
+name. retired_at is kept apart from valid_to. A contradicted fact gets
+valid_to, because it stopped being so. retired_at is for a fact the system
+stopped trusting, which is what deleting the only entry behind it will do,
+and that is later work.
+
+A fact said again, same subject, same predicate, same object, compared case
+insensitively, is not a second row. The new entry's id joins entry_ids on
+the open row. A fact with the same subject and predicate and a different
+object closes every open fact with that subject and predicate by setting
+valid_to to the new entry's time, and is then inserted with valid_from at
+that same time. Nothing is deleted.
+
+Why: the doc's own example is three rows about one person and one teacher
+across a week, and a person who says the same thing every Tuesday should
+have one fact with many entries behind it rather than many facts with one
+each. Keeping valid_to and retired_at as different questions is what lets
+the table answer what was so in March and what the system believed in
+March, which are not the same question.
+
+Reverses if: consolidation turns out to want a tier that is not an integer,
+or the nullable embedding leaves too many facts unfindable by meaning, in
+which case a backfill job is the fix rather than a not null constraint.
+
+---
+
+### 207. Facts are extracted in their own job, shown what is already held
+Sep 2026, Claude
+
+Decision: the tagger books an extract_facts job after it writes its row, the
+same way it books cue cards and people, rather than extracting facts
+inside its own run. The job loads the newest forty open facts about the
+student and hands them to the model under the entry, so the same thing is
+named the same way twice and a change can be seen as a change. The subject
+of a fact about the student themselves is the word I. The prompt,
+prompts/facts.v1.md, is the tagger's rules again: situations never traits,
+their words never a summary, an empty list is the common answer, no dashes.
+
+Why its own job: the tagger is what the rest of the system stands on, and a
+fact call that reads forty rows and closes some of them has more ways to
+fail than a tag call does. The tagger should not be retried, and its tags
+rewritten, because a fact could not be.
+
+Why the held facts go into the prompt: closing a contradicted fact depends
+on the new one having the same subject and predicate, and a model that has
+never seen the old fact will name it differently by chance. The cost is
+that a background call now carries earlier facts about the student as well
+as the entry, all of which are the student's own words and all of which
+already went to the same provider once.
+
+Why I: the extractor does not know the student's name, and the doc's Adnan
+is a stand in. A fact whose subject is I is not matched by name at
+retrieval, since I is in nearly every entry, and is found by meaning
+instead.
+
+Reverses if: a run of extraction shows the model inventing facts even with
+the prompt's examples, in which case the confidence floor moves up and low
+confidence facts stop being loaded, the same rule tags follow.
+
+---
+
+### 208. What the Mirror is now told, and in what order
+Sep 2026, Claude
+
+Decision: loadContext returns two more things. The nearest twelve earlier
+entries by cosine distance to the current entry, from any time, never the
+current one and never one of the recent eight, and empty until the entry's
+own embedding exists. And the open facts the entry touches, at most twelve,
+where touched means the fact's subject or object appears in the entry as a
+whole word, or the fact's embedding is among the eight nearest to the
+entry's. Name matches come before nearest ones. For each fact, the outcomes
+of any decisions on the entries behind it are attached. No distance
+threshold on either query: the nearest twelve are the nearest twelve.
+
+The rendered prefix keeps its old order and adds two sections after the
+past outcomes: the facts, oldest first, each with its outcomes under it, and
+then the entries that read like this one, oldest first. Recent entries stay
+last so newest last still runs into what they just said. Everything is
+quoted in the student's words.
+
+Only the Mirror reads loadContext. Beat one still builds its own prompt from
+the entry and the tone, and nothing in this change touches it.
+
+Why the name match runs in code rather than SQL: a whole word test with
+escaping is one small function in TypeScript and a regular expression built
+in SQL. The open facts are capped at sixty rows read, which is a small
+query, and the function is testable with a string.
+
+Why no threshold: the instruction asked for the nearest twelve, and on a
+student with few entries a threshold would make the section appear and
+disappear from one entry to the next. The Mirror's prompt already knows
+that history is history.
+
+One thing to say plainly: SCHEMA.md used to say entry_embeddings was queried
+by background jobs and never on the request path, and FLOW.md had always
+listed pgvector neighbours under buildContext, which runs on the Mirror
+request. The two disagreed and docs/memory.md settles it on FLOW.md's side.
+SCHEMA.md now says what happens. The embedding job itself is still in the
+background and nothing that was in the background moved.
+
+Reverses if: the twelve nearest entries turn out to pad the prompt with
+unrelated months on a student with a long record, in which case a distance
+cap is the fix and it goes here, not in the prompt.

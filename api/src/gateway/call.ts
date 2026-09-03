@@ -1,9 +1,14 @@
 import type { ZodType } from 'zod'
-import { db, generations } from '../db.js'
+import { db, generations, EMBEDDING_DIMENSIONS } from '../db.js'
 import { env } from '../env.js'
 import type { Session } from '../session.js'
 import { activePrompt, type Purpose } from './prompts.js'
-import { providers, type ProviderName, type ProviderCall } from './providers.js'
+import {
+  providers,
+  openaiEmbedding,
+  type ProviderName,
+  type ProviderCall,
+} from './providers.js'
 
 /**
  * Every model call in the system goes through this file. Nothing calls a
@@ -188,6 +193,28 @@ const config: Record<Purpose, PurposeConfig> = {
     json: true,
     reasoning: 'low',
   },
+  /**
+   * The facts in one entry, closed against the facts already held.
+   *
+   * Zero temperature because the output is a record, not a line: the same
+   * entry read twice should yield the same facts. Medium reasoning because
+   * the hard part is noticing that what they said now closes something they
+   * said in March, and that is a comparison rather than a summary. Nobody is
+   * waiting for it.
+   */
+  facts: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-5',
+    },
+    temperature: 0,
+    maxTokens: 4000,
+    timeoutMs: 120_000,
+    json: true,
+    reasoning: 'medium',
+  },
   cue_cards: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
@@ -337,4 +364,78 @@ export async function call<T>(
   }
 
   throw new GatewayError(`every provider failed for ${purpose}. ${failures.join('; ')}`)
+}
+
+/* ---------------------------------------------------------- embeddings -- */
+
+/**
+ * The one model the vectors in this database come from.
+ *
+ * Every entry embedding and every fact embedding has to come from the same
+ * model, because a distance between vectors from two models means nothing.
+ * Changing this is a fresh embedding of every row, not a config change, which is why
+ * it is a constant here and recorded on every row as model_version.
+ */
+export const EMBEDDING_MODEL = 'text-embedding-3-small'
+const EMBEDDING_TIMEOUT_MS = 30_000
+
+export type EmbeddingResult = {
+  vector: number[]
+  model: string
+  latencyMs: number
+}
+
+/**
+ * A vector for a piece of text.
+ *
+ * The other half of the gateway. It goes through this file for the same
+ * reason every chat call does: one place that names every provider a
+ * student's words can reach, and a generations row for every time they do.
+ *
+ * There is no prompt, so the row carries the word none as its prompt
+ * version rather than a version that does not exist. There is no schema
+ * either, because the reply is numbers and the check is that there are the
+ * right number of them.
+ */
+export async function embed(input: {
+  text: string
+  session: Session
+  entryId?: string
+}): Promise<EmbeddingResult> {
+  const key = keyFor('openai')
+  if (!key) throw new GatewayError('embedding failed. openai: no key configured')
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), EMBEDDING_TIMEOUT_MS)
+  const startedAt = Date.now()
+
+  try {
+    const reply = await openaiEmbedding(key, {
+      text: input.text,
+      model: EMBEDDING_MODEL,
+      dimensions: EMBEDDING_DIMENSIONS,
+      signal: controller.signal,
+    })
+    const latencyMs = Date.now() - startedAt
+
+    await db.insert(generations).values({
+      entryId: input.entryId ?? null,
+      studentId: input.session.studentId,
+      schoolId: input.session.schoolId,
+      districtId: input.session.districtId,
+      purpose: 'embedding',
+      promptVersion: 'none',
+      modelVersion: EMBEDDING_MODEL,
+      provider: 'openai',
+      latencyMs,
+      inputTokens: reply.inputTokens ?? null,
+      outputTokens: null,
+    })
+
+    return { vector: reply.vector, model: EMBEDDING_MODEL, latencyMs }
+  } catch (error) {
+    throw new GatewayError(`embedding failed. openai: ${(error as Error).message}`)
+  } finally {
+    clearTimeout(timer)
+  }
 }

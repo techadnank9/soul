@@ -3,7 +3,7 @@
 Postgres. Drizzle for definitions and migrations. Every table carries student,
 school and district identifiers and is protected by row level security.
 
-Twenty three tables. This document and `db/src/schema.ts` are kept in step; the
+Twenty four tables. This document and `db/src/schema.ts` are kept in step; the
 schema file is the one the database is built from.
 
 ## Tenancy
@@ -158,10 +158,39 @@ transcriber's word timings and are not opinions. Nothing here is shown to the
 student yet. No audio is stored.
 
 ## entry_embeddings
-`entry_id`, `embedding vector(N)`, `model_version`
+`entry_id`, `student_id`, `school_id`, `district_id`, `embedding vector(1536)`,
+`model_version`, `created_at`
 
-pgvector. The semantic fallback for when the same experience is worded
-differently. Queried by background jobs, never on the request path.
+pgvector. The semantic layer, for when the same experience is worded
+differently. Written by the `embed_entry` job, one row per entry, from
+OpenAI's text-embedding-3-small and nothing else, because a distance between
+vectors from two models means nothing. Read by the context builder when the
+Mirror asks for the earlier entries that read like this one. Never read for
+beat one.
+
+## facts
+`id`, `student_id`, `school_id`, `district_id`, `subject`, `predicate`,
+`object`, `sentence`, `entry_ids[]`, `valid_from`, `valid_to`, `learned_at`,
+`retired_at`, `confidence`, `tier`, `embedding vector(1536)`, `created_at`
+
+What a student has said is so, one row per thing, with the time it held.
+Written by the `extract_facts` job after the tagger, from the entry's own
+words. `sentence` is the fact as they would say it back and is what the Mirror
+reads. Every fact is a situation, never a trait.
+
+`entry_ids` are the entries behind it, so any fact can be opened to the words
+it came from. A fact said again gains an entry id rather than a second row.
+
+Four times. `valid_from` and `valid_to` are when it held in their life.
+`learned_at` and `retired_at` are when the system came to know it and when it
+stopped trusting it. A new fact with the same subject and predicate as an open
+one closes the old one by setting `valid_to`. Nothing is deleted. Open means
+`valid_to` and `retired_at` are both null, and only open facts are ever read as
+current.
+
+`tier` is 0 for a fact read from one entry, 1 for one the nightly
+consolidation writes over several. `embedding` is nullable: the fact is the
+record and the vector is one of two ways to find it.
 
 ---
 
@@ -218,8 +247,10 @@ hit or miss.
 `id`, `entry_id`, `student_id`, `purpose`, `prompt_version`, `model_version`,
 `provider`, `latency_ms`, `input_tokens`, `output_tokens`, `created_at`
 
-`purpose` is safety, beat_one, mirror or tagger. Written by the gateway for
-every call. This is how you tell whether a prompt change helped.
+`purpose` is one of the model purposes, plus `embedding` for the vector calls,
+which carry `none` as their prompt version because they have no prompt.
+Written by the gateway for every call. This is how you tell whether a prompt
+change helped.
 
 ---
 
@@ -321,7 +352,8 @@ somebody appears.
 - `entries (student_id, created_at desc)` for the context builder
 - `tags (student_id, feeling)` and `tags (student_id, trigger)` for the sweep
 - `jobs (status, run_at)` for the runner
-- ivfflat or hnsw on `entry_embeddings.embedding`
+- hnsw on `entry_embeddings.embedding` and on `facts.embedding`, cosine
+- `facts (student_id, valid_to, retired_at)` for the open facts
 
 ## The query that finds a pattern
 
