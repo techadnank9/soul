@@ -162,6 +162,15 @@ export async function tick(): Promise<boolean> {
   return true
 }
 
+if (env.sentryDsn()) {
+  Sentry.init({
+    dsn: env.sentryDsn(),
+    environment: process.env.RENDER ? 'render' : 'laptop',
+    release: process.env.RENDER_GIT_COMMIT,
+    sendDefaultPii: false,
+  })
+}
+
 async function loop(): Promise<void> {
   // The sweep keeps itself going once it has run once. This is the once.
   await scheduleSweep()
