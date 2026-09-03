@@ -52,8 +52,13 @@ Future<void> main() async {
       options.environment = kReleaseMode ? 'release' : 'debug';
       options.tracesSampleRate = 0.2;
       options.sendDefaultPii = false;
+      // Session replay, every session while the app is being tested, and
+      // always on an error. Text and images are masked by the SDK's default,
+      // so a replay shows where a person tapped, not what they wrote.
+      options.replay.sessionSampleRate = 1.0;
+      options.replay.onErrorSampleRate = 1.0;
     },
-    appRunner: () => runApp(const SoulApp()),
+    appRunner: () => runApp(const SentryWidget(child: SoulApp())),
   );
 }
 
