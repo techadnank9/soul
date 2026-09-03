@@ -373,45 +373,34 @@ class _EmailSignIn extends StatelessWidget {
             style: SoulType.secondary.copyWith(fontSize: 14),
           ),
           const SizedBox(height: 10),
-          if (!codeSent)
-            Row(
-              children: [
-                Expanded(
-                  child: _Field(
-                    controller: email,
-                    hint: 'you@somewhere.com',
-                    keyboard: TextInputType.emailAddress,
-                    enabled: enabled && !running,
-                    onDone: onSendCode,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SoulButton(
-                  running ? 'Sending' : 'Send code',
-                  onPressed: enabled && !running ? onSendCode : null,
-                ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: _Field(
-                    controller: code,
-                    hint: '6 digit code',
-                    keyboard: TextInputType.number,
-                    enabled: enabled && !running,
-                    onDone: onVerify,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SoulButton(
-                  running ? 'Checking' : 'Log in',
-                  kind: SoulButtonKind.filled,
-                  onPressed: enabled && !running ? onVerify : null,
-                ),
-              ],
+          if (!codeSent) ...[
+            _Field(
+              controller: email,
+              hint: 'you@somewhere.com',
+              keyboard: TextInputType.emailAddress,
+              enabled: enabled && !running,
+              onDone: onSendCode,
             ),
+            const SizedBox(height: 8),
+            SoulButton(
+              running ? 'Sending' : 'Send code',
+              onPressed: enabled && !running ? onSendCode : null,
+            ),
+          ] else ...[
+            _Field(
+              controller: code,
+              hint: '6 digit code',
+              keyboard: TextInputType.number,
+              enabled: enabled && !running,
+              onDone: onVerify,
+            ),
+            const SizedBox(height: 8),
+            SoulButton(
+              running ? 'Checking' : 'Log in',
+              kind: SoulButtonKind.filled,
+              onPressed: enabled && !running ? onVerify : null,
+            ),
+          ],
           if (codeSent) ...[
             const SizedBox(height: 6),
             GestureDetector(
