@@ -15,6 +15,7 @@ class Profile {
     this.region,
     this.latitude,
     this.longitude,
+    this.place,
   });
 
   final String? displayName;
@@ -27,6 +28,9 @@ class Profile {
   final double? latitude;
   final double? longitude;
 
+  /// Where the coordinates are, in words, from the phone.
+  final String? place;
+
   Profile copyWith({
     String? displayName,
     String? ageBand,
@@ -34,6 +38,7 @@ class Profile {
     String? region,
     double? latitude,
     double? longitude,
+    String? place,
   }) =>
       Profile(
         displayName: displayName ?? this.displayName,
@@ -42,6 +47,7 @@ class Profile {
         region: region ?? this.region,
         latitude: latitude ?? this.latitude,
         longitude: longitude ?? this.longitude,
+        place: place ?? this.place,
       );
 
   bool get isEmpty =>
@@ -58,6 +64,7 @@ class Profile {
         'region': ?region,
         'latitude': ?latitude,
         'longitude': ?longitude,
+        'place': ?place,
       };
 }
 
@@ -219,9 +226,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
+    final place = await placeName(where.latitude, where.longitude);
+    if (!mounted || _index != asking) return;
     _profile = _profile.copyWith(
       latitude: where.latitude,
       longitude: where.longitude,
+      place: place,
     );
     setState(() => _locating = false);
     await _advance();

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// The device's own position, when the user allows it.
@@ -43,6 +44,21 @@ Future<DeviceLocation?> currentLocation() async {
   } catch (_) {
     // Off, refused, timed out, unsupported. All of it means the same thing
     // here, and the list is still on the screen.
+    return null;
+  }
+}
+
+/// The place those coordinates are, as a person would say it, from the
+/// phone's own geocoder: neighbourhood, city, state. Null when the phone
+/// cannot say, which is what an offline phone answers.
+const _place = MethodChannel('soul/place');
+
+Future<String?> placeName(double latitude, double longitude) async {
+  try {
+    return await _place
+        .invokeMethod<String>('name', {'latitude': latitude, 'longitude': longitude})
+        .timeout(const Duration(seconds: 8));
+  } catch (_) {
     return null;
   }
 }

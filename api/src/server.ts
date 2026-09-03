@@ -29,6 +29,7 @@ import { peopleRoutes } from './routes/people.js'
 import { auth } from './routes/auth.js'
 import { jobs } from './routes/jobs.js'
 import { events } from './routes/events.js'
+import { speech } from './routes/speech.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -53,6 +54,7 @@ const noSession = new Set([
   '/auth/device',
   '/auth/email/start',
   '/auth/email/verify',
+  '/auth/apple',
 ])
 
 app.route('/', jobs)
@@ -70,8 +72,8 @@ app.use('*', async (c, next) => {
   await next()
 })
 
-// Sign in with Apple needs the device's session, so it lives inside this
-// block. The three account routes above are let through by name.
+// The account routes are let through by name above, and each resolves the
+// bearer itself when it is there.
 app.route('/', auth)
 
 app.route('/', entries)
@@ -82,6 +84,7 @@ app.route('/', consent)
 app.route('/', profile)
 app.route('/', peopleRoutes)
 app.route('/', events)
+app.route('/', speech)
 
 app.onError((error, c) => {
   console.error(`${c.req.method} ${c.req.path} failed:`, error)

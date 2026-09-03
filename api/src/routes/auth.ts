@@ -84,7 +84,12 @@ auth.post('/auth/apple', async (c) => {
       env.appleBundleId(),
     )
 
-    const signedIn = await signInWithApple(c.get('session'), appleSub)
+    // The bearer is optional here too, for the same reason as the email code.
+    const header = c.req.header('authorization')
+    const bearer = header?.startsWith('Bearer ') ? header.slice(7) : undefined
+    const current = await resolveSession(bearer)
+
+    const signedIn = await signInWithApple(current, appleSub)
     return c.json(signedIn)
   } catch (error) {
     // The one refusal a person cannot fix by trying again, so it is told

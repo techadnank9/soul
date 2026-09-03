@@ -9,7 +9,6 @@ import 'api/models.dart' as api;
 
 import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
-import 'features/capture/confirm_transcript.dart';
 import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
@@ -81,7 +80,7 @@ Widget? _requestedScreen() {
     'profile' => ProfileScreen(onFinished: (_) {}),
     'sign_in' => SignInScreen(onSignedIn: nothing, onSkip: nothing),
     'baseline' => BaselineScreen(onFinished: (_) {}),
-    'capture' => CaptureScreen(onSubmitted: (_) {}),
+    'capture' => CaptureScreen(onSubmitted: (_, {spoken = false, toneId}) {}),
     'home' => const Home(),
     'day' => DayScreen(api: api, date: todayOnDevice(), onBack: nothing),
     'patterns' => PatternsScreen(api: api),
@@ -99,6 +98,7 @@ class SoulApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
       home: _requestedScreen() ?? const _Launch(),
+      routes: {'/signin': (_) => const SignInAgain()},
     );
   }
 }
@@ -110,6 +110,26 @@ class SoulApp extends StatelessWidget {
 /// first launch, before a single question, so the token alone no longer
 /// means a person finished. What sits under the reads is the app's own
 /// background, so there is nothing worth spinning at for the length of them.
+enum _Start { firstRun, signIn, home }
+
+/// Sign in on its own, after a log out. Signing in with Apple or an email
+/// code finds the account those were attached to, and home follows.
+class SignInAgain extends StatelessWidget {
+  const SignInAgain({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SignInScreen(
+      onSignedIn: () => Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const Home()),
+      ),
+      onSkip: () => Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const Home()),
+      ),
+    );
+  }
+}
+
 class _Launch extends StatefulWidget {
   const _Launch();
 
@@ -121,24 +141,31 @@ class _LaunchState extends State<_Launch> {
   /// Read once, held here. Calling this inside build handed the builder a new
   /// future on every rebuild, which dropped back to the waiting state and
   /// threw away whatever the app had built underneath it.
-  late final Future<bool> _returning = _check();
+  late final Future<_Start> _start = _check();
 
-  static Future<bool> _check() async {
-    if (await sessionToken() == null) return false;
-    return firstRunDone();
+  static Future<_Start> _check() async {
+    final done = await firstRunDone();
+    if (await sessionToken() != null) return done ? _Start.home : _Start.firstRun;
+    // A phone that finished first run and then logged out. Sign in gets the
+    // account back; walking fifteen questions again would not.
+    return done ? _Start.signIn : _Start.firstRun;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _returning,
+    return FutureBuilder<_Start>(
+      future: _start,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Screen(body: []);
         }
         // Home shows the week the server returns, so a person who signed in
         // months ago and one who signed in a minute ago both see their own.
-        return snapshot.data == true ? const Home() : const FirstRun();
+        return switch (snapshot.data) {
+          _Start.home => const Home(),
+          _Start.signIn => const SignInAgain(),
+          _ => const FirstRun(),
+        };
       },
     );
   }
@@ -277,16 +304,8 @@ class _FirstRunState extends State<FirstRun> {
           prompt: 'Tell us about yourself.',
           note: 'Speak or type. What you are like, what you spend your time '
               'on, what is on your mind lately.',
-          onSubmitted: (text) =>
-              _submitIntroduction(context, text, spoken: false),
-          // The introduction has no confirm step, so the spoken words and how
-          // they sounded go straight in together.
-          onTranscribed: (transcript) => _submitIntroduction(
-            context,
-            transcript.text,
-            spoken: true,
-            toneId: transcript.toneId,
-          ),
+          onSubmitted: (text, {required spoken, toneId}) =>
+              _submitIntroduction(context, text, spoken: spoken, toneId: toneId),
         ),
 
       // Last. Signing in comes after there is something to keep, not before
@@ -356,13 +375,8 @@ class _HomeState extends State<Home> {
           prompt: 'What just happened?',
           note: 'Thirty seconds is plenty.',
           onClose: () => Navigator.of(capture).pop(),
-          onSubmitted: (text) => _openSession(capture, text, spoken: false),
-          onTranscribed: (transcript) => _openSession(
-            capture,
-            transcript.text,
-            spoken: true,
-            toneId: transcript.toneId,
-          ),
+          onSubmitted: (text, {required spoken, toneId}) =>
+              _openSession(capture, text, spoken: spoken, toneId: toneId),
         ),
       ),
     );
@@ -391,22 +405,21 @@ class Session extends StatefulWidget {
   /// for a typed entry and for a recording nothing managed to listen to.
   final String? toneId;
 
-  /// Whether this came from the mic. The confirm step exists because
-  /// transcription can be wrong, and recognition on children's voices is
-  /// weakest of all. A user who typed their own words has nothing to
-  /// confirm, and asking them to is friction that says we were not listening.
+  /// Whether any of this came from the mic. The words were on the screen as
+  /// they were said and could be fixed there, so there is nothing to confirm
+  /// either way.
   final bool spoken;
 
   @override
   State<Session> createState() => _SessionState();
 }
 
-enum _Beat { confirm, waiting, one, mirror, help, failed }
+enum _Beat { waiting, one, mirror, help, failed }
 
 class _SessionState extends State<Session> {
   final _api = SoulApi.fromEnvironment();
 
-  late _Beat _beat = widget.spoken ? _Beat.confirm : _Beat.waiting;
+  _Beat _beat = _Beat.waiting;
 
   String? _entryId;
   String? _line;
@@ -420,7 +433,7 @@ class _SessionState extends State<Session> {
   @override
   void initState() {
     super.initState();
-    if (!widget.spoken) _submit();
+    _submit();
   }
 
   Future<void> _submit() async {
@@ -505,18 +518,6 @@ class _SessionState extends State<Session> {
   @override
   Widget build(BuildContext context) {
     return switch (_beat) {
-      _Beat.confirm => ConfirmTranscript(
-          transcript: widget.transcript,
-          onSend: _submit,
-          onDiscard: () {
-            // The transcript goes, and how it sounded goes with it. Nobody
-            // waits on the delete and a failed one is swept up by the next
-            // recording on the server.
-            final toneId = widget.toneId;
-            if (toneId != null) _api.discardTone(toneId).ignore();
-            Navigator.of(context).pop();
-          },
-        ),
       _Beat.waiting => const _Waiting(note: 'reading what you said'),
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,

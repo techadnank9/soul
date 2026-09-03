@@ -113,27 +113,24 @@ This is the path that matters. Read it in order.
 ```
 capture_screen.dart
   └─ tap to start, tap to stop. Not hold, so the phone can be set down.
-  └─ records wav, sixteen kilohertz mono, to the system temp directory
-  └─ waits for the file size to settle before reading it
-     an unfinalised container reaches the provider as corrupt audio
-  └─ POST /transcribe  → routes/transcribe.ts, two calls on the same bytes
-  │     ├─ services/transcribe/run.ts
-  │     │    ├─ consent/gate.ts   ← checked here too, before audio leaves
-  │     │    ├─ provider call (ElevenLabs Scribe, config driven)
-  │     │    └─ word timings measured into prosody: pace, pauses, hesitations,
-  │     │       audio events, language. Measured, not judged
-  │     ├─ services/tone/judge.ts, in parallel, allowed to fail
-  │     │    ├─ consent/gate.ts   ← checked again, a second place audio leaves
-  │     │    ├─ gateway.call('voice_tone', audio)  ← the only call that hears
-  │     │    │    emotion, intensity, intent, one sentence, confidence
-  │     │    └─ storeTone() → voice_tones row, entry_id null, returns toneId
-  │     │       a failure here costs the student nothing. Transcript still returns
-  │     └─ audio deleted immediately, never persisted
-  │        the client deletes its temp file too, success or failure
-  │        DELETE /transcribe/:toneId when the student discards the transcript
-  └─ a typed entry skips all of the above and the confirm step with it.
-     There is nothing to confirm about words a student typed themselves.
-  └─ shows the transcript, student sends or discards
+  └─ POST /speech/token  → routes/speech.ts
+  │     consent/gate.ts, then a single use token from ElevenLabs. The key
+  │     never reaches the phone; the token opens one connection and dies in
+  │     fifteen minutes
+  └─ features/capture/live_speech.dart
+  │     a WebSocket straight from the phone to the transcriber, raw sixteen
+  │     kilohertz samples up, words back while the person is speaking.
+  │     partial_transcript is the guess, committed_transcript is settled, and
+  │     both are written into the same box typing uses, after whatever was
+  │     typed. The waves are the loudness of each chunk. Stop sends a commit
+  │     and waits up to two and a half seconds for the tail
+  └─ POST /tone  → routes/speech.ts, in the background after stop
+  │     the audio the phone held in memory, judged once by
+  │     services/tone/judge.ts, stored as a voice_tones row, then dropped.
+  │     Nobody waits: send can go before it lands and the entry has no tone
+  └─ send is the same button as for typing. No confirm screen: the words were
+     on the screen as they were said and could be fixed there
+  └─ POST /transcribe still exists for a whole file, and nothing calls it
   └─ writes to local queue (survives connection loss)
   └─ POST /entries, carrying toneId for a spoken entry
        │

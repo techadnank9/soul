@@ -71,6 +71,9 @@ work identically from the picker. They are held because the founder asked for
 them, they are shown back to the student on the profile tab, and clearing them
 there clears the columns. See decisions 056, 057, 060 and 061.
 
+`place` is the neighbourhood, city and state the coordinates resolved to on
+the phone, shown back instead of the numbers.
+
 `email` is present once a user has signed in with one, lowercased, unique.
 The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random

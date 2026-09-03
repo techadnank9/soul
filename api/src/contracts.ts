@@ -305,6 +305,7 @@ export type PatternsView = z.infer<typeof patternsView>
  */
 export const saveProfile = z.object({
   displayName: z.string().trim().min(1).max(40).nullable().optional(),
+  place: z.string().trim().min(1).max(120).nullable().optional(),
   ageBand: z
     .enum(['under_13', '13_17', '18_24', '25_34', '35_49', '50_plus'])
     .nullable()

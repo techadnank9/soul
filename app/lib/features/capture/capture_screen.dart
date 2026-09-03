@@ -1,28 +1,28 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 import '../../api/client.dart';
-import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import 'live_speech.dart';
 
 /// Screen 3. Voice or text, on the same screen, at the same weight.
 ///
-/// Typing is not a fallback. Recognition on children's voices is materially
-/// worse than on adults, and worst for users from non English speaking
-/// homes, so the users served least well by the mic are exactly the ones who
-/// need the other path to look like a real choice.
+/// Typing is not a fallback. Recognition on some voices is worse than on
+/// others, so the people served least well by the mic are exactly the ones
+/// who need the other path to look like a real choice.
 ///
-/// Nothing records yet. The mic gesture is wired to the same place the typed
-/// path goes, so the shape of the screen can be judged before task 3.
+/// Speaking writes into the same box typing does, while the person is still
+/// talking. There is no separate transcript screen: the words are on the
+/// screen as they are said, they can be fixed by hand, and send is the same
+/// button either way.
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({
     super.key,
     required this.onSubmitted,
-    this.onTranscribed,
     this.onClose,
     this.onBack,
     this.prompt = 'What is going on with you lately?',
@@ -30,23 +30,18 @@ class CaptureScreen extends StatefulWidget {
     this.opener = 'to begin',
   });
 
-  /// Called with the text once there is text, whether it was typed or spoken.
-  /// A spoken entry has already been through the confirm step by then.
-  final ValueChanged<String> onSubmitted;
-
-  /// Called with a transcript that still needs confirming. The caller shows
-  /// the confirm screen, because send or discard belongs to the flow rather
-  /// than to this screen. The transcript carries the handle for how it
-  /// sounded, which goes with the entry or goes when it is discarded.
-  final ValueChanged<Transcript>? onTranscribed;
+  /// Called with the text once the person sends it. spoken says whether the
+  /// mic was used for any of it, and toneId is how it sounded, when the mic
+  /// was used and the judgement came back in time.
+  final void Function(String text, {required bool spoken, String? toneId})
+      onSubmitted;
 
   /// Closes the screen. Not a skip and not an answer: it is the way out for
   /// somebody who opened this and decided not to say anything, which has to
   /// stay an ordinary thing to do rather than something to back out of.
   final VoidCallback? onClose;
 
-  /// The previous screen, when this one sits in a sequence. Shown top left
-  /// as a chevron, the same one every screen in first run uses.
+  /// The previous screen, when this one sits in a sequence.
   final VoidCallback? onBack;
 
   final String prompt;
@@ -57,65 +52,43 @@ class CaptureScreen extends StatefulWidget {
   State<CaptureScreen> createState() => _CaptureScreenState();
 }
 
-class _CaptureScreenState extends State<CaptureScreen>
-    with SingleTickerProviderStateMixin {
+class _CaptureScreenState extends State<CaptureScreen> {
   final _controller = TextEditingController();
+  final _recorder = AudioRecorder();
+  final _api = SoulApi.fromEnvironment();
 
   /// Tap to start, tap again to stop. Not hold.
   ///
   /// Holding a button for thirty seconds is tiring, it fails the moment a
-  /// finger slips, and it cannot be done while putting the phone down. A
-  /// user talking about something that just happened should be able to set
-  /// the phone on a desk and speak.
+  /// finger slips, and it cannot be done while putting the phone down.
   bool _recording = false;
 
-  /// Between stopping and the transcript arriving. The user should see that
-  /// something is happening rather than a mic that went quiet.
-  bool _transcribing = false;
+  /// Between stopping and the last words landing.
+  bool _finishing = false;
   String? _failure;
 
-  final _recorder = AudioRecorder();
-  final _api = SoulApi.fromEnvironment();
+  /// The live connection, while one is open.
+  LiveSpeech? _live;
+  StreamSubscription<Uint8List>? _audio;
 
-  /// When the mic was started, so the report can say how long the person
-  /// spoke against how long the transcriber thought the clip was.
-  DateTime? _recordingSince;
+  /// What was in the box before the mic started, what the transcriber has
+  /// settled on since, and what it is still deciding. The box shows all
+  /// three in that order, so a person sees words arrive and firm up.
+  String _before = '';
+  String _committed = '';
+  String _partial = '';
+
+  /// Whether any of the text came from the mic, and how it sounded.
+  bool _spoken = false;
+  String? _toneId;
+  Future<void>? _judging;
 
   /// The last few seconds of what the microphone heard, newest last, one
-  /// value per bar between 0 and 1. The waves are drawn from this and from
-  /// nothing else, so silence is flat and a word is a spike, the way a voice
-  /// recorder looks.
+  /// value per bar between 0 and 1. Flat in silence, a spike per word.
   final List<double> _levels = List<double>.filled(_WavePainter.bars, 0);
-  StreamSubscription<Amplitude>? _listening;
 
-  /// Decibels relative to full scale into a bar height. Quiet rooms sit near
-  /// minus sixty and a voice a hand's width from the phone reaches minus ten,
-  /// so that is the range that fills the bar.
-  static double _level(double dbfs) {
-    if (!dbfs.isFinite) return 0;
-    return ((dbfs + 60) / 50).clamp(0.0, 1.0);
-  }
-
-  void _listen() {
-    _listening?.cancel();
-    _listening = _recorder
-        .onAmplitudeChanged(const Duration(milliseconds: 70))
-        .listen((amplitude) {
-      if (!mounted) return;
-      setState(() {
-        _levels.removeAt(0);
-        _levels.add(_level(amplitude.current));
-      });
-    });
-  }
-
-  void _stopListening() {
-    _listening?.cancel();
-    _listening = null;
-    for (var i = 0; i < _levels.length; i++) {
-      _levels[i] = 0;
-    }
-  }
+  DateTime? _recordingSince;
+  int _bytes = 0;
 
   @override
   void initState() {
@@ -130,159 +103,214 @@ class _CaptureScreenState extends State<CaptureScreen>
   @override
   void dispose() {
     _controller.removeListener(_onChanged);
-    _listening?.cancel();
+    _audio?.cancel();
+    _live?.close();
     _recorder.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _toggleRecording() async {
-    if (_transcribing) return;
-
+    if (_finishing) return;
     if (_recording) {
-      await _stopAndTranscribe();
-      return;
+      await _stop();
+    } else {
+      await _start();
     }
+  }
 
+  Future<void> _start() async {
     if (!await _recorder.hasPermission()) {
-      // The permission sheet can sit there for as long as the user leaves
-      // it, and the screen can be closed underneath it.
       _api.event('record_no_permission');
       if (!mounted) return;
       setState(() => _failure = 'Soul needs the microphone to hear you.');
       return;
     }
 
-    // The system temporary directory, so the file lives outside anything that
-    // gets backed up, and only until the upload returns.
-    final path =
-        '${Directory.systemTemp.path}/soul_capture_${DateTime.now().millisecondsSinceEpoch}.wav';
-
-    // Wav rather than m4a. An aac container has to be finalised when recording
-    // stops, and a short clip can reach the provider before that has happened,
-    // which comes back as corrupt audio. Wav is written straight through.
-    // Sixteen kilohertz mono is what speech recognition wants anyway, so the
-    // file is not much larger than the compressed one would have been.
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.wav,
-        numChannels: 1,
-        sampleRate: 16000,
-      ),
-      path: path,
-    );
-
-    if (!mounted) return;
-    _recordingSince = DateTime.now();
     setState(() {
-      _recording = true;
       _failure = null;
-    });
-    _listen();
-  }
-
-  /// Waits for the recorder to finish writing.
-  ///
-  /// stop() returns the path before the last buffers have reached disk, and
-  /// reading too early sends a header with almost no audio behind it, which
-  /// the provider rejects as corrupt. Poll until the size stops changing.
-  static Future<void> _settled(File file) async {
-    var previous = -1;
-    for (var attempt = 0; attempt < 20; attempt++) {
-      final size = file.existsSync() ? await file.length() : 0;
-      if (size > 0 && size == previous) return;
-      previous = size;
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    }
-  }
-
-  Future<void> _stopAndTranscribe() async {
-    final path = await _recorder.stop();
-
-    // Finishing the file is real elapsed time and this screen can be left
-    // during it. Touching the animation after dispose throws, so the mounted
-    // check comes first.
-    if (!mounted) return;
-    _stopListening();
-
-    setState(() {
-      _recording = false;
-      _transcribing = true;
+      _finishing = true;
     });
 
-    if (path == null) {
-      setState(() => _transcribing = false);
-      return;
-    }
-
-    final file = File(path);
-    final startedAt = DateTime.now();
-    final recordedMs = _recordingSince == null
-        ? null
-        : startedAt.difference(_recordingSince!).inMilliseconds;
-    var bytes = 0;
+    // A token for one connection, from our own service, so the transcriber's
+    // key never reaches the phone.
+    final String token;
     try {
-      await _settled(file);
-      final audio = await file.readAsBytes();
-      bytes = audio.length;
-      final transcript = await _api.transcribe(audio, 'audio/wav');
-      _api.event('transcribe_ok', {
-        'bytes': bytes,
-        'recorded_ms': recordedMs,
-        'ms': DateTime.now().difference(startedAt).inMilliseconds,
-        'words': transcript.text.trim().split(RegExp(r'\s+')).length,
-        'tone': transcript.toneId != null,
-      });
-
-      if (!mounted) return;
-      setState(() => _transcribing = false);
-
-      if (transcript.text.trim().isEmpty) {
-        setState(() => _failure = 'Nothing came through. Try again.');
-        return;
-      }
-
-      // Never straight into the field. The transcript is the permanent record
-      // and the text the safety classifier reads, so the user sees it and
-      // chooses send or discard first.
-      widget.onTranscribed?.call(transcript);
+      token = await _api.speechToken();
     } catch (error) {
       final status = error is SoulApiException ? error.status : null;
-      _api.event('transcribe_failed', {
-        'status': status,
-        'bytes': bytes,
-        'recorded_ms': recordedMs,
-        'ms': DateTime.now().difference(startedAt).inMilliseconds,
-        'error': status == null ? error.runtimeType.toString() : null,
-      });
+      _api.event('speech_failed', {'stage': 'token', 'status': status});
       if (!mounted) return;
       setState(() {
-        _transcribing = false;
-        // Which thing failed, in one line, so a person can act on it. The
-        // exact words in a status are on the server, never shown here.
+        _finishing = false;
         _failure = switch (status) {
-          403 => 'Nothing left the app. Agree to the terms first.',
           401 => 'This phone is not signed in yet. Close the app and open it again.',
-          422 => 'Nothing came through. Try again.',
-          final int s when s >= 500 => 'The service had a problem. Try again in a moment.',
+          503 => 'Speech is not available right now. You can type it instead.',
           null => 'No connection. You can type it instead.',
           _ => 'That did not go through. You can type it instead.',
         };
       });
-    } finally {
-      // The audio is deleted the moment we are done with it, success or not.
-      if (file.existsSync()) {
-        try {
-          await file.delete();
-        } catch (_) {}
-      }
+      return;
     }
+
+    final live = LiveSpeech(token: token, language: 'en');
+    try {
+      await live.connect();
+    } catch (error) {
+      _api.event('speech_failed', {'stage': 'connect', 'error': error.runtimeType.toString()});
+      if (!mounted) return;
+      setState(() {
+        _finishing = false;
+        _failure = 'Could not reach the transcriber. You can type it instead.';
+      });
+      return;
+    }
+
+    _live = live;
+    _before = _controller.text.trimRight();
+    _committed = '';
+    _partial = '';
+    live.transcripts.listen(_onTranscript, onError: (Object error) {
+      _api.event('speech_failed', {'stage': 'stream', 'error': error.toString().substring(0, 120)});
+    });
+
+    // Raw sixteen bit samples at sixteen kilohertz, mono, straight from the
+    // microphone. Each chunk drives the waves, goes to the transcriber, and is
+    // kept in memory for the tone judgement at the end.
+    final stream = await _recorder.startStream(
+      const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+    );
+
+    _recordingSince = DateTime.now();
+    _bytes = 0;
+    _audio = stream.listen((chunk) {
+      _bytes += chunk.length;
+      live.send(chunk);
+      if (!mounted) return;
+      setState(() {
+        _levels.removeAt(0);
+        _levels.add(_rms(chunk));
+      });
+    });
+
+    _api.event('speech_started');
+    if (!mounted) return;
+    setState(() {
+      _recording = true;
+      _finishing = false;
+      _spoken = true;
+    });
   }
 
-  void _send() {
+  /// The loudness of one chunk, 0 to 1. Root mean square of the samples,
+  /// against a ceiling well under full scale so ordinary speech fills the bar.
+  static double _rms(Uint8List chunk) {
+    final samples = chunk.buffer.asInt16List(chunk.offsetInBytes, chunk.length ~/ 2);
+    if (samples.isEmpty) return 0;
+    var sum = 0.0;
+    for (final sample in samples) {
+      sum += sample * sample;
+    }
+    final rms = (sum / samples.length);
+    // 6000 is a firm speaking voice a hand's width away.
+    return (rms / (6000 * 6000)).clamp(0.0, 1.0);
+  }
+
+  void _onTranscript(Transcript transcript) {
+    if (!mounted) return;
+    setState(() {
+      if (transcript.committed) {
+        _committed = _join(_committed, transcript.text);
+        _partial = '';
+      } else {
+        _partial = transcript.text;
+      }
+      _show();
+    });
+  }
+
+  static String _join(String a, String b) {
+    if (a.isEmpty) return b.trim();
+    if (b.trim().isEmpty) return a;
+    return '$a ${b.trim()}';
+  }
+
+  /// Puts the three parts in the box with the cursor at the end, so the
+  /// person watches words arrive rather than fights the caret.
+  void _show() {
+    final text = _join(_join(_before, _committed), _partial);
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  Future<void> _stop() async {
+    final live = _live;
+    setState(() {
+      _recording = false;
+      _finishing = true;
+    });
+    await _audio?.cancel();
+    _audio = null;
+    await _recorder.stop();
+    for (var i = 0; i < _levels.length; i++) {
+      _levels[i] = 0;
+    }
+
+    final recordedMs = _recordingSince == null
+        ? null
+        : DateTime.now().difference(_recordingSince!).inMilliseconds;
+
+    // Ask for the tail to be settled, give it a moment, then let go.
+    if (live != null) {
+      await live.finish(const Duration(milliseconds: 2500));
+      final held = live.audio;
+      _live = null;
+      await live.close();
+      if (mounted) {
+        setState(() {
+          _partial = '';
+          _show();
+        });
+      }
+
+      _api.event('speech_stopped', {
+        'recorded_ms': recordedMs,
+        'bytes': _bytes,
+        'chars': _committed.length,
+      });
+
+      // How it sounded, judged once from the audio the phone held, then the
+      // audio goes. Nobody waits on this: send can happen before it lands.
+      if (held.length > 16000) {
+        _judging = _api.tone(held).then((id) {
+          _toneId = id;
+        }).catchError((Object error) {
+          _api.event('tone_failed', {
+            'status': error is SoulApiException ? error.status : null,
+          });
+        });
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _finishing = false);
+  }
+
+  Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    widget.onSubmitted(text);
+    if (_recording) await _stop();
+    // A tone still on its way gets one more second, then goes without.
+    if (_judging != null) {
+      await _judging!.timeout(const Duration(seconds: 1), onTimeout: () {});
+    }
+    widget.onSubmitted(text, spoken: _spoken, toneId: _toneId);
   }
 
   @override
@@ -325,27 +353,22 @@ class _CaptureScreenState extends State<CaptureScreen>
         const SizedBox(height: 24),
         SoulField(
           controller: _controller,
-          hint: 'Type it here',
+          hint: 'Type it here, or tap the mic and talk',
         ),
-        // The mic sits low, down where a thumb rests, with room around it. It
-        // is the thing most users will reach for, and it should not look
-        // like an afterthought under the typing field.
+        // The mic sits low, down where a thumb rests, with room around it.
         const SizedBox(height: 200),
         Center(
           child: Column(
             children: [
-              // The waves sit above the mic. While recording they move; the
-              // rest of the time the space is held open so nothing jumps when
-              // recording starts.
+              // The waves sit above the mic. While recording they follow the
+              // voice; the rest of the time the space is held open so nothing
+              // jumps when recording starts.
               SizedBox(
                 height: 64,
                 width: double.infinity,
                 child: _recording
-                    ? AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, _) => CustomPaint(
-                          painter: _WavePainter(List<double>.of(_levels), recording: _recording),
-                        ),
+                    ? CustomPaint(
+                        painter: _WavePainter(List<double>.of(_levels)),
                       )
                     : null,
               ),
@@ -393,47 +416,44 @@ class _CaptureScreenState extends State<CaptureScreen>
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: Label(
-                  _transcribing
-                      ? 'writing it down'
+                  _finishing
+                      ? 'one moment'
                       : _recording
                           ? 'tap to stop'
                           : 'tap to speak',
-                  key: ValueKey('$_recording$_transcribing'),
+                  key: ValueKey('$_finishing $_recording'),
                 ),
               ),
             ],
           ),
         ),
       ],
-      footer: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (typing)
-            SoulButton('Send', kind: SoulButtonKind.filled, onPressed: _send),
-        ],
-      ),
+      footer: typing
+          ? SoulButton(
+              'Send it',
+              kind: SoulButtonKind.filled,
+              onPressed: _finishing ? null : _send,
+            )
+          : null,
     );
   }
 }
-
 
 /// The waves while someone is speaking.
 ///
 /// One bar per level from the microphone, newest on the right, so the line
 /// scrolls the way a voice recorder does: flat while nobody speaks, spiking
-/// with each word. Before recording starts the bars sit at their resting
-/// height so nothing jumps when they come alive.
+/// with each word.
 class _WavePainter extends CustomPainter {
-  _WavePainter(this.levels, {required this.recording});
+  _WavePainter(this.levels);
   final List<double> levels;
-  final bool recording;
 
   static const bars = 21;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = SoulColors.clay.withValues(alpha: recording ? 0.8 : 0.35)
+      ..color = SoulColors.clay.withValues(alpha: 0.8)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 4;
 
@@ -453,14 +473,11 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter old) =>
-      old.recording != recording || !_same(old.levels, levels);
-
-  static bool _same(List<double> a, List<double> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
+  bool shouldRepaint(covariant _WavePainter old) {
+    if (old.levels.length != levels.length) return true;
+    for (var i = 0; i < levels.length; i++) {
+      if (old.levels[i] != levels[i]) return true;
     }
-    return true;
+    return false;
   }
 }

@@ -132,6 +132,7 @@ class SoulApi {
     '/auth/email/verify',
     '/auth/apple',
     '/events',
+    '/speech/token',
     '/profile',
     '/baseline',
     '/consent',
@@ -208,14 +209,20 @@ class SoulApi {
     return jsonDecode(text) as Map<String, dynamic>;
   }
 
-  /// Audio in, text out. The bytes are sent and forgotten; the server deletes
-  /// them the moment the provider returns a transcript. The same bytes are
-  /// listened to for how they sounded, and the handle for that rides back
-  /// with the words.
-  Future<Transcript> transcribe(List<int> audio, String contentType) async {
+  /// A single use token that opens one live connection to the transcriber,
+  /// minted by our service so the transcriber's key never reaches the phone.
+  Future<String> speechToken() async {
+    final json = await _post('/speech/token', {});
+    return json['token'] as String;
+  }
+
+  /// The audio the phone held while it streamed, judged once for how it
+  /// sounded. The bytes are sent and forgotten. Returns the handle that goes
+  /// with the entry.
+  Future<String> tone(List<int> audio) async {
     final bearer = await _bearer();
-    final request = await _client.postUrl(Uri.parse('$baseUrl/transcribe'));
-    request.headers.set('content-type', contentType);
+    final request = await _client.postUrl(Uri.parse('$baseUrl/tone'));
+    request.headers.set('content-type', 'audio/wav');
     request.headers.set('authorization', 'Bearer $bearer');
     request.add(audio);
 
@@ -226,16 +233,7 @@ class SoulApi {
       await _forgetDeadToken(response.statusCode);
       throw SoulApiException(response.statusCode, text);
     }
-    final json = jsonDecode(text) as Map<String, dynamic>;
-    return Transcript(
-      text: json['text'] as String,
-      toneId: json['toneId'] as String?,
-    );
-  }
-
-  /// A discarded transcript takes how it sounded with it.
-  Future<void> discardTone(String toneId) async {
-    await _delete('/transcribe/$toneId');
+    return (jsonDecode(text) as Map<String, dynamic>)['toneId'] as String;
   }
 
   /// An account for a phone that has never been seen, and its session.
@@ -260,23 +258,9 @@ class SoulApi {
     return json['token'] as String;
   }
 
-  /// The agreement, recorded with its version. Until this is recorded
-  /// nothing a person writes or says leaves the server.
+  /// The agreement, recorded with its version.
   Future<void> recordConsent(String version) async {
     await _post('/consent', {'version': version});
-  }
-
-  /// Whether this account has agreed. Asked on launch, because a phone can
-  /// hold an account from before the agreement screen existed, and the
-  /// keychain outlives the app on iOS. Unreachable reads as agreed, so an
-  /// offline launch is not a wall.
-  Future<bool> consentRecorded() async {
-    try {
-      final json = await _get('/consent');
-      return json['recorded'] == true;
-    } catch (_) {
-      return true;
-    }
   }
 
   /// Sign in with Apple, traded for a session token.

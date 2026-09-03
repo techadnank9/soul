@@ -164,6 +164,13 @@ export const students = pgTable(
     timezone: text('timezone'),
 
     /**
+     * The place the coordinates resolved to on the phone, as a person would
+     * say it: neighbourhood, city, state. Shown back to them instead of the
+     * numbers. Set by the phone, because the phone has the geocoder.
+     */
+    place: text('place'),
+
+    /**
      * Exact coordinates, when the student shared their location.
      *
      * This is precise location data about a child and it is the most sensitive

@@ -3450,3 +3450,51 @@ identifier attached is our own account id.
 
 Reverses if: the free plan is outgrown and the paid one is not worth it, in
 which case the events table and the logs remain and the SDKs come out.
+
+---
+
+### 203. Words appear while the person is speaking, in the same box they would type in
+Sep 2026, Adnan
+
+Decision: the mic streams audio straight from the phone to ElevenLabs over a
+live connection, and the words come back into the typing box as they are
+said. There is no separate transcript screen and no confirm step. Send is
+the same button either way. The waves are the loudness of the microphone,
+not an animation. How it sounded is judged once from the audio the phone
+held in memory, after stop, in the background.
+
+Why: the founder's call, on seeing the first build. A screen that records,
+goes quiet, and then shows a page of text felt broken, and the batch
+transcriber returned nothing for clips of two seconds. Live words are what a
+voice recorder does, the person can fix a wrong word by hand, and there is
+nothing to confirm because they watched it arrive.
+
+How the key stays off the phone: the service mints a single use token, good
+for one connection and fifteen minutes. The audio does not pass through the
+service on the live path. It is sent once afterwards for the tone judgement
+and dropped, the same promise as before.
+
+What changed in the rules: decision 019 said no edit step. The box is
+editable, because it is the typing box. Invariants ten and eleven, that a
+transcript is seen before it is sent and never lands in the typing field,
+are replaced by this: the words land in the typing field as they are said,
+which is a stronger form of seen.
+
+Reverses if: the live transcriber's accuracy is measured to be worse than
+the batch one on real voices, in which case the batch route, which still
+exists, takes over after stop.
+
+---
+
+### 204. Location is a place name, and there is a log out
+Sep 2026, Adnan
+
+Decision: the profile shows where a person is as a place they would say,
+neighbourhood, city, state, resolved on the phone by Apple's geocoder and
+stored as text. The region row is gone. The profile tab has a log out, which
+forgets the phone's session, and the next launch is the sign in screen
+rather than first run. Sign in with Apple works from a phone with no
+session, making an account if the Apple account has none.
+
+Why: US West is not an answer to where are you. The geocoder is on the phone
+and costs no package and no vendor. A log out is table stakes.

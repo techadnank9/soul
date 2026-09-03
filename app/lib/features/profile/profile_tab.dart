@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../data/device_location.dart';
+import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../onboarding/profile_fields.dart';
@@ -65,14 +66,22 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   /// Coordinates move together or not at all, so they get their own writer.
-  Future<void> _changeLocation(double? latitude, double? longitude) async {
+  Future<void> _changeLocation(
+    double? latitude,
+    double? longitude, {
+    String? place,
+  }) async {
     setState(() => _held = {
           ...?_held,
           'latitude': latitude,
           'longitude': longitude,
         });
     try {
-      await widget.api.profile({'latitude': latitude, 'longitude': longitude});
+      await widget.api.profile({
+        'latitude': latitude,
+        'longitude': longitude,
+        'place': place,
+      });
     } catch (_) {
       // Nothing said. The reload underneath shows what is actually stored.
     }
@@ -91,19 +100,21 @@ class _ProfileTabState extends State<ProfileTab> {
     }
 
     setState(() => _note = null);
-    await _changeLocation(where.latitude, where.longitude);
+    final place = await placeName(where.latitude, where.longitude);
+    await _changeLocation(where.latitude, where.longitude, place: place);
   }
 
   String? get _name => _held?['displayName'] as String?;
 
-  /// Whether a position is held. Shown as the area it resolved to, never as
-  /// coordinates: a person reads a place name, not a number.
+  /// Where the person is, as they would say it: the place the phone named,
+  /// or the broad region when the phone could not, never coordinates.
   String? get _position {
+    final place = _held?['place'] as String?;
+    if (place != null && place.isNotEmpty) return place;
     final latitude = (_held?['latitude'] as num?)?.toDouble();
     final longitude = (_held?['longitude'] as num?)?.toDouble();
     if (latitude == null || longitude == null) return null;
-    final region = _held?['region'] as String?;
-    return region == null || region.isEmpty ? 'Shared' : region;
+    return labelFor(regions, _held?['region'] as String?) ?? 'Shared';
   }
 
   @override
@@ -165,25 +176,12 @@ class _ProfileTabState extends State<ProfileTab> {
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Rule(),
               ),
-              _Row(
-                label: 'Where',
-                value: labelFor(regions, _held?['region'] as String?),
-                // The zone is derived from the region, so it is shown here
-                // rather than asked for. It is what decides the hour a check
-                // back arrives.
-                note: _held?['timezone'] as String?,
-                onTap: () => _pick(context, 'region', 'Where are you?', regions),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Rule(),
-              ),
-              // Shown as its own line rather than folded into the region,
-              // because it is a different kind of thing to hold about somebody
-              // and it should not be able to sit there unnoticed.
+              // The place decides the zone, and the zone decides the hour a
+              // check back arrives, so it is shown under the place.
               _Row(
                 label: 'Location',
                 value: _position,
+                note: _held?['timezone'] as String?,
                 onTap: () => _location(context),
               ),
             ],
@@ -201,9 +199,24 @@ class _ProfileTabState extends State<ProfileTab> {
               '${_position == null ? 'Your location is not stored unless you share it.' : 'Your location is stored, and removing it here removes it for good.'} '
               'Everything above can be changed or emptied here.',
         ),
+        const SizedBox(height: 24),
+        // Log out forgets this phone's session. The account stays, and
+        // signing in with the same Apple account or email brings it back.
+        SoulButton(
+          'Log out',
+          kind: SoulButtonKind.ghost,
+          onPressed: () => _logOut(context),
+        ),
         const SizedBox(height: 90),
       ],
     );
+  }
+
+  Future<void> _logOut(BuildContext context) async {
+    widget.api.event('logged_out');
+    await clearSessionToken();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/signin', (_) => false);
   }
 
   Future<void> _editName(BuildContext context) async {

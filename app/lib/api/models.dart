@@ -616,15 +616,3 @@ class PersonView {
         ],
       );
 }
-
-/// What came back from the microphone.
-///
-/// The words, and a handle for how they sounded. The handle is absent when
-/// nothing managed to listen, and the transcript is the same either way. It
-/// goes back with the entry so the server can hang the tone on it, and it is
-/// sent to be discarded when the transcript is.
-class Transcript {
-  const Transcript({required this.text, this.toneId});
-  final String text;
-  final String? toneId;
-}

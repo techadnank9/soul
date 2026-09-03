@@ -30,6 +30,7 @@ profile.get('/profile', async (c) => {
       ageBand: students.ageBand,
       gender: students.gender,
       region: students.region,
+      place: students.place,
       timezone: students.timezone,
       latitude: students.latitude,
       longitude: students.longitude,
@@ -46,6 +47,7 @@ profile.get('/profile', async (c) => {
     ageBand: row?.ageBand ?? null,
     gender: row?.gender ?? null,
     region: row?.region ?? null,
+    place: row?.place ?? null,
     timezone: row?.timezone ?? null,
     // Shown back to the student, because a product holding a child's exact
     // position and not showing it to them is the worse version of this.

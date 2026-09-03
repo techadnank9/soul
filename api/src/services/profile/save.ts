@@ -25,6 +25,7 @@ export async function saveProfile(
   const patch: Record<string, unknown> = {}
 
   if (input.displayName !== undefined) patch.displayName = input.displayName
+  if (input.place !== undefined) patch.place = input.place
   if (input.ageBand !== undefined) patch.ageBand = input.ageBand
   if (input.gender !== undefined) patch.gender = input.gender
   if (input.region !== undefined) {

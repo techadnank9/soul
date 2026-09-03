@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db, students } from '../db.js'
 import type { Session } from '../session.js'
-import { auditLinked, issueSession, type SignedIn } from './accounts.js'
+import { auditLinked, createAccount, issueSession, type SignedIn } from './accounts.js'
 
 /**
  * Signing in with Apple attaches an Apple account to the account this device
@@ -25,7 +25,10 @@ export class AlreadyLinked extends Error {}
 
 export type { SignedIn }
 
-export async function signInWithApple(current: Session, appleSub: string): Promise<SignedIn> {
+export async function signInWithApple(
+  current: Session | null,
+  appleSub: string,
+): Promise<SignedIn> {
   const linked = await db
     .select({
       id: students.id,
@@ -39,6 +42,15 @@ export async function signInWithApple(current: Session, appleSub: string): Promi
   // A second device, or the same one after a reinstall. The Apple account
   // decides which account this is.
   if (linked[0]) return issueSession(linked[0])
+
+  // A phone with no account, after a log out, signing in with an Apple
+  // account nothing was ever attached to. It gets a new one.
+  if (!current) {
+    const account = await createAccount()
+    await db.update(students).set({ appleUserId: appleSub }).where(eq(students.id, account.id))
+    await auditLinked(account.id, 'apple_account_linked')
+    return issueSession(account)
+  }
 
   const rows = await db
     .select({ appleUserId: students.appleUserId })
