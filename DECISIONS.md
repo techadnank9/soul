@@ -3408,3 +3408,21 @@ connection.
 Reverses if: the service grows to where a hosted error tracker on the server
 side earns its place. That would be a server dependency, not a client one,
 and a separate decision.
+
+---
+
+### 201. Using the app is the agreement
+Sep 2026, Adnan
+
+Decision: an account a person makes for themselves is recorded as agreed the
+moment it is created. There is no agreement screen in first run and no check
+on launch. The terms and the privacy policy stay linked from the sign in
+screen and the website, and the gate in the code stays as it is, always
+passing for these accounts.
+
+Why: the founder's call. The product is for anybody, not for children, and a
+functional app comes first. Decision 200 moved the checkbox earlier; this
+removes it. Accounts made before this were marked agreed in the same change.
+
+Reverses if: a district rosters students, whose consent is recorded by the
+district as before and is untouched by this.

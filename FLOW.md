@@ -46,11 +46,11 @@ Before any of it, the phone gets an account. `FirstRun` asks
 `POST /auth/device` the moment it opens, `auth/accounts.ts` makes a row in the
 self signup district and issues a session, and the token is in the keychain
 before the intro's continue is pressed. Everything first run writes goes into
-that account. The agreement is the second screen, before a word is said, and
-`POST /consent` records it. Anything written before consent is stored held
-and released afterwards: `POST /consent` books a `release_held` job, which
-runs the classifier over the held entries and then the tagger, in that order,
-and writes nothing back.
+that account. An account a person makes is agreed from the moment it exists:
+`createAccount` records consent as it inserts the row, so nothing a person
+says or writes ever waits on a checkbox. `POST /consent` and the
+`release_held` job remain for rostered accounts whose district records
+consent later.
 
 ```
 main.dart / FirstRun
@@ -59,14 +59,7 @@ main.dart / FirstRun
   │     what the app does, and three lines on what it is not
   │     no account, no sign up, no consent screen (decisions 048 and 055)
   │
-  ├─ 1. agreement_screen.dart
-  │     the terms, the privacy policy, a box that gates the button
-  │     POST /consent → routes/consent.ts, in the background
-  │        this is the moment the gate opens. Before it, nothing leaves, and
-  │        a spoken introduction would be refused at /transcribe, which is
-  │        exactly what happened when this screen sat at the end
-  │
-  ├─ 2. profile_screen.dart
+  ├─ 1. profile_screen.dart
   │     name, age band, gender, where, one question at a time
   │     the where question offers the device before the list
   │        data/device_location.dart asks for permission, coarse failure and
@@ -80,11 +73,11 @@ main.dart / FirstRun
   │        derives timezone from region, never takes one from the client
   │        writes an audit_log row naming the fields, never the values
   │
-  ├─ 3. baseline_screen.dart
+  ├─ 2. baseline_screen.dart
   │     the ten questions, unchanged
   │     POST /baseline  → routes/consent.ts         ← background, nobody waits
   │
-  ├─ 4. capture_screen.dart, the introduction
+  ├─ 3. capture_screen.dart, the introduction
   │     tell us about yourself, spoken or typed
   │     POST /entries, the whole loop: consent, safety, beat one
   │     the line it generates is never shown. This entry is how the app
@@ -95,7 +88,7 @@ main.dart / FirstRun
   │     the terms, the privacy policy, an agreement that gates the button
   │     a development skip that is labelled as one
   │
-  └─ 6. home
+  └─ 5. home
         the week ring, and on a new account nothing in it yet
 ```
 

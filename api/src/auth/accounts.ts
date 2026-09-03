@@ -62,9 +62,16 @@ export async function selfSignupHome(): Promise<{ schoolId: string; districtId: 
 /** A new account with nothing in it. The external reference is random and means nothing. */
 export async function createAccount(): Promise<Account> {
   const home = await selfSignupHome()
+  // Agreed from the moment it exists. Using the app is the agreement, and
+  // nothing a person says or writes waits on a checkbox.
   const rows = await db
     .insert(students)
-    .values({ ...home, externalRef: `self_${randomUUID()}` })
+    .values({
+      ...home,
+      externalRef: `self_${randomUUID()}`,
+      consentRecordedAt: new Date(),
+      consentVersion: 'v1',
+    })
     .returning({ id: students.id })
   const row = rows[0]
   if (!row) throw new Error('account insert returned no row')

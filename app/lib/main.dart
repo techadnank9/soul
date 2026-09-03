@@ -12,7 +12,6 @@ import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/baseline.dart';
-import 'features/onboarding/agreement_screen.dart';
 import 'features/onboarding/baseline_screen.dart';
 import 'features/onboarding/intro_screen.dart';
 import 'features/onboarding/profile_screen.dart';
@@ -86,8 +85,6 @@ class SoulApp extends StatelessWidget {
 /// first launch, before a single question, so the token alone no longer
 /// means a person finished. What sits under the reads is the app's own
 /// background, so there is nothing worth spinning at for the length of them.
-enum _Start { firstRun, agreement, home }
-
 class _Launch extends StatefulWidget {
   const _Launch();
 
@@ -99,48 +96,24 @@ class _LaunchState extends State<_Launch> {
   /// Read once, held here. Calling this inside build handed the builder a new
   /// future on every rebuild, which dropped back to the waiting state and
   /// threw away whatever the app had built underneath it.
-  late final Future<_Start> _start = _check();
+  late final Future<bool> _returning = _check();
 
-  final _api = SoulApi.fromEnvironment();
-
-  Future<_Start> _check() async {
-    if (await sessionToken() == null) return _Start.firstRun;
-    if (!await firstRunDone()) return _Start.firstRun;
-    // A phone from before the agreement screen existed holds an account
-    // that never agreed, and the keychain outlives the app on iOS. Nothing
-    // that account says can leave until it does, so ask now rather than let
-    // the mic fail on every entry.
-    return await _api.consentRecorded() ? _Start.home : _Start.agreement;
+  static Future<bool> _check() async {
+    if (await sessionToken() == null) return false;
+    return firstRunDone();
   }
-
-  bool _agreed = false;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_Start>(
-      future: _start,
+    return FutureBuilder<bool>(
+      future: _returning,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Screen(body: []);
         }
         // Home shows the week the server returns, so a person who signed in
         // months ago and one who signed in a minute ago both see their own.
-        return switch (snapshot.data) {
-          _Start.home => const Home(),
-          _Start.agreement when !_agreed => AgreementScreen(
-              onAgreed: () {
-                _api.recordConsent('v1').then(
-                  (_) => _api.event('consent_recorded', {'version': 'v1', 'late': true}),
-                  onError: (Object error) => _api.event('consent_failed', {
-                    'status': error is SoulApiException ? error.status : null,
-                  }),
-                );
-                setState(() => _agreed = true);
-              },
-            ),
-          _Start.agreement => const Home(),
-          _ => const FirstRun(),
-        };
+        return snapshot.data == true ? const Home() : const FirstRun();
       },
     );
   }
@@ -176,21 +149,6 @@ class _FirstRunState extends State<FirstRun> {
     }
   }
 
-  /// The agreement, recorded the moment it is made. Until it is recorded
-  /// nothing this person says or writes leaves the server, which is why it
-  /// comes before the introduction rather than after it.
-  static const _consentVersion = 'v1';
-
-  Future<void> _recordAgreement() async {
-    try {
-      await _api.recordConsent(_consentVersion);
-      _api.event('consent_recorded', {'version': _consentVersion});
-    } catch (error) {
-      _api.event('consent_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      });
-    }
-  }
 
   void _next() => setState(() => _step++);
 
@@ -256,19 +214,10 @@ class _FirstRunState extends State<FirstRun> {
           },
         ),
 
-      // The agreement, before a word is said. Recorded in the background:
-      // the introduction is two screens away and the post is quick.
-      1 => AgreementScreen(
-          onAgreed: () {
-            _recordAgreement();
-            _next();
-          },
-        ),
-
       // Four questions, every one of them skippable. Sent in the background,
       // because a user should never wait on this, and a profile where
       // everything was skipped is never sent at all.
-      2 => ProfileScreen(
+      1 => ProfileScreen(
           onFinished: (profile) {
             setState(() => _profile = profile);
             if (!profile.isEmpty) _api.profile(profile.toJson()).ignore();
@@ -278,7 +227,7 @@ class _FirstRunState extends State<FirstRun> {
 
       // Nothing is scored and nothing is shown back. The answers are a
       // baseline for later, not a result for now.
-      3 => BaselineScreen(
+      2 => BaselineScreen(
           onFinished: (answers) {
             _api.baseline(baselineVersion, answers).ignore();
             _next();
@@ -286,7 +235,7 @@ class _FirstRunState extends State<FirstRun> {
         ),
 
       // The first real pass through the loop, at the end of first run.
-      // Step 4.
+      // Step 3.
       //
       // Everything before this was answered by tapping. This is the first
       // time a user says something in their own words, and it goes the
@@ -294,7 +243,7 @@ class _FirstRunState extends State<FirstRun> {
       // that names something only they said. It is also the only honest way
       // to show what the product is, because describing the loop is not the
       // same as feeling it.
-      4 => CaptureScreen(
+      3 => CaptureScreen(
           opener: 'last one',
           prompt: 'Tell us about yourself.',
           note: 'Speak or type. What you are like, what you spend your time '
