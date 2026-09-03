@@ -8,9 +8,9 @@ import 'cue_card.dart';
 /// The calendar date this device is on, as YYYY-MM-DD.
 ///
 /// The only date the client ever works out for itself, and it decides which
-/// day the Days tab opens on before the student has picked one. It is not a
-/// boundary: the entries inside a day are still cut by the student's own
-/// timezone on the server. A phone in a different zone to the student's region
+/// day the Days tab opens on before the user has picked one. It is not a
+/// boundary: the entries inside a day are still cut by the user's own
+/// timezone on the server. A phone in a different zone to the user's region
 /// can open the neighbouring day, and every dot on the week strip carries a
 /// date from the server, so tapping one is always exact.
 String todayOnDevice() {
@@ -23,7 +23,7 @@ String todayOnDevice() {
 /// Screen 7. One day, in order.
 ///
 /// A lens over entries that already exist. It adds nothing and interprets
-/// nothing: the words are the student's, the feeling and the trigger under
+/// nothing: the words are the user's, the feeling and the trigger under
 /// them are the tagger's, and there is no closing observation because nothing
 /// on this screen is in a position to make one.
 class DayScreen extends StatefulWidget {
@@ -54,7 +54,7 @@ class _DayScreenState extends State<DayScreen> {
   DayView? _day;
   bool _failed = false;
 
-  /// What the student chose, per card, for as long as this page is open. The
+  /// What the user chose, per card, for as long as this page is open. The
   /// day says a card was answered and never what with, so a card answered here
   /// can show it and one answered on another day cannot.
   final Map<String, CueCardAnswer> _answers = {};
@@ -134,13 +134,13 @@ class _DayScreenState extends State<DayScreen> {
               last: i == day.entries.length - 1,
             ),
           // Under the day, because a card asks what happens next about
-          // something that is already up there in the student's own words.
+          // something that is already up there in the user's own words.
           for (final card in day.cards) ...[
             const SizedBox(height: 22),
             CueCardTile(
               // Keyed by the card, not by where it sits. Matched by position,
               // a day whose cards reorder hands one card's typed words and its
-              // half made answer to the next one, and a student can answer a
+              // half made answer to the next one, and a user can answer a
               // card they never read.
               key: ValueKey(card.id),
               card: card,
@@ -160,7 +160,7 @@ class _DayScreenState extends State<DayScreen> {
   /// no writes neither and is recorded as what it is.
   ///
   /// It throws back to the card when the answer did not land, because the card
-  /// is where the student is looking and where the way back belongs.
+  /// is where the user is looking and where the way back belongs.
   Future<void> _answer(CueCard card, CueCardAnswer answer) async {
     try {
       await widget.api.answerCard(
@@ -171,7 +171,7 @@ class _DayScreenState extends State<DayScreen> {
       );
       if (mounted) setState(() => _answers[card.id] = answer);
     } on SoulApiException catch (failure) {
-      // Answered already, or not this student's card. Neither is something a
+      // Answered already, or not this user's card. Neither is something a
       // second tap fixes, so the day is read again and the card comes back
       // saying what it now is.
       if (failure.status == 409 || failure.status == 404) {
@@ -249,7 +249,7 @@ class _Header extends StatelessWidget {
     'December',
   ];
 
-  /// A date the student would say out loud. Built from the digits in the
+  /// A date the user would say out loud. Built from the digits in the
   /// string rather than from an instant, so nothing here can slide into the
   /// day before.
   String get _spoken {
@@ -331,7 +331,7 @@ class _TimelineItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // All of it. These are the student's own words and cutting
+                  // All of it. These are the user's own words and cutting
                   // them off at a line count would be the app deciding which
                   // part mattered.
                   Text(entry.text, style: SoulType.field),

@@ -7,9 +7,9 @@ import '../onboarding/profile_fields.dart';
 
 /// The profile tab.
 ///
-/// It shows exactly what the app holds about a student and nothing it has been
+/// It shows exactly what the app holds about a user and nothing it has been
 /// told to hold and does not. Every line here is changeable and every line can
-/// be emptied back to nothing, because a student who gave an answer at first
+/// be emptied back to nothing, because a user who gave an answer at first
 /// run and regrets it should not have to ask anyone.
 ///
 /// The list of what is not held is on the screen on purpose. A child being
@@ -51,7 +51,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  /// Optimistic. The row shows the new answer straight away, because a student
+  /// Optimistic. The row shows the new answer straight away, because a user
   /// changing their own name should not watch a spinner to do it. A failed
   /// write is corrected by the reload underneath.
   Future<void> _change(String field, String? value) async {
@@ -96,7 +96,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
   String? get _name => _held?['displayName'] as String?;
 
-  /// The stored position, as the student would read it. Four decimal places is
+  /// The stored position, as the user would read it. Four decimal places is
   /// about eleven metres, which is the honest way to show something this
   /// precise rather than rounding it into looking harmless.
   String? get _position {
@@ -330,7 +330,7 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 }
 
-/// One held field. The value is the student's answer, or a plain statement
+/// One held field. The value is the user's answer, or a plain statement
 /// that there is not one. Never a dash and never a blank.
 class _Row extends StatelessWidget {
   const _Row({

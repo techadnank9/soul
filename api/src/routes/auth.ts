@@ -3,24 +3,74 @@ import { env } from '../env.js'
 import * as contracts from '../contracts.js'
 import { AppleTokenInvalid, verifyAppleIdentityToken } from '../auth/apple.js'
 import { AlreadyLinked, SignInRefused, signInWithApple } from '../auth/signIn.js'
-import type { Session } from '../session.js'
+import { createAccount, issueSession } from '../auth/accounts.js'
+import { EmailRefused, startEmailSignIn, verifyEmailSignIn } from '../auth/email.js'
+import { EmailUnavailable } from '../auth/resend.js'
+import { resolveSession, type Session } from '../session.js'
 
 /**
- * Sign in with Apple.
+ * Accounts and sign in.
  *
- * This route sits inside the authenticated block on purpose. A student signing
- * in for the first time has no session token yet, but they do have the roster
- * reference the build carries, and that is what says which student row the
- * Apple account attaches to. Without a bearer there is nothing to attach to
- * and the call has no meaning.
+ * Three routes have no session, and server.ts lists them: a phone asking for
+ * its first account, an address asking for a code, and a code being checked.
+ * Sign in with Apple keeps a session, the device's own, because it needs an
+ * account to attach the Apple account to.
  *
  * Every rejection is one status and one shape. The reason is logged and never
- * returned, because a caller working out which of the checks it failed is
- * being helped to pass them.
+ * returned, because a caller working out which check it failed is being
+ * helped to pass it.
  */
 type Vars = { Variables: { session: Session } }
 
 export const auth = new Hono<Vars>()
+
+/** A new account for a phone that has never been seen. The session comes with it. */
+auth.post('/auth/device', async (c) => {
+  const account = await createAccount()
+  return c.json(await issueSession(account))
+})
+
+auth.post('/auth/email/start', async (c) => {
+  const parsed = contracts.emailStart.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'invalid email' }, 400)
+
+  try {
+    await startEmailSignIn(parsed.data.email)
+    return c.json({ ok: true })
+  } catch (error) {
+    if (error instanceof EmailRefused) {
+      console.log(`email sign in refused: ${error.message}`)
+      return c.json({ error: 'try later' }, 429)
+    }
+    if (error instanceof EmailUnavailable) {
+      console.error(error.message)
+      return c.json({ error: 'email sign in is not available' }, 503)
+    }
+    throw error
+  }
+})
+
+auth.post('/auth/email/verify', async (c) => {
+  const parsed = contracts.emailVerify.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'invalid code' }, 401)
+
+  // The bearer is optional here. A phone mid first run carries its device
+  // session and the address attaches to it. A fresh install carries nothing
+  // and the address finds, or makes, the account.
+  const header = c.req.header('authorization')
+  const bearer = header?.startsWith('Bearer ') ? header.slice(7) : undefined
+  const current = await resolveSession(bearer)
+
+  try {
+    return c.json(await verifyEmailSignIn(parsed.data.email, parsed.data.code, current))
+  } catch (error) {
+    if (error instanceof EmailRefused) {
+      console.log(`email code refused: ${error.message}`)
+      return c.json({ error: 'sign in refused' }, 401)
+    }
+    throw error
+  }
+})
 
 auth.post('/auth/apple', async (c) => {
   const parsed = contracts.appleSignIn.safeParse(await c.req.json().catch(() => null))
@@ -36,7 +86,7 @@ auth.post('/auth/apple', async (c) => {
     const signedIn = await signInWithApple(c.get('session'), appleSub)
     return c.json(signedIn)
   } catch (error) {
-    // The one refusal a student cannot fix by trying again, so it is told
+    // The one refusal a person cannot fix by trying again, so it is told
     // apart from the rest rather than folded into the same opaque 401.
     if (error instanceof AlreadyLinked) {
       console.error('sign in refused: already linked')

@@ -6,13 +6,13 @@ import '../../theme/widgets.dart';
 
 /// One reflection, and everything behind it.
 ///
-/// The returning tab tells a student to keep doing something or to stop doing
+/// The returning tab tells a user to keep doing something or to stop doing
 /// it. This is the screen that has to exist for that to be fair: the entries
 /// the claim was built from, in their own words, with the dates, and what they
 /// decided about it afterwards.
 ///
 /// Nothing here is generated except the one line at the top, which is the same
-/// line the list showed. Everything under it is the student's own record.
+/// line the list showed. Everything under it is the user's own record.
 class ReflectionScreen extends StatefulWidget {
   const ReflectionScreen({
     super.key,
@@ -134,7 +134,7 @@ class _ReflectionScreenState extends State<ReflectionScreen> {
                   const SizedBox(height: 10),
                   Text(view.line, style: SoulType.lead),
                   const SizedBox(height: 10),
-                  // Where the claim came from, said plainly. A student is owed
+                  // Where the claim came from, said plainly. A user is owed
                   // the difference between what they told the app and what the
                   // app worked out on its own.
                   Label(view.source == 'outcomes'

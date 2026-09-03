@@ -6,11 +6,13 @@ import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import 'policies.dart';
 
-/// The last screen of first run. Sign in, or carry on without one.
+/// The last screen of first run. Sign in with Apple, or with an email code.
 ///
-/// It comes after the introduction rather than before anything, so a student
+/// It comes after the introduction rather than before anything, so a person
 /// is asked to sign in to keep something that already exists rather than to
-/// get through a door. What they wrote is already saved either way.
+/// get through a door. What they wrote is already saved either way, in the
+/// account this phone was given on first launch. Signing in attaches a way
+/// back into it from another phone.
 ///
 /// The agreement is a checkbox and it gates the button, because a consent that
 /// happens by pressing the only control on the screen is not a consent. Both
@@ -40,13 +42,104 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _running = false;
   bool _failed = false;
 
+  /// The email path. An address, then a code, then in. It sits under Apple's
+  /// button for anybody Apple's sheet does not work for, and it is a full
+  /// sign in rather than a fallback: the address is the way back in.
+  final _email = TextEditingController();
+  final _code = TextEditingController();
+  bool _codeSent = false;
+  bool _emailRunning = false;
+  String? _emailNote;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  /// The agreement, recorded once the person is signed in. Until it is
+  /// recorded nothing they wrote leaves the server, and recording it is what
+  /// lets the introduction through.
+  static const _consentVersion = 'v1';
+
+  Future<void> _finish(String token) async {
+    await storeSessionToken(token);
+    _api.recordConsent(_consentVersion).ignore();
+    if (!mounted) return;
+    widget.onSignedIn();
+  }
+
+  Future<void> _sendCode() async {
+    if (!_agreed) {
+      setState(() => _tried = true);
+      return;
+    }
+    final email = _email.text.trim();
+    if (!email.contains('@')) {
+      setState(() => _emailNote = 'That does not look like an email address.');
+      return;
+    }
+    setState(() {
+      _emailRunning = true;
+      _emailNote = null;
+    });
+    try {
+      await _api.emailStart(email);
+      if (!mounted) return;
+      setState(() {
+        _emailRunning = false;
+        _codeSent = true;
+        _emailNote = 'A six digit code is on its way to $email.';
+      });
+    } on SoulApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _emailRunning = false;
+        _emailNote = error.status == 503
+            ? 'Email sign in is not available right now.'
+            : error.status == 429
+                ? 'Too many codes for now. Try again in a while.'
+                : 'That did not go through.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _emailRunning = false;
+        _emailNote = 'That did not go through.';
+      });
+    }
+  }
+
+  Future<void> _verifyCode() async {
+    final code = _code.text.trim();
+    if (code.length != 6) {
+      setState(() => _emailNote = 'The code is six digits.');
+      return;
+    }
+    setState(() {
+      _emailRunning = true;
+      _emailNote = null;
+    });
+    try {
+      final token = await _api.emailVerify(_email.text.trim(), code);
+      await _finish(token);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _emailRunning = false;
+        _emailNote = 'That code did not work. Check it, or ask for another.';
+      });
+    }
+  }
+
   /// Apple's sheet, then the exchange, then the token on the device.
   ///
-  /// No scopes are asked for. This product holds no names and no email
-  /// addresses, and asking Apple for either would contradict the policy the
-  /// student has just been shown two lines above the button. The account
-  /// identifier and the signed token are the whole of what arrives, and the
-  /// server never learns who the Apple account belongs to.
+  /// No scopes are asked for. Asking Apple for a name or an address would
+  /// contradict the policy the person has just been shown two lines above
+  /// the button. The account identifier and the signed token are the whole
+  /// of what arrives, and the server never learns who the Apple account
+  /// belongs to.
   Future<void> _signIn() async {
     if (!_agreed) {
       setState(() => _tried = true);
@@ -72,10 +165,7 @@ class _SignInScreenState extends State<SignInScreen> {
         identityToken: identityToken,
         appleUserId: appleUserId,
       );
-      await storeSessionToken(token);
-
-      if (!mounted) return;
-      widget.onSignedIn();
+      await _finish(token);
     } on SignInWithAppleAuthorizationException catch (error) {
       // Backing out of Apple's sheet is a decision, not a fault. The screen
       // goes back to how it was and says nothing about it.
@@ -144,6 +234,17 @@ class _SignInScreenState extends State<SignInScreen> {
               style: SoulType.secondary.copyWith(color: SoulColors.clay),
             ),
           ],
+          const SizedBox(height: 14),
+          _EmailSignIn(
+            enabled: _agreed && !_running,
+            running: _emailRunning,
+            codeSent: _codeSent,
+            note: _emailNote,
+            email: _email,
+            code: _code,
+            onSendCode: _sendCode,
+            onVerify: _verifyCode,
+          ),
           const SizedBox(height: 6),
           // Development only, and it says so. It exists because first run is
           // fifteen questions long and testing the rest of the app should not
@@ -333,7 +434,7 @@ class _AppleButton extends StatelessWidget {
 
   final bool enabled;
 
-  /// Apple's sheet is its own window, so the wait a student notices is the one
+  /// Apple's sheet is its own window, so the wait a user notices is the one
   /// after it closes, while the token is exchanged. The button says so rather
   /// than sitting there looking pressed.
   final bool running;
@@ -382,6 +483,162 @@ class _AppleButton extends StatelessWidget {
                     ),
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sign in by email. An address and a button, then a code and a button.
+///
+/// It is quieter than Apple's button and sits under it, and it is dimmed the
+/// same way until the box is ticked. The note under it says what happened
+/// last, in one line, and is the only feedback: no toasts, no dialogs.
+class _EmailSignIn extends StatelessWidget {
+  const _EmailSignIn({
+    required this.enabled,
+    required this.running,
+    required this.codeSent,
+    required this.note,
+    required this.email,
+    required this.code,
+    required this.onSendCode,
+    required this.onVerify,
+  });
+
+  final bool enabled;
+  final bool running;
+  final bool codeSent;
+  final String? note;
+  final TextEditingController email;
+  final TextEditingController code;
+  final VoidCallback onSendCode;
+  final VoidCallback onVerify;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: enabled ? 1 : 0.45,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Or use your email',
+            textAlign: TextAlign.center,
+            style: SoulType.secondary.copyWith(fontSize: 14),
+          ),
+          const SizedBox(height: 10),
+          if (!codeSent)
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    controller: email,
+                    hint: 'you@somewhere.com',
+                    keyboard: TextInputType.emailAddress,
+                    enabled: enabled && !running,
+                    onDone: onSendCode,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SoulButton(
+                  running ? 'Sending' : 'Send code',
+                  onPressed: enabled && !running ? onSendCode : null,
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    controller: code,
+                    hint: '6 digit code',
+                    keyboard: TextInputType.number,
+                    enabled: enabled && !running,
+                    onDone: onVerify,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SoulButton(
+                  running ? 'Checking' : 'Log in',
+                  kind: SoulButtonKind.filled,
+                  onPressed: enabled && !running ? onVerify : null,
+                ),
+              ],
+            ),
+          if (codeSent) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: enabled && !running ? onSendCode : null,
+              child: Text(
+                'Send another code',
+                textAlign: TextAlign.center,
+                style: SoulType.secondary.copyWith(
+                  fontSize: 13,
+                  color: SoulColors.clay,
+                ),
+              ),
+            ),
+          ],
+          if (note != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              note!,
+              textAlign: TextAlign.center,
+              style: SoulType.secondary.copyWith(fontSize: 13),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Field extends StatelessWidget {
+  const _Field({
+    required this.controller,
+    required this.hint,
+    required this.keyboard,
+    required this.enabled,
+    required this.onDone,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final TextInputType keyboard;
+  final bool enabled;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: SoulColors.s1,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: SoulColors.border),
+      ),
+      alignment: Alignment.centerLeft,
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        keyboardType: keyboard,
+        autocorrect: false,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => onDone(),
+        style: SoulType.secondary.copyWith(
+          fontSize: 15,
+          color: SoulColors.text,
+        ),
+        decoration: InputDecoration(
+          isCollapsed: true,
+          border: InputBorder.none,
+          hintText: hint,
+          hintStyle: SoulType.secondary.copyWith(fontSize: 15),
         ),
       ),
     );

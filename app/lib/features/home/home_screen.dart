@@ -12,7 +12,7 @@ import '../outcome/outcome_screen.dart';
 /// Screen 4. Home.
 ///
 /// Two versions, and the empty one comes first. Every mockup shows a full week
-/// of data and no student has that on day one, so a brand new account has to
+/// of data and no user has that on day one, so a brand new account has to
 /// look intentional rather than broken.
 ///
 /// The week comes from the server, boundaries and all. Nothing here decides
@@ -31,7 +31,7 @@ class HomeScreen extends StatefulWidget {
 
   final SoulApi api;
 
-  /// The first name the student gave at first run, if they gave one. Used
+  /// The first name the user gave at first run, if they gave one. Used
   /// once, on the empty screen, where the alternative is a room with nobody
   /// in it. Never used to praise them and never used twice in a row.
   final String? name;
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } catch (_) {
       // Nothing said here. The card stays where it is and the question can be
-      // answered again, which is better than telling a student their answer
+      // answered again, which is better than telling a user their answer
       // went somewhere it did not.
     }
 

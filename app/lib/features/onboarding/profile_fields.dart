@@ -1,8 +1,8 @@
-/// The profile fields, as keys and the words a student reads.
+/// The profile fields, as keys and the words a user reads.
 ///
 /// The keys are the API's, not the interface's. They match the enums in
 /// db/src/schema.ts and the region list in api/src/profile/regions.ts. Change
-/// those and this together, or a student's answer stops meaning what they
+/// those and this together, or a user's answer stops meaning what they
 /// chose.
 ///
 /// The region list carries no timezone. The server derives it, because a check

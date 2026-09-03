@@ -11,7 +11,7 @@ import 'baseline_more.dart';
 /// slides in. The bar along the top fills as the set is answered.
 ///
 /// The pleasure here is in the interaction. Nothing on this screen praises the
-/// student, congratulates them, or tells them what an answer means, because
+/// user, congratulates them, or tells them what an answer means, because
 /// none of that is ours to say and the clinical guidance is direct about it.
 class BaselineScreen extends StatefulWidget {
   const BaselineScreen({

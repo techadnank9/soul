@@ -5,7 +5,7 @@ import '../../theme/widgets.dart';
 /// Screen 9. A pattern candidate, asked as a question inside a later reflection.
 ///
 /// A pattern is never asserted. It is proposed, and it is stored only when the
-/// student confirms it. Rejections are stored too, so the same wrong guess is
+/// user confirms it. Rejections are stored too, so the same wrong guess is
 /// never offered twice.
 class PatternPromptScreen extends StatelessWidget {
   const PatternPromptScreen({

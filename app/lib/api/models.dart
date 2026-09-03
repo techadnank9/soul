@@ -54,7 +54,7 @@ final class HelpNeeded extends SubmitResult {
   final List<({String label, String detail})> contacts;
 }
 
-/// Consent does not cover this student. The entry is saved and nothing left.
+/// Consent does not cover this user. The entry is saved and nothing left.
 final class Held extends SubmitResult {
   const Held({required this.entryId});
   final String entryId;
@@ -90,12 +90,12 @@ class MirrorResult {
   }
 }
 
-/// GET /week. The shape of the student's current week.
+/// GET /week. The shape of the user's current week.
 ///
-/// Every boundary in here was decided on the server, in the student's own
+/// Every boundary in here was decided on the server, in the user's own
 /// timezone. Nothing on the device works out where a week starts or which day
 /// an evening entry belongs to.
-/// What the student said they would do, once the day they named has passed
+/// What the user said they would do, once the day they named has passed
 /// without an answer.
 class Holding {
   const Holding({
@@ -133,7 +133,7 @@ class WeekView {
   /// Exactly seven, Monday first.
   final List<WeekDay> days;
 
-  /// Null on almost every week. When it is not, the day the student named has
+  /// Null on almost every week. When it is not, the day the user named has
   /// come and gone and nobody has asked them how it went.
   final Holding? holding;
 
@@ -206,7 +206,7 @@ class DayView {
   final List<DayEntry> entries;
 
   /// At most two, unanswered first, in the order the server sent them. Empty
-  /// on any day where nothing the student wrote pointed forward, which is most
+  /// on any day where nothing the user wrote pointed forward, which is most
   /// days.
   final List<CueCard> cards;
 
@@ -223,14 +223,14 @@ class DayView {
       );
 }
 
-/// One cue card, about something the student said was coming up.
+/// One cue card, about something the user said was coming up.
 ///
-/// The model wrote it from that student's own entries, and it only exists
+/// The model wrote it from that user's own entries, and it only exists
 /// because one of those entries named something ahead of them. Nothing here is
 /// generated for a day that pointed nowhere.
 ///
 /// The question takes yes or no and nothing else. It is about one thing the
-/// student named that has not settled, so the card is asking whether they are
+/// user named that has not settled, so the card is asking whether they are
 /// going to do it, not offering them ways to.
 ///
 /// What they answered is not on the wire. A card carries the fact that it was
@@ -246,7 +246,7 @@ class CueCard {
 
   final String id;
 
-  /// The thing itself, in the student's own frame. Something like the
+  /// The thing itself, in the user's own frame. Something like the
   /// coursework due Friday.
   final String about;
 
@@ -301,7 +301,7 @@ class DayEntry {
 /// The two judged groups are the app taking a side, which it did not do
 /// before. What sits under them did not change: a theme still carries the
 /// count behind it and the day of the last one, so anything said about a
-/// theme can still be walked back to entries the student wrote.
+/// theme can still be walked back to entries the user wrote.
 class PatternsView {
   const PatternsView({
     required this.reflections,
@@ -310,7 +310,7 @@ class PatternsView {
     required this.forming,
   });
 
-  /// Every entry this student has ever written.
+  /// Every entry this user has ever written.
   final int reflections;
 
   /// Themes that are doing them good, each with the sentence that says so.
@@ -337,20 +337,20 @@ class PatternsView {
 
   /// The contract sends all three arrays always, empty rather than absent.
   /// Read through a missing one anyway, so a client that is ahead of a server
-  /// costs the student one section rather than the whole tab.
+  /// costs the user one section rather than the whole tab.
   static List<JudgedTheme> _judged(Object? group) => [
         for (final theme in (group as List<dynamic>? ?? []))
           JudgedTheme.fromJson(theme as Map<String, dynamic>),
       ];
 }
 
-/// Who decided what a theme is doing to the student.
+/// Who decided what a theme is doing to the user.
 enum PatternSource {
-  /// The outcomes the student recorded themselves. Their reading of it beats
+  /// The outcomes the user recorded themselves. Their reading of it beats
   /// ours and is never overruled.
   outcomes,
 
-  /// The model read the theme, which only happens where the student has
+  /// The model read the theme, which only happens where the user has
   /// recorded no outcome to read.
   model,
 }
@@ -374,7 +374,7 @@ class JudgedTheme {
   /// When the last of them was, as the server sent it.
   final String lastAt;
 
-  /// The sentence the student reads under the theme. It is written about
+  /// The sentence the user reads under the theme. It is written about
   /// their own situation, so it is never a line this screen could have
   /// supplied on its own.
   ///
@@ -389,7 +389,7 @@ class JudgedTheme {
         times: json['times'] as int,
         lastAt: json['lastAt'] as String,
         line: (json['line'] as String?) ?? '',
-        // Anything that is not the student's own word falls to the model. The
+        // Anything that is not the user's own word falls to the model. The
         // screen says out loud which of the two spoke, and claiming their
         // voice for a string we did not recognise is the one mistake here
         // worth guarding against.
@@ -470,7 +470,7 @@ class ReflectionEntry {
       );
 }
 
-/// What the student decided about this theme, and how it went if they said.
+/// What the user decided about this theme, and how it went if they said.
 class ReflectionDecision {
   const ReflectionDecision({required this.chose, required this.at, this.felt});
 
@@ -506,7 +506,7 @@ class ReflectionView {
 
   final String line;
 
-  /// outcomes when the student's own check backs decided it, model otherwise.
+  /// outcomes when the user's own check backs decided it, model otherwise.
   final String source;
 
   final int times;
@@ -530,7 +530,7 @@ class ReflectionView {
       );
 }
 
-/// Somebody the student writes about, in the list.
+/// Somebody the user writes about, in the list.
 class PersonRow {
   const PersonRow({
     required this.id,
@@ -555,7 +555,7 @@ class PersonRow {
       );
 }
 
-/// One of the student's own entries, on a person's page.
+/// One of the user's own entries, on a person's page.
 class PersonMention {
   const PersonMention({
     required this.entryId,
@@ -589,15 +589,15 @@ class PersonView {
   final String id;
   final String name;
 
-  /// Written by the model unless the student has said otherwise, and then it
+  /// Written by the model unless the user has said otherwise, and then it
   /// is theirs and stays theirs.
   final String? relation;
 
-  /// What happens between the student and this person, from the student's own
+  /// What happens between the user and this person, from the user's own
   /// entries. Empty until somebody has come up twice.
   final String? profile;
 
-  /// The student's own note on how they would reach them. Only ever theirs.
+  /// The user's own note on how they would reach them. Only ever theirs.
   final String? reach;
 
   final int mentions;

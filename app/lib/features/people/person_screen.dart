@@ -6,12 +6,12 @@ import '../../theme/widgets.dart';
 
 /// One person, and everything the app holds about them.
 ///
-/// The order on this page is deliberate. What the student can change comes
+/// The order on this page is deliberate. What the user can change comes
 /// first, then what the app worked out, then their own words underneath. A
-/// student reading about somebody they know should reach the edit and the
+/// user reading about somebody they know should reach the edit and the
 /// delete before they reach our description of the relationship.
 ///
-/// Everything under the profile is the student's own entries, unedited. The
+/// Everything under the profile is the user's own entries, unedited. The
 /// only sentence on this page we wrote is the profile itself, and it says so.
 class PersonScreen extends StatefulWidget {
   const PersonScreen({
@@ -219,7 +219,7 @@ class _PersonScreenState extends State<PersonScreen> {
           if (person.profile != null && person.profile!.isNotEmpty) ...[
             const SizedBox(height: 20),
             Inset(
-              // Said plainly, because the difference between what the student
+              // Said plainly, because the difference between what the user
               // wrote and what the app wrote about somebody else is the thing
               // they are most owed on this page.
               label: 'what the app made of it',
@@ -291,7 +291,7 @@ class _Back extends StatelessWidget {
   }
 }
 
-/// One editable line. Anything the student sets here is theirs and a later
+/// One editable line. Anything the user sets here is theirs and a later
 /// profile run leaves it alone.
 class _Field extends StatelessWidget {
   const _Field({required this.label, required this.value, required this.onTap});

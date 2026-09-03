@@ -3261,3 +3261,71 @@ sets it by hand and removes it before the app leaves the team.
 
 Reverses if: the host changes, in which case the file goes with it and the
 Dockerfile stays.
+
+---
+
+### 196. Anybody can use it. A phone gets an account on first launch, and sign in attaches an identity
+Sep 2026, Adnan, Claude writing it up
+
+Decision: the product is for anybody, not only for rostered students. A phone
+that has never been seen asks for an account the moment the app opens and is
+given one, with a session, before a single question. Sign in with Apple, or a
+six digit code sent by email through Resend, attaches an identity to that
+account so it can be found again from another phone. The roster reference
+path still exists behind its flag for development and is no longer needed
+for a device build.
+
+Why: the founder ruled out shipping a build that depends on a development
+flag being set on the server and remembered to be removed. The alternative
+was a real sign in path that works with no district. Doing that properly
+meant answering the question decision 192 left open, whether an account is
+made by a district or by a person, and the answer is both.
+
+Why the account comes first rather than sign in. First run writes the
+profile, the baseline and the spoken introduction before the screen that
+asks anyone to agree to anything, and the order was chosen so that a person
+signs in to keep something that already exists. Making the account silently
+on first launch keeps that order. What it costs is a row for every phone that
+opens the app, including ones that never come back.
+
+Consent. A self made account has none until the person ticks the agreement
+on the sign in screen, so the introduction is stored held with nothing sent
+out, the same as a rostered student without consent. Recording the agreement
+books a job that lets held entries through, classifier first and tagger
+after, and writes nothing back. Nothing bypasses the classifier.
+
+The email address is held. It is the first piece of directly identifying
+information in the students table and the policy, the terms and this entry
+all say so. It is held for one purpose, getting back in, and the only thing
+ever sent to it is a code. Resend is a new sub processor for that one
+message, over plain fetch, no SDK.
+
+Where self made accounts live: one district and one school both named Self
+signup, made on first use, so every row still has a school and a district
+and row level security is unchanged.
+
+Rejected: a server flag that accepts roster references and is removed
+later, which is what the founder objected to. Making the introduction wait
+for sign in, which reverses the order first run was designed around.
+
+Reverses if: districts require that only rostered students can hold
+accounts, in which case self signup is switched off for their region rather
+than removed.
+
+---
+
+### 197. Student becomes user in the app, and the database keeps its names for now
+Sep 2026, Adnan
+
+Decision: every identifier and comment in the Flutter app says user rather
+than student, and the API's one refusal message says unknown user. The
+database tables, columns and role names still say student.
+
+Why: the product is for anybody, per decision 196, and the client is what
+people read and what the team edits daily. Renaming the schema on the live
+Supabase project touches every table, the row level security functions and
+every query in the API, and it is a migration that deserves to be its own
+change with its own test run rather than a side effect of a copy edit.
+
+Reverses if: never for the app. The schema rename is a separate decision
+still to be taken.

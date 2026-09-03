@@ -9,7 +9,7 @@ import '../../theme/widgets.dart';
 /// decision field.
 ///
 /// The keyboard is handled by hand rather than by resizing the scaffold.
-/// Resizing shrinks the card and reflows the reflection while the student is
+/// Resizing shrinks the card and reflows the reflection while the user is
 /// still reading it.
 class MirrorScreen extends StatefulWidget {
   const MirrorScreen({
@@ -26,7 +26,7 @@ class MirrorScreen extends StatefulWidget {
   final String underneath;
   final String question;
 
-  /// What the Mirror suggested. Stored separately from what the student writes,
+  /// What the Mirror suggested. Stored separately from what the user writes,
   /// because the gap between the two is the most interesting data in the system.
   final String offered;
 

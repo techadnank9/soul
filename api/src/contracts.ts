@@ -338,6 +338,18 @@ export const appleSignIn = z.object({
 })
 export type AppleSignIn = z.infer<typeof appleSignIn>
 
+/**
+ * Email sign in. The address is lowercased and trimmed at the boundary so the
+ * same address typed two ways is one account. The code is six digits.
+ */
+export const emailStart = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+})
+export const emailVerify = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  code: z.string().trim().regex(/^\d{6}$/),
+})
+
 export const appleSession = z.object({
   token: z.string(),
   expiresAt: z.string(),

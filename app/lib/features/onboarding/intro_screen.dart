@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 
-/// The first screen a student ever sees.
+/// The first screen a user ever sees.
 ///
 /// It says what the app does and what it does not do, and then gets out of the
 /// way. No sign up, no account, no promise about how anyone will feel. The
@@ -15,7 +15,7 @@ class IntroScreen extends StatelessWidget {
   final VoidCallback onContinue;
 
   /// Development only. Jumps the whole of first run and opens home as the
-  /// seeded demo student, who has a week of entries behind them, so how home
+  /// seeded demo user, who has a week of entries behind them, so how home
   /// behaves can be looked at without answering fifteen questions first.
   ///
   /// It is labelled on the screen as what it is. A skip that looks like a
@@ -41,7 +41,7 @@ class IntroScreen extends StatelessWidget {
         const SizedBox(height: 26),
         // The founder's words, kept as written. They say what reflection is
         // before the app says what it does, which is the right order: a
-        // student who does not know what this is for cannot want it.
+        // user who does not know what this is for cannot want it.
         Text(
           'Reflection is not thinking harder about something. It is saying it '
           'out loud and hearing what was actually in there.',

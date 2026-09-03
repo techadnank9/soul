@@ -5,7 +5,7 @@ import '../../theme/widgets.dart';
 /// Screen 8. How it went, days later.
 ///
 /// Neutral wording. The outcome is stored either way, including when the
-/// student ignores the check back, because an ignore is an answer too.
+/// user ignores the check back, because an ignore is an answer too.
 class OutcomeScreen extends StatefulWidget {
   const OutcomeScreen({
     super.key,
@@ -18,7 +18,7 @@ class OutcomeScreen extends StatefulWidget {
   final String? observation;
 
   /// What happened in their words, and how it left them. Either can be null:
-  /// a student who opens this and says nothing has still answered, and the
+  /// a user who opens this and says nothing has still answered, and the
   /// outcome is stored either way.
   final void Function(String? happened, String? felt) onDone;
 
@@ -54,7 +54,7 @@ class _OutcomeScreenState extends State<OutcomeScreen> {
         const SizedBox(height: 24),
         const Rule(),
         const SizedBox(height: 18),
-        // Not "you did it". The wording is neutral on purpose: a student who
+        // Not "you did it". The wording is neutral on purpose: a user who
         // did not do it has still answered, and a question that assumes they
         // did turns the check back into a test they can fail.
         const Text('What happened?', style: SoulType.lead),

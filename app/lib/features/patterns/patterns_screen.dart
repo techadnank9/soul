@@ -5,15 +5,15 @@ import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import 'reflection_screen.dart';
 
-/// Screen 10. What keeps coming back, and what it is doing to the student.
+/// Screen 10. What keeps coming back, and what it is doing to the user.
 ///
 /// This screen used to be a record and nothing more. It now says which of the
 /// things that keep returning are worth keeping and which are worth stopping,
-/// because a student who has written for months and been handed back a tidy
+/// because a user who has written for months and been handed back a tidy
 /// list of themes has been given a filing cabinet rather than an answer.
 ///
 /// The sentence under each theme is the whole of the verdict and the server
-/// wrote it out of that student's own situation. Nothing on this screen adds a
+/// wrote it out of that user's own situation. Nothing on this screen adds a
 /// word to it, ranks the two groups against each other or counts anything up
 /// into a total: the app is allowed to say what a pattern is costing them, and
 /// is not allowed to turn that into a mark out of ten.
@@ -170,7 +170,7 @@ class _PatternsScreenState extends State<PatternsScreen> {
       const SizedBox(height: 22),
 
       // An empty group is missing entirely, and says nothing about itself. A
-      // student with two things worth keeping and nothing worth stopping
+      // user with two things worth keeping and nothing worth stopping
       // should see one section, not one section and a hole where the other
       // would go.
       //
@@ -316,7 +316,7 @@ class _PatternsScreenState extends State<PatternsScreen> {
 
   /// The facts under the sentence: how often, when the last one was, and who
   /// decided. The last of the three is there because the app is asserting
-  /// something now, and a student is owed the difference between their own
+  /// something now, and a user is owed the difference between their own
   /// verdict handed back to them and ours.
   static String _facts(JudgedTheme theme) {
     final ago = _ago(theme.lastAt);
@@ -346,7 +346,7 @@ class _PatternsScreenState extends State<PatternsScreen> {
   /// How long ago, in whole days, and never closer than that.
   ///
   /// The device works this out, which is the one place in this screen it is
-  /// allowed to: a day count off two local midnights survives a student
+  /// allowed to: a day count off two local midnights survives a user
   /// travelling, and a clock time would not. Whole days on both sides rather
   /// than elapsed hours, so something written last night reads as yesterday
   /// however late it was. Null when the string will not parse, and then the
@@ -384,7 +384,7 @@ class _PatternsScreenState extends State<PatternsScreen> {
 /// One reflection, in one line.
 ///
 /// It used to print the whole sentence under every theme, which meant three
-/// reflections filled the screen and a student with a dozen never saw most of
+/// reflections filled the screen and a user with a dozen never saw most of
 /// them. This tab is the overview: what keeps coming back and how often, in a
 /// list you can take in at once. The sentence, the entries behind it and what
 /// was decided all live on the page this opens.

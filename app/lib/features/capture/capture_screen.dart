@@ -12,8 +12,8 @@ import '../../theme/widgets.dart';
 /// Screen 3. Voice or text, on the same screen, at the same weight.
 ///
 /// Typing is not a fallback. Recognition on children's voices is materially
-/// worse than on adults, and worst for students from non English speaking
-/// homes, so the students served least well by the mic are exactly the ones who
+/// worse than on adults, and worst for users from non English speaking
+/// homes, so the users served least well by the mic are exactly the ones who
 /// need the other path to look like a real choice.
 ///
 /// Nothing records yet. The mic gesture is wired to the same place the typed
@@ -60,11 +60,11 @@ class _CaptureScreenState extends State<CaptureScreen>
   ///
   /// Holding a button for thirty seconds is tiring, it fails the moment a
   /// finger slips, and it cannot be done while putting the phone down. A
-  /// student talking about something that just happened should be able to set
+  /// user talking about something that just happened should be able to set
   /// the phone on a desk and speak.
   bool _recording = false;
 
-  /// Between stopping and the transcript arriving. The student should see that
+  /// Between stopping and the transcript arriving. The user should see that
   /// something is happening rather than a mic that went quiet.
   bool _transcribing = false;
   String? _failure;
@@ -107,7 +107,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     }
 
     if (!await _recorder.hasPermission()) {
-      // The permission sheet can sit there for as long as the student leaves
+      // The permission sheet can sit there for as long as the user leaves
       // it, and the screen can be closed underneath it.
       if (!mounted) return;
       setState(() => _failure = 'Soul needs the microphone to hear you.');
@@ -190,7 +190,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       }
 
       // Never straight into the field. The transcript is the permanent record
-      // and the text the safety classifier reads, so the student sees it and
+      // and the text the safety classifier reads, so the user sees it and
       // chooses send or discard first.
       widget.onTranscribed?.call(transcript);
     } catch (error) {
@@ -246,7 +246,7 @@ class _CaptureScreenState extends State<CaptureScreen>
           hint: 'Type it here',
         ),
         // The mic sits low, down where a thumb rests, with room around it. It
-        // is the thing most students will reach for, and it should not look
+        // is the thing most users will reach for, and it should not look
         // like an afterthought under the typing field.
         const SizedBox(height: 200),
         Center(

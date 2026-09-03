@@ -5,7 +5,7 @@ import '../../theme/widgets.dart';
 /// The confirm step. Send or discard, never edit.
 ///
 /// There is no edit field on purpose. The transcript is the permanent record
-/// and the text the safety classifier reads, so the student sees it before
+/// and the text the safety classifier reads, so the user sees it before
 /// anything is submitted. Given the error rates on child speech, an unreviewed
 /// permanent record is not defensible.
 class ConfirmTranscript extends StatelessWidget {

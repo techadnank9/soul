@@ -7,12 +7,12 @@ import 'person_screen.dart';
 
 /// The people tab.
 ///
-/// Everybody the student has named, most recently mentioned first. The names
+/// Everybody the user has named, most recently mentioned first. The names
 /// are theirs: mum is mum and Mr Hale is Mr Hale, because that is what they
 /// called them.
 ///
 /// This tab holds records about people who are not users of this app. What
-/// keeps that defensible is on the page behind each row: the student can
+/// keeps that defensible is on the page behind each row: the user can
 /// rename anybody, write their own note about them, and delete them outright.
 class PeopleScreen extends StatefulWidget {
   const PeopleScreen({super.key, required this.api, this.revision = 0});

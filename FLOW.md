@@ -42,8 +42,18 @@ Once, on a device that has never been used. Nothing here blocks anything: every
 question can be skipped and a student who skips all of them still gets the
 whole product.
 
+Before any of it, the phone gets an account. `FirstRun` asks
+`POST /auth/device` the moment it opens, `auth/accounts.ts` makes a row in the
+self signup district and issues a session, and the token is in the keychain
+before the intro's continue is pressed. Everything first run writes goes into
+that account. It has no consent yet, so the introduction is stored held, and
+the agreement on the last screen is what releases it: `POST /consent` books a
+`release_held` job, which runs the classifier over the held entries and then
+the tagger, in that order, and writes nothing back.
+
 ```
 main.dart / FirstRun
+  └─ POST /auth/device → auth/accounts.ts, a session before a single question
   └─ 0. intro_screen.dart
   │     what the app does, and three lines on what it is not
   │     no account, no sign up, no consent screen (decisions 048 and 055)
@@ -441,10 +451,10 @@ improves.
 11. A transcript never lands in the typing field. It goes to the confirm step,
     send or discard, because it is the permanent record and the text the safety
     classifier reads.
-12. Consent has no student facing screen. It is recorded at rostering and read
-    by the gate. The sign in screen at the end of first run records an
-    agreement to the terms and the privacy policy, which is a different thing
-    and must not be mistaken for it.
+12. Consent is recorded by the district at rostering, or by the person
+    themselves on the sign in screen for an account they made, and it is read
+    by the gate. Until it is recorded nothing leaves. What was written before
+    it is released through the classifier afterwards, never around it.
 13. A card is only ever about something the student named themselves, and a
     person only ever exists because they named them. Neither is invented, and
     an empty answer is the common one.

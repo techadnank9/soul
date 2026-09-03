@@ -9,7 +9,7 @@ import 'baseline.dart';
 ///
 /// Every one of them does the same three things: arrives with a stagger so the
 /// screen assembles rather than appears, responds under the finger, and settles
-/// visibly once chosen. None of them praises the student for choosing.
+/// visibly once chosen. None of them praises the user for choosing.
 
 /// Options arrive one after another rather than all at once.
 class Enter extends StatelessWidget {
@@ -368,7 +368,7 @@ class _ScaleChoiceState extends State<ScaleChoice> {
               index: 1,
               child: GestureDetector(
                 // Moving and choosing are separate. Committing on release
-                // meant a student could not adjust, and when the release did
+                // meant a user could not adjust, and when the release did
                 // not register the screen became a dead end with no way on.
                 onPanUpdate: (d) => _moveTo(d.localPosition.dx, width),
                 onPanEnd: (_) => _settle(),

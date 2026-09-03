@@ -43,8 +43,17 @@ export const env = {
    */
   jobsSecret: (): string | undefined => optional('SOUL_JOBS_SECRET'),
 
+  /**
+   * Sign in codes go out through Resend. The from address has to be on a
+   * domain verified in Resend, and the default is Resend's own test sender,
+   * which only delivers to the account that owns the key. Fine for a first
+   * device build, wrong for anybody else.
+   */
+  resendFrom: (): string => optional('RESEND_FROM') ?? 'Soul <onboarding@resend.dev>',
+
   providers: {
     openaiKey: optional('OPENAI_API_KEY'),
+    resendKey: optional('RESEND_API_KEY'),
     geminiKey: optional('GEMINI_API_KEY'),
     openrouterKey: optional('OPENROUTER_API_KEY'),
     elevenlabsKey: optional('ELEVENLABS_API_KEY'),

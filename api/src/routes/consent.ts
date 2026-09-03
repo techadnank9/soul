@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { eq, sql } from 'drizzle-orm'
 import { db, students, auditLog, baselineAnswers } from '../db.js'
+import { enqueue } from '../jobs/enqueue.js'
 import type { Session } from '../session.js'
 
 /**
@@ -41,6 +42,12 @@ consent.post('/consent', async (c) => {
 
   const session = c.get('session')
 
+  const before = await db
+    .select({ recordedAt: students.consentRecordedAt })
+    .from(students)
+    .where(eq(students.id, session.studentId))
+    .limit(1)
+
   await db
     .update(students)
     .set({
@@ -48,6 +55,10 @@ consent.post('/consent', async (c) => {
       consentVersion: parsed.data.version,
     })
     .where(eq(students.id, session.studentId))
+
+  // Anything written before this moment was stored held. Now it can go
+  // through the classifier and the tagger, in the queue, in that order.
+  if (!before[0]?.recordedAt) await enqueue('release_held', {}, session)
 
   // Districts have inspection rights and will ask when a student agreed and to
   // which wording. This is the row that answers them.

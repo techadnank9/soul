@@ -69,7 +69,7 @@ class SoulCard extends StatelessWidget {
 }
 
 /// The recessed block. Used for the one question and for an observation the
-/// student can push back on.
+/// user can push back on.
 class Inset extends StatelessWidget {
   const Inset({super.key, this.label, required this.body});
   final String? label;
@@ -95,7 +95,7 @@ class Inset extends StatelessWidget {
   }
 }
 
-/// The student's own words, set apart. Always their transcript, never ours.
+/// The user's own words, set apart. Always their transcript, never ours.
 class Quote extends StatelessWidget {
   const Quote(this.text, {super.key});
   final String text;
@@ -193,7 +193,7 @@ class ButtonRow extends StatelessWidget {
 }
 
 /// The text field. Serif at 17 points, growing with the words rather than
-/// scrolling inside itself, so a student can see everything they wrote.
+/// scrolling inside itself, so a user can see everything they wrote.
 class SoulField extends StatelessWidget {
   const SoulField({
     super.key,
@@ -291,7 +291,7 @@ class Screen extends StatelessWidget {
               ),
               // The footer stays put when the keyboard opens, lifted above
               // it. Hiding it was how the send button disappeared at the exact
-              // moment a student had something to send.
+              // moment a user had something to send.
               if (footer != null)
                 Padding(
                   padding: EdgeInsets.fromLTRB(

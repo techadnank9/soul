@@ -23,11 +23,19 @@ app.get('/health', (c) => c.json({ ok: true }))
  * the product, because every row in the database is scoped to one.
  */
 /**
- * Two routes have no student. /health answers a load balancer, and /jobs/drain
- * is driven by a scheduler and carries its own shared secret. Everything else
- * below the middleware has a student, because every row does.
+ * Five routes have no session. /health answers a load balancer, /jobs/drain
+ * is driven by a scheduler and carries its own shared secret, and the three
+ * account routes are how a session comes to exist: a phone asking for its
+ * first account, an address asking for a code, and a code being checked.
+ * Everything else below the middleware has a user, because every row does.
  */
-const noSession = new Set(['/health', '/jobs/drain'])
+const noSession = new Set([
+  '/health',
+  '/jobs/drain',
+  '/auth/device',
+  '/auth/email/start',
+  '/auth/email/verify',
+])
 
 app.route('/', jobs)
 
@@ -38,15 +46,14 @@ app.use('*', async (c, next) => {
   const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined
   const session = await resolveSession(token)
 
-  if (!session) return c.json({ error: 'unknown student' }, 401)
+  if (!session) return c.json({ error: 'unknown user' }, 401)
 
   c.set('session', session)
   await next()
 })
 
-// Signing in is above the rest because it is the one route whose bearer is
-// still the roster reference. It needs a student to attach an Apple account
-// to, which is why it lives inside this block rather than in front of it.
+// Sign in with Apple needs the device's session, so it lives inside this
+// block. The three account routes above are let through by name.
 app.route('/', auth)
 
 app.route('/', entries)

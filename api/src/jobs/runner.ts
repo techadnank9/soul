@@ -1,5 +1,6 @@
 import { sql } from '../db.js'
 import { tagEntry } from '../services/tagging/tag.js'
+import { releaseHeld } from '../services/reflection/release.js'
 import { checkBack } from '../services/decisions/checkBack.js'
 import { generateCards } from '../services/cards/generate.js'
 import { extractPeople } from '../services/people/extract.js'
@@ -86,6 +87,11 @@ async function run(job: Job): Promise<void> {
     case 'tag_entry':
       await tagEntry(payload.entryId!, studentOf(job))
       return
+    case 'release_held': {
+      const released = await releaseHeld(studentOf(job))
+      console.log(`${released} held entries released`)
+      return
+    }
     case 'check_back':
       await checkBack(payload.decisionId!, studentOf(job))
       return

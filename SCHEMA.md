@@ -71,6 +71,19 @@ work identically from the picker. They are held because the founder asked for
 them, they are shown back to the student on the profile tab, and clearing them
 there clears the columns. See decisions 056, 057, 060 and 061.
 
+`email` is present once a user has signed in with one, lowercased, unique.
+The only thing ever sent to it is a sign in code. Accounts people make for
+themselves live in the Self signup district and school, with a random
+`external_ref`, and look like every other row.
+
+## email_codes
+`id`, `email`, `code_hash`, `expires_at`, `attempts`, `consumed_at`,
+`created_at`
+
+Sign in codes. Only the hash is stored, a row is used once, expires in ten
+minutes, and counts its attempts. Not scoped to a user, because the user may
+not exist yet.
+
 ## sessions
 `id`, `student_id`, `school_id`, `district_id`, `token_hash`, `created_at`,
 `expires_at`, `revoked_at`

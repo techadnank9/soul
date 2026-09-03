@@ -16,10 +16,10 @@ import '../../theme/soul_theme.dart';
 ///
 /// Capture is not a tab. It is the raised button in the middle, because it is
 /// an action rather than a place, and it is the only thing on this bar the
-/// student is ever encouraged to do.
+/// user is ever encouraged to do.
 ///
 /// Profile is the fourth destination. It is last because it is the one a
-/// student visits rarely and on purpose, and it is a tab rather than a menu
+/// user visits rarely and on purpose, and it is a tab rather than a menu
 /// because what the app holds about somebody should not be hidden behind a
 /// gear.
 class AppShell extends StatefulWidget {
@@ -46,7 +46,7 @@ class _AppShellState extends State<AppShell> {
   final _api = SoulApi.fromEnvironment();
   int _tab = 0;
 
-  /// Which day the Days tab should open, when the student picked one from the
+  /// Which day the Days tab should open, when the user picked one from the
   /// week strip. Null means the list decides, and it opens the newest.
   String? _day;
 

@@ -6,7 +6,7 @@
 ///
 /// Both are drafts. The named third parties, the retention window and the
 /// escalation wording all have to be checked against the signed district
-/// agreement before any student sees this.
+/// agreement before any user sees this.
 library;
 
 const policyUpdated = 'Draft, not yet reviewed';
@@ -14,7 +14,7 @@ const policyUpdated = 'Draft, not yet reviewed';
 const termsOfService = '''
 $policyUpdated
 
-These are the terms for using Soul, a reflection app for students. By using the
+These are the terms for using Soul, a reflection app. By using the
 app you agree to them. This is a first draft written to match how the app works
 today, and it has not been reviewed by a lawyer.
 
@@ -97,6 +97,7 @@ WHO ELSE SEES IT
 
 To turn speech into text: ElevenLabs.
 To describe how you sounded when you spoke: OpenAI.
+To deliver a sign in code, if you sign in with your email: Resend.
 To write a line back and to describe your entries in a few words: OpenAI.
 
 They process what is sent and nothing more. Your words are not used to train
@@ -111,7 +112,7 @@ advertising. Nobody is watching which screens you open.
 YOUR SCHOOL AND YOUR DISTRICT
 
 Your account belongs to a school inside a district. A district can ask what is
-held about a student and when consent was recorded. What you write is not sent
+held about a user and when consent was recorded. What you write is not sent
 to your teachers as a report.
 
 If something you write suggests you are at risk, the app records that it

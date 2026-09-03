@@ -38,7 +38,7 @@ abstract final class SoulType {
   static const serif = 'InstrumentSerif';
   static const sans = 'Inter';
 
-  /// Serif at 17 points is the size named in task 0a. It is the size a student
+  /// Serif at 17 points is the size named in task 0a. It is the size a user
   /// reads their own words back in, so it is the one the keyboard test is
   /// measured against.
   static const lead = TextStyle(

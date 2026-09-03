@@ -233,10 +233,10 @@ be created by an assistant.
    for a web service and a worker. In Render, New, Blueprint, point it at this
    repository, and it asks for the four secrets: `DATABASE_URL`, the Supabase
    connection string already in `.env`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`,
-   and it generates `SOUL_JOBS_SECRET` itself. For an internal test with no
-   district sign in yet, also set `SOUL_ROSTER_TOKENS` to `allow` on the web
-   service, and remove it before anybody outside the team installs the app.
-   When it is up, `https://soul-api.onrender.com/health` answers.
+   and it generates `SOUL_JOBS_SECRET` itself. `RESEND_API_KEY` and
+   `RESEND_FROM` are for sign in codes by email; without them Apple sign in
+   still works and the email path says it is not available. When it is up,
+   `https://soul-api.onrender.com/health` answers.
 
 3. **An ElevenLabs key.** Without it every spoken entry fails with a clear
    message and typed entries work. Put it in the Render dashboard and, for
@@ -252,8 +252,8 @@ be created by an assistant.
 
    That writes `build/ios/ipa/soul.ipa`. Upload it with the Transporter app
    or `xcrun altool`, then add internal testers in App Store Connect. The
-   student token baked in is the test student with consent, which is right
-   for an internal build and wrong for anything else.
+   build needs no test student: a phone gets its own account on first
+   launch.
 
 5. **On the device.** First run is the intro, the profile questions, the ten
    baseline questions, the spoken introduction, then sign in. The simulator

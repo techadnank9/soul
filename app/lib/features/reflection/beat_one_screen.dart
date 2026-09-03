@@ -4,7 +4,7 @@ import '../../theme/widgets.dart';
 
 /// Screen 5. One line back, under three seconds.
 ///
-/// The line quotes something specific the student just said. If it could be
+/// The line quotes something specific the user just said. If it could be
 /// pasted into a different person's entry unchanged, it has failed. There is no
 /// question mark on it, because a question demands something and the first line
 /// should lower pressure rather than add to it.
@@ -23,7 +23,7 @@ class BeatOneScreen extends StatelessWidget {
   final String transcript;
   final String line;
   /// Only set when the entry came from the mic. A typed entry was not spoken,
-  /// and telling a student how long they spoke for when they did not speak is
+  /// and telling a user how long they spoke for when they did not speak is
   /// the app describing something that did not happen.
   final int? spokenSeconds;
   final String timeOfDay;

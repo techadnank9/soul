@@ -3,7 +3,7 @@ import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 
-/// What the student said, on their way to a decision.
+/// What the user said, on their way to a decision.
 ///
 /// The screen holds one of these per card it has seen answered, because the
 /// day tells us that a card was answered and never what with. A card answered
@@ -28,14 +28,14 @@ class CueCardAnswer {
 
 /// One cue card, inside an open day and under that day's entries.
 ///
-/// The card asks one question about one thing the student already named and
+/// The card asks one question about one thing the user already named and
 /// has not settled, and yes or no answers it. Picking one selects it and
 /// commits nothing: a tap that sends on their behalf is the wrong shape for a
 /// question about what they are going to do, so the one button at the bottom
 /// is the only thing that sends anything.
 ///
 /// The box under the question is theirs. It takes anything they want to say
-/// about the thing and it is never required, because a student who knows the
+/// about the thing and it is never required, because a user who knows the
 /// answer is yes and has nothing to add has already finished.
 class CueCardTile extends StatefulWidget {
   const CueCardTile({
@@ -47,7 +47,7 @@ class CueCardTile extends StatefulWidget {
 
   final CueCard card;
 
-  /// What the student said, once this screen has seen them say it.
+  /// What the user said, once this screen has seen them say it.
   final CueCardAnswer? answer;
 
   /// Throws when the answer did not land, which is what puts the card into its
@@ -67,7 +67,7 @@ class _CueCardTileState extends State<CueCardTile> {
   bool? _yes;
 
   /// Three days, the same as the Mirror path holds a decision for. It starts
-  /// on a day so that a student who has nothing to say about timing still has
+  /// on a day so that a user who has nothing to say about timing still has
   /// a card that works. Kept through a switch to no and back, so changing
   /// their mind twice does not quietly reset the day they picked.
   int _horizonDays = 3;

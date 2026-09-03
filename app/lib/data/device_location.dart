@@ -1,14 +1,14 @@
 import 'package:geolocator/geolocator.dart';
 
-/// The device's own position, when the student allows it.
+/// The device's own position, when the user allows it.
 ///
 /// This is the only place in the client that touches location. It returns a
 /// pair of numbers or nothing at all, and it never throws at the caller,
-/// because every reason it can fail leads to the same place: the student picks
+/// because every reason it can fail leads to the same place: the user picks
 /// their region from the list instead.
 ///
 /// Nothing is cached and nothing is written to the device. The coordinates go
-/// straight to the profile call and are held only where the student can see
+/// straight to the profile call and are held only where the user can see
 /// them and delete them.
 class DeviceLocation {
   const DeviceLocation(this.latitude, this.longitude);
@@ -16,8 +16,8 @@ class DeviceLocation {
   final double longitude;
 }
 
-/// Asks, once. A student who says no is not asked again by this function, and
-/// a student who has said never is not shown a prompt that cannot appear.
+/// Asks, once. A user who says no is not asked again by this function, and
+/// a user who has said never is not shown a prompt that cannot appear.
 Future<DeviceLocation?> currentLocation() async {
   try {
     if (!await Geolocator.isLocationServiceEnabled()) return null;
@@ -32,8 +32,8 @@ Future<DeviceLocation?> currentLocation() async {
     }
 
     final position = await Geolocator.getCurrentPosition(
-      // Ten seconds, because a student waiting on a satellite fix in a
-      // building is a student who has stopped believing the app works.
+      // Ten seconds, because a user waiting on a satellite fix in a
+      // building is a user who has stopped believing the app works.
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         timeLimit: Duration(seconds: 10),

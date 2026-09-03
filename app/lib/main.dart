@@ -25,17 +25,17 @@ import 'theme/widgets.dart';
 ///
 /// Every screen in docs/screens.html, walkable in flow order. The one thing
 /// kept on the device is the session token, and its whole job is to answer the
-/// question this file asks first: whether this student has been here before.
+/// question this file asks first: whether this user has been here before.
 ///
-/// Nothing on any screen is written here any more. The line a student reads is
+/// Nothing on any screen is written here any more. The line a user reads is
 /// generated, and the week, the day and the patterns are read back from the
-/// server, so what is on screen is this student's own life or it is an empty
+/// server, so what is on screen is this user's own life or it is an empty
 /// state saying so.
 void main() => runApp(const SoulApp());
 
 /// A way to open one screen directly, for reviewing them without walking the
 /// whole flow. Set SOUL_SCREEN in the environment. Unset, the app starts where
-/// a student starts.
+/// a user starts.
 ///
 /// This exists so screens can be looked at side by side during design review.
 /// It reads an environment variable rather than a compiled constant so one
@@ -80,13 +80,11 @@ class SoulApp extends StatelessWidget {
 
 /// First run, or straight to home.
 ///
-/// A stored session token is the only record that first run has happened, so
-/// that is the only thing asked. It is one keychain read, and what sits under
-/// it while it happens is the app's own background, so there is nothing worth
-/// spinning at for the length of it.
-///
-/// The development skip stores nothing, which is why skipping still lands
-/// here on first run every launch.
+/// Two keychain reads decide it: whether this phone has a session, and
+/// whether first run was walked to the end. A phone gets its session on
+/// first launch, before a single question, so the token alone no longer
+/// means a person finished. What sits under the reads is the app's own
+/// background, so there is nothing worth spinning at for the length of them.
 class _Launch extends StatefulWidget {
   const _Launch();
 
@@ -98,20 +96,24 @@ class _LaunchState extends State<_Launch> {
   /// Read once, held here. Calling this inside build handed the builder a new
   /// future on every rebuild, which dropped back to the waiting state and
   /// threw away whatever the app had built underneath it.
-  late final Future<String?> _stored = sessionToken();
+  late final Future<bool> _returning = _check();
+
+  static Future<bool> _check() async {
+    if (await sessionToken() == null) return false;
+    return firstRunDone();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: _stored,
+    return FutureBuilder<bool>(
+      future: _returning,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Screen(body: []);
         }
-        // Home either way. What it shows is the week the server returns, so a
-        // student who signed in months ago and a student who signed in a
-        // minute ago both see their own.
-        return snapshot.data == null ? const FirstRun() : const Home();
+        // Home shows the week the server returns, so a person who signed in
+        // months ago and one who signed in a minute ago both see their own.
+        return snapshot.data == true ? const Home() : const FirstRun();
       },
     );
   }
@@ -130,9 +132,25 @@ class _FirstRunState extends State<FirstRun> {
   int _step = 0;
   Profile _profile = const Profile();
 
+  /// The account this phone writes into, asked for before anything is asked
+  /// of the person. Held as a future so the intro's continue can wait on it,
+  /// which is the only wait in first run and is almost always already over.
+  /// A phone that is offline gets no account and the posts that follow fail
+  /// quietly, which is what they did before too.
+  late final Future<void> _account = _ensureAccount();
+
+  Future<void> _ensureAccount() async {
+    if (await sessionToken() != null) return;
+    try {
+      await storeSessionToken(await _api.deviceSession());
+    } catch (_) {
+      // Nothing to tell them yet. Sign in at the end makes another attempt.
+    }
+  }
+
   void _next() => setState(() => _step++);
 
-  /// First run ends on home, empty, with whatever name was given. A student
+  /// First run ends on home, empty, with whatever name was given. A user
   /// who has just arrived has no week behind them, so the day one version is
   /// the true one and the populated version is only ever reached by living
   /// with the app.
@@ -140,7 +158,7 @@ class _FirstRunState extends State<FirstRun> {
   /// home.
   ///
   /// Every later entry earns a line back. This one does not: it is how the
-  /// app learns who it is talking to, and a student who has just answered
+  /// app learns who it is talking to, and a user who has just answered
   /// fifteen questions should arrive somewhere rather than be handed one more
   /// screen.
   ///
@@ -148,7 +166,7 @@ class _FirstRunState extends State<FirstRun> {
   /// call. See decision 063. The classifier still runs, blocking, on the
   /// server, and the safety_flags row is still written with the risk level and
   /// the categories, so the record exists for whoever reads it when the
-  /// escalation path is built. What is missing is the screen: a student who
+  /// escalation path is built. What is missing is the screen: a user who
   /// says something serious here sees home, the same as everyone else.
   void _submitIntroduction(BuildContext context, String text,
       {required bool spoken, String? toneId}) {
@@ -156,7 +174,9 @@ class _FirstRunState extends State<FirstRun> {
     setState(() => _step++);
   }
 
-  void _toHome(BuildContext context) {
+  Future<void> _toHome(BuildContext context) async {
+    await markFirstRunDone();
+    if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Home(name: _profile.displayName)),
     );
@@ -171,18 +191,21 @@ class _FirstRunState extends State<FirstRun> {
     // the escalation policy is written. See decisions 048 and 055.
     return switch (_step) {
       0 => IntroScreen(
-          onContinue: _next,
-          // Development only. Straight to home as the seeded demo student, so
+          onContinue: () async {
+            await _account;
+            _next();
+          },
+          // Development only. Straight to home as the seeded demo user, so
           // home can be judged against a week that exists rather than against
           // an empty account or fifteen questions of setup.
           onSkip: () {
-            SoulApi.demoStudent = 'student_demo';
+            SoulApi.demoUser = 'student_demo';
             _toHome(context);
           },
         ),
 
       // Four questions, every one of them skippable. Sent in the background,
-      // because a student should never wait on this, and a profile where
+      // because a user should never wait on this, and a profile where
       // everything was skipped is never sent at all.
       1 => ProfileScreen(
           onFinished: (profile) {
@@ -205,7 +228,7 @@ class _FirstRunState extends State<FirstRun> {
       // Step 3.
       //
       // Everything before this was answered by tapping. This is the first
-      // time a student says something in their own words, and it goes the
+      // time a user says something in their own words, and it goes the
       // whole way: consent gate, safety classifier, then a generated line
       // that names something only they said. It is also the only honest way
       // to show what the product is, because describing the loop is not the
@@ -228,7 +251,7 @@ class _FirstRunState extends State<FirstRun> {
         ),
 
       // Last. Signing in comes after there is something to keep, not before
-      // the student has seen what this is.
+      // the user has seen what this is.
       _ => SignInScreen(
           onSignedIn: () => _toHome(context),
           onSkip: () => _toHome(context),
@@ -254,7 +277,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    // Always the shell, including on day one. A new student getting a
+    // Always the shell, including on day one. A new user getting a
     // different navigation model from everyone else is the same problem as an
     // empty screen looking broken.
     return AppShell(
@@ -330,7 +353,7 @@ class Session extends StatefulWidget {
 
   /// Whether this came from the mic. The confirm step exists because
   /// transcription can be wrong, and recognition on children's voices is
-  /// weakest of all. A student who typed their own words has nothing to
+  /// weakest of all. A user who typed their own words has nothing to
   /// confirm, and asking them to is friction that says we were not listening.
   final bool spoken;
 
@@ -383,7 +406,7 @@ class _SessionState extends State<Session> {
             _beat = _Beat.help;
           });
         case api.Held():
-          // Stored, nothing sent. The student is told plainly rather than
+          // Stored, nothing sent. The user is told plainly rather than
           // shown a reflection that was never generated.
           setState(() {
             _stored = true;
@@ -425,7 +448,7 @@ class _SessionState extends State<Session> {
           offered: _mirror?.offered,
         );
       } catch (_) {
-        // The decision is the student's, not ours. Losing it to a dropped
+        // The decision is the user's, not ours. Losing it to a dropped
         // connection is bad, and blocking them behind an error is worse.
       }
     }
@@ -513,9 +536,9 @@ class _Waiting extends StatelessWidget {
 /// The entry was saved and nothing else happened. Said plainly.
 /// Two different things went wrong and they are not told the same way.
 ///
-/// A held entry is on the server and the student can be told so. A submission
+/// A held entry is on the server and the user can be told so. A submission
 /// that never arrived is not, and saying it is kept when it is not is the one
-/// thing this screen must never do: the student closes the app believing their
+/// thing this screen must never do: the user closes the app believing their
 /// words are somewhere.
 class _Failed extends StatelessWidget {
   const _Failed({required this.onDone, required this.stored, this.onRetry});

@@ -14,6 +14,7 @@ export type JobType =
   | 'cue_cards'
   | 'people'
   | 'person_profile'
+  | 'release_held'
 
 /** The hour the sweep runs. Late enough that a school day is long over. */
 const SWEEP_HOUR = 3

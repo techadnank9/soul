@@ -5,7 +5,7 @@ import '../../theme/widgets.dart';
 import 'baseline_answering.dart' show ListChoices;
 import 'profile_fields.dart';
 
-/// What a student gave at first run. Every field is optional, because every
+/// What a user gave at first run. Every field is optional, because every
 /// question can be skipped and a half answered profile is a real state.
 class Profile {
   const Profile({
@@ -22,7 +22,7 @@ class Profile {
   final String? gender;
   final String? region;
 
-  /// Present only if the student shared their location. The region is derived
+  /// Present only if the user shared their location. The region is derived
   /// from these on the server, so both are never sent as a disagreement.
   final double? latitude;
   final double? longitude;
@@ -64,7 +64,7 @@ class Profile {
 /// Four questions, asked one at a time, before the baseline set.
 ///
 /// Every one of them can be skipped and the app still works. That is the test
-/// this screen has to pass: nothing here is a gate, because a student who does
+/// this screen has to pass: nothing here is a gate, because a user who does
 /// not want to tell us their age should still be able to say what happened
 /// today.
 ///
@@ -149,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // The where question asks the device the moment it appears rather than
     // waiting to be pressed. Once only: coming back to this question does not
-    // ask again, because a student who said no should not be asked twice by
+    // ask again, because a user who said no should not be asked twice by
     // the act of tapping back.
     if (_step == _Step.where && !_asked) await _useMyLocation();
   }
@@ -183,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
   }
 
-  /// Asks the device where the student is.
+  /// Asks the device where the user is.
   ///
   /// The region is not chosen here. The coordinates go to the server and the
   /// region and timezone are derived from them there, so a measured location
@@ -196,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _locating = true);
 
     // Which question asked. A fix can take ten seconds, and by then the
-    // student may have picked a region themselves and moved on. Landing that
+    // user may have picked a region themselves and moved on. Landing that
     // answer late would either move the screen under their finger or overwrite
     // what they chose.
     final asking = _index;
@@ -237,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       };
 
   /// Why the question is being asked, where the reason is not obvious. A
-  /// student is owed this more than an adult is, not less.
+  /// user is owed this more than an adult is, not less.
   String? get _because => switch (_step) {
         _Step.name => 'A first name is plenty. It is what the app calls you.',
         _Step.where => 'So the app comes back to you in your afternoon, '

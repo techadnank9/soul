@@ -27,7 +27,7 @@ class SoulApi {
   final String baseUrl;
 
   /// The roster token from the build. It is what the development path runs on
-  /// and what a student carries until they sign in.
+  /// and what a user carries until they sign in.
   final String token;
 
   /// One client for the whole app.
@@ -40,14 +40,14 @@ class SoulApi {
   static final HttpClient _client = HttpClient()
     ..connectionTimeout = const Duration(seconds: 10)
     // The Mirror thinks for a while. Cutting it off client side would show a
-    // student a failure for a response that was on its way.
+    // user a failure for a response that was on its way.
     ..idleTimeout = const Duration(minutes: 3);
 
   /// How long a read is allowed to take before it counts as failed.
   ///
   /// A connection that opens and then goes quiet is not covered by the
   /// connection timeout, and the three screens that read are the ones a
-  /// student sits in front of. Without a deadline here their loading state has
+  /// user sits in front of. Without a deadline here their loading state has
   /// no end and no way out. Writes are deliberately not given one: the Mirror
   /// thinks for a while and cutting it off would show a failure for a response
   /// that was on its way.
@@ -57,13 +57,13 @@ class SoulApi {
   /// The server takes either, so nothing above this line has to know which of
   /// the two went out.
   /// Development only. Set by the skip button on the first screen so the app
-  /// can be looked at as the seeded demo student, who has a week of entries
+  /// can be looked at as the seeded demo user, who has a week of entries
   /// behind them. It is deliberately not stored anywhere: it lasts as long as
   /// the process and a real launch never sets it.
-  static String? demoStudent;
+  static String? demoUser;
 
   Future<String> _bearer() async {
-    if (demoStudent != null) return demoStudent!;
+    if (demoUser != null) return demoUser!;
     return await sessionToken() ?? token;
   }
 
@@ -111,15 +111,18 @@ class SoulApi {
     await clearSessionToken();
   }
 
-  /// Posts that are a student waiting on a button, rather than a model
+  /// Posts that are a user waiting on a button, rather than a model
   /// thinking, get the same deadline the reads do.
   ///
   /// Without it a connection that opens and then goes quiet left the cue card
   /// on Holding with no end and no way out. Submitting an entry and asking for
   /// the Mirror are deliberately not in this set: those wait on a model and
-  /// cutting them off shows a student a failure for an answer that was on its
+  /// cutting them off shows a user a failure for an answer that was on its
   /// way.
   static const _quick = {
+    '/auth/device',
+    '/auth/email/start',
+    '/auth/email/verify',
     '/auth/apple',
     '/profile',
     '/baseline',
@@ -212,12 +215,40 @@ class SoulApi {
     await _delete('/transcribe/$toneId');
   }
 
+  /// An account for a phone that has never been seen, and its session.
+  ///
+  /// Asked for on first launch, before a single question, so that everything
+  /// first run writes has somewhere to go. Signing in later attaches an
+  /// identity to this account rather than making another.
+  Future<String> deviceSession() async {
+    final json = await _post('/auth/device', {});
+    return json['token'] as String;
+  }
+
+  /// Asks for a six digit code to be sent to the address.
+  Future<void> emailStart(String email) async {
+    await _post('/auth/email/start', {'email': email});
+  }
+
+  /// The code, traded for a session token. The bearer is this phone's own
+  /// session, so a new address attaches to the account already here.
+  Future<String> emailVerify(String email, String code) async {
+    final json = await _post('/auth/email/verify', {'email': email, 'code': code});
+    return json['token'] as String;
+  }
+
+  /// The agreement on the sign in screen, recorded with its version. Until
+  /// this is recorded nothing a person writes leaves the server.
+  Future<void> recordConsent(String version) async {
+    await _post('/consent', {'version': version});
+  }
+
   /// Sign in with Apple, traded for a session token.
   ///
-  /// The bearer on this one call is still the roster token, because this is
-  /// what links an Apple account to the student the district already rostered.
-  /// Two strings go out and nothing else: no scopes were asked for, so there
-  /// is no name and no email to send.
+  /// The bearer on this call is the phone's own session, which is what links
+  /// the Apple account to the account already here. Two strings go out and
+  /// nothing else: no scopes were asked for, so there is no name and no
+  /// email to send.
   ///
   /// The reply also carries an expiry. It is not kept, because the only thing
   /// the client can do with an expired token is be told so by the server.
@@ -279,7 +310,7 @@ class SoulApi {
     await _post('/profile', fields);
   }
 
-  /// What the app holds about this student. The profile tab shows exactly
+  /// What the app holds about this user. The profile tab shows exactly
   /// this and nothing it has not been told.
   Future<Map<String, dynamic>> profileHeld() => _get('/profile');
 
@@ -296,17 +327,17 @@ class SoulApi {
 
   /// The week behind the home screen.
   ///
-  /// The week is bounded by the student's own timezone on the server, so a
+  /// The week is bounded by the user's own timezone on the server, so a
   /// Sunday evening in Los Angeles lands on Sunday. Nothing here asks the
   /// device what day it is.
   Future<WeekView> week() async => WeekView.fromJson(await _get('/week'));
 
   /// One day, earliest first. The date is YYYY-MM-DD and it is the string the
   /// week gave back, passed through untouched.
-  /// Every day this student has written on, newest first. Days with nothing
+  /// Every day this user has written on, newest first. Days with nothing
   /// in them are not in the list, because a calendar of blanks reads as a
   /// record of what somebody did not do.
-  /// How it went, days later. The student's own verdict, and the only place
+  /// How it went, days later. The user's own verdict, and the only place
   /// the two sections on the returning tab come from.
   Future<void> recordOutcome({
     required String decisionId,
@@ -336,7 +367,7 @@ class SoulApi {
   /// answer is the whole of what was recorded.
   ///
   /// horizonDays goes out only with a yes, because there is nothing to come
-  /// back to otherwise. detail is absent when the student wrote nothing,
+  /// back to otherwise. detail is absent when the user wrote nothing,
   /// which is most of the time and is a complete answer.
   Future<String?> answerCard({
     required String cardId,
@@ -353,7 +384,7 @@ class SoulApi {
     return json['decisionId'] as String?;
   }
 
-  /// Everything that has come back for this student, what each of those is
+  /// Everything that has come back for this user, what each of those is
   /// doing to them, and what is still too thin to say anything about.
   /// One reflection with the entries behind it. The theme carries spaces and
   /// apostrophes, so it goes as a query parameter rather than a path segment.
@@ -362,7 +393,7 @@ class SoulApi {
     return ReflectionView.fromJson(json);
   }
 
-  /// The people this student writes about, most recently mentioned first.
+  /// The people this user writes about, most recently mentioned first.
   Future<List<PersonRow>> people() async {
     final json = await _getList('/people');
     return [
@@ -373,7 +404,7 @@ class SoulApi {
   Future<PersonView> person(String id) async =>
       PersonView.fromJson(await _get('/people/$id'));
 
-  /// The student's own words about somebody. Whatever they set here is theirs
+  /// The user's own words about somebody. Whatever they set here is theirs
   /// and is never written over by a later profile run.
   Future<void> editPerson(
     String id, {

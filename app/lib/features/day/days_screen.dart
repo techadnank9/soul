@@ -8,7 +8,7 @@ import 'day_screen.dart';
 /// The days tab. Every day with something in it, newest first.
 ///
 /// It opened straight into one day before this, which meant the tab had no
-/// answer to the question a student actually arrives with, which is what have
+/// answer to the question a user actually arrives with, which is what have
 /// I been saying lately.
 ///
 /// A day opens its own page rather than unfolding in the row. The day carries
@@ -31,7 +31,7 @@ class DaysScreen extends StatefulWidget {
   /// Changes when an entry lands, because a new entry can start a new day.
   final int revision;
 
-  /// A day the student picked somewhere else, on the week strip on home. It
+  /// A day the user picked somewhere else, on the week strip on home. It
   /// opens straight away rather than waiting to be found in the list.
   final String? openOn;
 
@@ -160,7 +160,7 @@ class _DaysScreenState extends State<DaysScreen> {
   }
 }
 
-/// One day, closed. The name is what a student would call it out loud, so the
+/// One day, closed. The name is what a user would call it out loud, so the
 /// last two days are today and yesterday rather than dates.
 class _DayRow extends StatelessWidget {
   const _DayRow({required this.day, required this.onTap});

@@ -285,7 +285,7 @@ class SwipeDeck extends StatelessWidget {
   Widget build(BuildContext context) {
     // Every option on screen at once.
     //
-    // This was a swipe deck, one card at a time. A student who does not swipe
+    // This was a swipe deck, one card at a time. A user who does not swipe
     // never sees options two, three and four, and answers from the one card
     // they were shown. A question whose options are hidden is not a question.
     return Column(

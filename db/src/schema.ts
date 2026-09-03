@@ -136,6 +136,15 @@ export const students = pgTable(
     appleUserId: text('apple_user_id'),
 
     /**
+     * An email address, present once a user has signed in with one. It is
+     * the way back into the account from another phone, and the code sent to
+     * it is the credential. Held for that and nothing else: nothing is ever
+     * sent to it except a sign in code. Lowercased before it is stored so the
+     * same address typed two ways is one account.
+     */
+    email: text('email'),
+
+    /**
      * The profile, given by the student at first run. Every column is
      * nullable, because a student can leave first run at any point and a
      * half answered profile is a real state rather than a broken one.
@@ -176,7 +185,30 @@ export const students = pgTable(
   (t) => [
     uniqueIndex('students_school_external_ref_idx').on(t.schoolId, t.externalRef),
     uniqueIndex('students_apple_user_id_idx').on(t.appleUserId),
+    uniqueIndex('students_email_idx').on(t.email),
   ],
+)
+
+/**
+ * Sign in codes sent by email.
+ *
+ * Only the hash of the code is stored, the same way session tokens are. A row
+ * is used once, expires in minutes, and counts its attempts so a code cannot
+ * be guessed. Nothing here is scoped to a user, because the user may not exist
+ * yet: the code is how they come to.
+ */
+export const emailCodes = pgTable(
+  'email_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    attempts: smallint('attempts').notNull().default(0),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => [index('email_codes_email_created_idx').on(t.email, t.createdAt.desc())],
 )
 
 /**

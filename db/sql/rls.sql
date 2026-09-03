@@ -54,7 +54,7 @@ begin
     'entry_embeddings','decisions','outcomes','cue_cards','pattern_candidates',
     'confirmed_patterns','pattern_rejections','pattern_verdicts','safety_flags',
     'people','entry_people',
-    'generations','prompts','jobs','audit_log',
+    'generations','prompts','jobs','audit_log','email_codes',
     'legacy_feedback','legacy_users'
   ]
   loop

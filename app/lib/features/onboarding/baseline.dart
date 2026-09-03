@@ -6,9 +6,9 @@ import '../../theme/soul_theme.dart';
 /// Ten questions across five sections, asked once at first run. The purpose is
 /// pattern awareness and readiness, not diagnosis and not treatment. Nothing
 /// here is scored, nothing is shown back as a result, and no answer produces a
-/// label for the student.
+/// label for the user.
 ///
-/// Every question is skippable and the whole set is skippable. A student who is
+/// Every question is skippable and the whole set is skippable. A user who is
 /// here because an adult sent them needs a way through that is not answering.
 /// How a question is answered.
 ///
@@ -46,7 +46,7 @@ class BaselineQuestion {
   final (String, String)? ends;
 }
 
-/// Each section carries a mark and a colour, so a student can see they have
+/// Each section carries a mark and a colour, so a user can see they have
 /// moved from one part of the set to another without being told.
 const sectionMarks = <String, (IconData, Color)>{
   'Decision timing': (Icons.schedule, SoulColors.clay),

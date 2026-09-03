@@ -1,30 +1,31 @@
 import { and, eq, isNull } from 'drizzle-orm'
-import { db, students, sessions, auditLog } from '../db.js'
+import { db, students } from '../db.js'
 import type { Session } from '../session.js'
-import { hashSessionToken, mintSessionToken, sessionExpiry } from './tokens.js'
+import { auditLinked, issueSession, type SignedIn } from './accounts.js'
 
 /**
- * Signing in attaches a device to a student who already exists.
+ * Signing in with Apple attaches an Apple account to the account this device
+ * already has, or finds the account that Apple account was attached to before.
  *
- * There is no sign up here and there never will be. The district rosters the
- * student, the roster reference says which row this is, and Apple says which
- * device is allowed back into it later. That is the whole of it.
+ * The bearer on the call is the device's own session, made on first launch,
+ * or a roster reference in development. Either way it names the row the Apple
+ * account attaches to on a first sign in. On a later sign in the Apple account
+ * is the credential that was just proven, so it decides which account this
+ * is, whatever the bearer said.
  */
 export class SignInRefused extends Error {}
 
 /**
- * The roster row already belongs to a different Apple account.
+ * The account already belongs to a different Apple account.
  *
- * Its own error because it is the one refusal a student can do nothing about.
- * Every other failure here means try again; this one means somebody has to
- * unlink it, and telling a student to try again forever is worse than telling
- * them plainly that it needs the school.
+ * Its own error because it is the one refusal a person can do nothing about
+ * by trying again. Telling them plainly beats telling them to retry forever.
  */
 export class AlreadyLinked extends Error {}
 
-export type SignedIn = { token: string; expiresAt: string }
+export type { SignedIn }
 
-export async function signInWithApple(roster: Session, appleSub: string): Promise<SignedIn> {
+export async function signInWithApple(current: Session, appleSub: string): Promise<SignedIn> {
   const linked = await db
     .select({
       id: students.id,
@@ -36,83 +37,36 @@ export async function signInWithApple(roster: Session, appleSub: string): Promis
     .limit(1)
 
   // A second device, or the same one after a reinstall. The Apple account
-  // decides which student this is, not the roster reference the build happens
-  // to carry, because the account is the credential that was just proven.
-  let student = linked[0]
-  const firstSignIn = !student
+  // decides which account this is.
+  if (linked[0]) return issueSession(linked[0])
 
-  if (!student) {
-    const rows = await db
-      .select({ appleUserId: students.appleUserId })
-      .from(students)
-      .where(eq(students.id, roster.studentId))
-      .limit(1)
+  const rows = await db
+    .select({ appleUserId: students.appleUserId })
+    .from(students)
+    .where(eq(students.id, current.studentId))
+    .limit(1)
 
-    if (!rows[0]) throw new SignInRefused('unknown student')
+  if (!rows[0]) throw new SignInRefused('unknown user')
 
-    // The row is already somebody's. Overwriting would hand one student's
-    // entries to another Apple account, so the link is written once and only
-    // once and a second account has to be sorted out by the district.
-    //
-    // Claimed in one statement rather than checked and then written. Two sign
-    // ins racing on the same roster token could both read an empty column and
-    // both proceed, and the loser still walked away with a working session.
-    if (rows[0].appleUserId) throw new AlreadyLinked()
+  // The row is already somebody's. Overwriting would hand one person's
+  // entries to another Apple account, so the link is written once and only
+  // once. Claimed in one statement rather than checked and then written, so
+  // two sign ins racing on the same account cannot both proceed.
+  if (rows[0].appleUserId) throw new AlreadyLinked()
 
-    const claimed = await db
-      .update(students)
-      .set({ appleUserId: appleSub })
-      .where(and(eq(students.id, roster.studentId), isNull(students.appleUserId)))
-      .returning({ id: students.id })
+  const claimed = await db
+    .update(students)
+    .set({ appleUserId: appleSub })
+    .where(and(eq(students.id, current.studentId), isNull(students.appleUserId)))
+    .returning({ id: students.id })
 
-    if (!claimed[0]) throw new AlreadyLinked()
+  if (!claimed[0]) throw new AlreadyLinked()
 
-    student = {
-      id: roster.studentId,
-      schoolId: roster.schoolId,
-      districtId: roster.districtId,
-    }
-  }
+  await auditLinked(current.studentId, 'apple_account_linked')
 
-  // A new sign in ends the old ones. Sessions live for six months, so without
-  // this a device handed on or lost keeps a working token for half a year.
-  await db
-    .update(sessions)
-    .set({ revokedAt: new Date() })
-    .where(and(eq(sessions.studentId, student.id), isNull(sessions.revokedAt)))
-
-  const token = mintSessionToken()
-  const expiresAt = sessionExpiry()
-
-  await db.insert(sessions).values({
-    studentId: student.id,
-    schoolId: student.schoolId,
-    districtId: student.districtId,
-    tokenHash: hashSessionToken(token),
-    expiresAt,
+  return issueSession({
+    id: current.studentId,
+    schoolId: current.schoolId,
+    districtId: current.districtId,
   })
-
-  // Districts have inspection rights and will ask when a device was trusted
-  // and when an account was first attached. These are the rows that answer.
-  if (firstSignIn) {
-    await db.insert(auditLog).values({
-      actorId: student.id,
-      actorRole: 'student',
-      action: 'apple_account_linked',
-      subjectStudentId: student.id,
-      subjectType: 'student',
-      subjectId: student.id,
-    })
-  }
-
-  await db.insert(auditLog).values({
-    actorId: student.id,
-    actorRole: 'student',
-    action: 'session_issued',
-    subjectStudentId: student.id,
-    subjectType: 'student',
-    subjectId: student.id,
-  })
-
-  return { token, expiresAt: expiresAt.toISOString() }
 }
