@@ -84,3 +84,11 @@ Future<void> markFirstRunDone() async {
     // Next launch walks first run again. A bad morning, not a broken app.
   }
 }
+
+/// Forgets that first run happened, which is what a log out does: the next
+/// launch is the intro again, with a way straight to sign in on it.
+Future<void> clearFirstRunDone() async {
+  try {
+    await _keychain.delete(key: _firstRunKey);
+  } catch (_) {}
+}

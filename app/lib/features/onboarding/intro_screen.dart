@@ -10,7 +10,7 @@ import '../../theme/widgets.dart';
 /// discovered later, and the two lines about what this is not are the part
 /// that does that work.
 class IntroScreen extends StatelessWidget {
-  const IntroScreen({super.key, required this.onContinue, this.onSkip});
+  const IntroScreen({super.key, required this.onContinue, this.onSkip, this.onSignIn});
 
   final VoidCallback onContinue;
 
@@ -21,6 +21,10 @@ class IntroScreen extends StatelessWidget {
   /// It is labelled on the screen as what it is. A skip that looks like a
   /// product control is one somebody ships by forgetting it is there.
   final VoidCallback? onSkip;
+
+  /// For somebody who has been here before, on another phone or after a log
+  /// out. Straight to sign in, no questions.
+  final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +79,14 @@ class IntroScreen extends StatelessWidget {
             kind: SoulButtonKind.filled,
             onPressed: onContinue,
           ),
+          if (onSignIn != null) ...[
+            const SizedBox(height: 4),
+            SoulButton(
+              'Already have an account? Sign in',
+              kind: SoulButtonKind.ghost,
+              onPressed: onSignIn,
+            ),
+          ],
           if (onSkip != null) ...[
             const SizedBox(height: 4),
             SoulButton(

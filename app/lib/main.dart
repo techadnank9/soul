@@ -103,7 +103,7 @@ class SoulApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
       home: _requestedScreen() ?? const _Launch(),
-      routes: {'/signin': (_) => const SignInAgain()},
+      routes: {'/start': (_) => const FirstRun()},
     );
   }
 }
@@ -124,13 +124,19 @@ class SignInAgain extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Future<void> home() async {
+      await markFirstRunDone();
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const Home()),
+        (_) => false,
+      );
+    }
+
     return SignInScreen(
-      onSignedIn: () => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Home()),
-      ),
-      onSkip: () => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Home()),
-      ),
+      onBack: () => Navigator.of(context).maybePop(),
+      onSignedIn: home,
+      onSkip: home,
     );
   }
 }
@@ -149,11 +155,8 @@ class _LaunchState extends State<_Launch> {
   late final Future<_Start> _start = _check();
 
   static Future<_Start> _check() async {
-    final done = await firstRunDone();
-    if (await sessionToken() != null) return done ? _Start.home : _Start.firstRun;
-    // A phone that finished first run and then logged out. Sign in gets the
-    // account back; walking fifteen questions again would not.
-    return done ? _Start.signIn : _Start.firstRun;
+    if (await sessionToken() == null) return _Start.firstRun;
+    return await firstRunDone() ? _Start.home : _Start.firstRun;
   }
 
   @override
@@ -284,6 +287,9 @@ class _FirstRunState extends State<FirstRun> {
           // account and fills it, so the skip works on any phone and nobody
           // shares an account.
           onSkip: () => _skipToDemo(context),
+          onSignIn: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SignInAgain()),
+          ),
         ),
 
       // Four questions, every one of them skippable. Sent in the background,

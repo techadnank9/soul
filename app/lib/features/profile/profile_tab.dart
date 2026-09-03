@@ -215,8 +215,9 @@ class _ProfileTabState extends State<ProfileTab> {
   Future<void> _logOut(BuildContext context) async {
     widget.api.event('logged_out');
     await clearSessionToken();
+    await clearFirstRunDone();
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/signin', (_) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil('/start', (_) => false);
   }
 
   Future<void> _editName(BuildContext context) async {
