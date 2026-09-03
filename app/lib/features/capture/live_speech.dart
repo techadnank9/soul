@@ -76,6 +76,9 @@ class LiveSpeech {
       case 'session_started':
       case 'warning':
         break;
+      case 'commit_throttled':
+        // Nothing to settle yet. The words on the screen are already right.
+        _settled?.complete();
       default:
         if (message['error'] != null) {
           _transcripts.addError(StateError('$type: ${message['error']}'));

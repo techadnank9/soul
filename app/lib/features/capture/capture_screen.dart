@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -63,8 +64,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
   /// finger slips, and it cannot be done while putting the phone down.
   bool _recording = false;
 
-  /// Between stopping and the last words landing.
+  /// Between the tap and the connection opening, and between stopping and
+  /// the last words landing. Which one is shown under the mic.
   bool _finishing = false;
+  bool _connecting = false;
   String? _failure;
 
   /// The live connection, while one is open.
@@ -89,6 +92,19 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   DateTime? _recordingSince;
   int _bytes = 0;
+  int _partialChars = 0;
+
+  /// A token fetched the moment the screen opens, so the tap on the mic has
+  /// only a connection to make. Single use, so a fresh one is fetched after
+  /// each recording. A failed fetch is retried on the tap.
+  Future<String>? _token;
+
+  void _prefetchToken() {
+    _token = _api.speechToken().catchError((Object error) {
+      _token = null;
+      throw error;
+    });
+  }
 
   @override
   void initState() {
@@ -96,6 +112,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     // Without this the send button never appears, because nothing tells the
     // screen that the field now has something in it.
     _controller.addListener(_onChanged);
+    _prefetchToken();
   }
 
   void _onChanged() => setState(() {});
@@ -130,19 +147,22 @@ class _CaptureScreenState extends State<CaptureScreen> {
     setState(() {
       _failure = null;
       _finishing = true;
+      _connecting = true;
     });
 
     // A token for one connection, from our own service, so the transcriber's
     // key never reaches the phone.
     final String token;
     try {
-      token = await _api.speechToken();
+      token = await (_token ?? _api.speechToken());
+      _token = null;
     } catch (error) {
       final status = error is SoulApiException ? error.status : null;
       _api.event('speech_failed', {'stage': 'token', 'status': status});
       if (!mounted) return;
       setState(() {
         _finishing = false;
+        _connecting = false;
         _failure = switch (status) {
           401 => 'This phone is not signed in yet. Close the app and open it again.',
           503 => 'Speech is not available right now. You can type it instead.',
@@ -161,6 +181,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       if (!mounted) return;
       setState(() {
         _finishing = false;
+        _connecting = false;
         _failure = 'Could not reach the transcriber. You can type it instead.';
       });
       return;
@@ -198,26 +219,32 @@ class _CaptureScreenState extends State<CaptureScreen> {
     });
 
     _api.event('speech_started');
+    _partialChars = 0;
     if (!mounted) return;
     setState(() {
       _recording = true;
       _finishing = false;
+      _connecting = false;
       _spoken = true;
     });
   }
 
   /// The loudness of one chunk, 0 to 1. Root mean square of the samples,
-  /// against a ceiling well under full scale so ordinary speech fills the bar.
+  /// read two bytes at a time so an unaligned buffer cannot throw, against
+  /// a ceiling well under full scale so ordinary speech fills the bar.
   static double _rms(Uint8List chunk) {
-    final samples = chunk.buffer.asInt16List(chunk.offsetInBytes, chunk.length ~/ 2);
-    if (samples.isEmpty) return 0;
+    final bytes = ByteData.sublistView(chunk);
+    final count = chunk.length ~/ 2;
+    if (count == 0) return 0;
     var sum = 0.0;
-    for (final sample in samples) {
+    for (var i = 0; i < count; i++) {
+      final sample = bytes.getInt16(i * 2, Endian.little).toDouble();
       sum += sample * sample;
     }
-    final rms = (sum / samples.length);
-    // 6000 is a firm speaking voice a hand's width away.
-    return (rms / (6000 * 6000)).clamp(0.0, 1.0);
+    final rms = math.sqrt(sum / count);
+    // About 2500 is a clear speaking voice a hand's width from the phone.
+    // Square root of the ratio so quiet speech still shows as movement.
+    return math.sqrt((rms / 2500).clamp(0.0, 1.0));
   }
 
   void _onTranscript(Transcript transcript) {
@@ -228,6 +255,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _partial = '';
       } else {
         _partial = transcript.text;
+        _partialChars = transcript.text.length;
       }
       _show();
     });
@@ -272,9 +300,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final held = live.audio;
       _live = null;
       await live.close();
+      // If the commit never came back, the last guess is the best there is,
+      // and it stays on the screen rather than vanishing.
       if (mounted) {
         setState(() {
-          _partial = '';
+          if (_partial.isNotEmpty) {
+            _committed = _join(_committed, _partial);
+            _partial = '';
+          }
           _show();
         });
       }
@@ -283,7 +316,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
         'recorded_ms': recordedMs,
         'bytes': _bytes,
         'chars': _committed.length,
+        'partial_chars': _partialChars,
       });
+      _prefetchToken();
 
       // How it sounded, judged once from the audio the phone held, then the
       // audio goes. Nobody waits on this: send can happen before it lands.
@@ -417,7 +452,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 duration: const Duration(milliseconds: 200),
                 child: Label(
                   _finishing
-                      ? 'one moment'
+                      ? (_connecting ? 'connecting' : 'finishing')
                       : _recording
                           ? 'tap to stop'
                           : 'tap to speak',
