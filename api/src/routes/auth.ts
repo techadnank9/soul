@@ -4,6 +4,9 @@ import * as contracts from '../contracts.js'
 import { AppleTokenInvalid, verifyAppleIdentityToken } from '../auth/apple.js'
 import { AlreadyLinked, SignInRefused, signInWithApple } from '../auth/signIn.js'
 import { createAccount, issueSession } from '../auth/accounts.js'
+import { seedDemoWeek, ZONE, REGION } from '../services/demo/seed.js'
+import { db, students } from '../db.js'
+import { eq } from 'drizzle-orm'
 import { EmailRefused, startEmailSignIn, verifyEmailSignIn } from '../auth/email.js'
 import { EmailUnavailable } from '../auth/resend.js'
 import { resolveSession, type Session } from '../session.js'
@@ -28,6 +31,33 @@ export const auth = new Hono<Vars>()
 auth.post('/auth/device', async (c) => {
   const account = await createAccount()
   console.log(`account: created ${account.id.slice(0, 8)}`)
+  return c.json(await issueSession(account))
+})
+
+/**
+ * The demo skip on the first screen. A fresh account, filled with a week of
+ * entries ending today, so whoever presses it lands on a home with something
+ * in it. Each press is its own account, so nobody shares one.
+ */
+auth.post('/auth/demo', async (c) => {
+  const account = await createAccount()
+  await db
+    .update(students)
+    .set({
+      displayName: 'Sam',
+      ageBand: '13_17',
+      gender: 'not_said',
+      region: REGION,
+      timezone: ZONE,
+      profileRecordedAt: new Date(),
+    })
+    .where(eq(students.id, account.id))
+  const count = await seedDemoWeek({
+    studentId: account.id,
+    schoolId: account.schoolId,
+    districtId: account.districtId,
+  })
+  console.log(`demo: account ${account.id.slice(0, 8)} with ${count} entries`)
   return c.json(await issueSession(account))
 })
 

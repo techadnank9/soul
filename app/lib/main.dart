@@ -208,6 +208,23 @@ class _FirstRunState extends State<FirstRun> {
 
 
   void _next() => setState(() => _step++);
+
+  Future<void> _skipToDemo(BuildContext context) async {
+    try {
+      final token = await _api.demoSession();
+      await storeSessionToken(token);
+      await markFirstRunDone();
+      _api.event('demo_skipped');
+      if (!context.mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const Home(name: 'Sam')),
+      );
+    } catch (error) {
+      _api.event('demo_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
+    }
+  }
   void _previous() => setState(() => _step = _step > 0 ? _step - 1 : 0);
 
   /// First run ends on home, empty, with whatever name was given. A user
@@ -263,13 +280,10 @@ class _FirstRunState extends State<FirstRun> {
             await _account;
             _next();
           },
-          // Development only. Straight to home as the seeded demo user, so
-          // home can be judged against a week that exists rather than against
-          // an empty account or fifteen questions of setup.
-          onSkip: () {
-            SoulApi.demoUser = 'student_demo';
-            _toHome(context);
-          },
+          // Straight to a home with a week in it. The server makes a fresh
+          // account and fills it, so the skip works on any phone and nobody
+          // shares an account.
+          onSkip: () => _skipToDemo(context),
         ),
 
       // Four questions, every one of them skippable. Sent in the background,

@@ -63,14 +63,7 @@ class SoulApi {
   /// A stored session token when there is one, the roster token otherwise.
   /// The server takes either, so nothing above this line has to know which of
   /// the two went out.
-  /// Development only. Set by the skip button on the first screen so the app
-  /// can be looked at as the seeded demo user, who has a week of entries
-  /// behind them. It is deliberately not stored anywhere: it lasts as long as
-  /// the process and a real launch never sets it.
-  static String? demoUser;
-
   Future<String> _bearer() async {
-    if (demoUser != null) return demoUser!;
     return await sessionToken() ?? token;
   }
 
@@ -207,6 +200,13 @@ class SoulApi {
       throw SoulApiException(response.statusCode, text);
     }
     return jsonDecode(text) as Map<String, dynamic>;
+  }
+
+  /// The demo skip: a fresh account already holding a week of entries, and
+  /// its session. Every press makes its own, so nobody shares one.
+  Future<String> demoSession() async {
+    final json = await _post('/auth/demo', {});
+    return json['token'] as String;
   }
 
   /// A single use token that opens one live connection to the transcriber,
