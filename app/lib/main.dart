@@ -58,7 +58,7 @@ Future<void> main() async {
       options.replay.sessionSampleRate = 1.0;
       options.replay.onErrorSampleRate = 1.0;
     },
-    appRunner: () => runApp(const SentryWidget(child: SoulApp())),
+    appRunner: () => runApp(SentryWidget(child: const SoulApp())),
   );
 }
 
