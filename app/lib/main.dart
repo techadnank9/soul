@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'api/client.dart';
 import 'api/models.dart' as api;
@@ -31,7 +33,26 @@ import 'theme/widgets.dart';
 /// generated, and the week, the day and the patterns are read back from the
 /// server, so what is on screen is this user's own life or it is an empty
 /// state saying so.
-void main() => runApp(const SoulApp());
+/// Where crashes and errors are reported. An address, not a secret, and
+/// empty means nothing is reported and nothing else changes. Set at build
+/// time with SENTRY_DSN or pasted here once the project exists.
+const _sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
+
+Future<void> main() async {
+  if (_sentryDsn.isEmpty) {
+    runApp(const SoulApp());
+    return;
+  }
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = _sentryDsn;
+      options.environment = kReleaseMode ? 'release' : 'debug';
+      options.tracesSampleRate = 0.2;
+      options.sendDefaultPii = false;
+    },
+    appRunner: () => runApp(const SoulApp()),
+  );
+}
 
 /// A way to open one screen directly, for reviewing them without walking the
 /// whole flow. Set SOUL_SCREEN in the environment. Unset, the app starts where

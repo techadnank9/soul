@@ -59,6 +59,7 @@ runs before either, blocking, on every entry.
 | Database | Postgres 17 with pgvector, row level security. Supabase in production, local Postgres in development |
 | Schema | Drizzle |
 | Jobs | Durable, Postgres backed |
+| Errors | Sentry, app and service, on only when a DSN is set |
 | Models | OpenAI primary, Gemini second, OpenRouter fallback. gpt-5 for beat one, the Mirror and the tagger, gpt-5-mini for safety |
 | Observability | Prompt and model version stored on every generated row |
 

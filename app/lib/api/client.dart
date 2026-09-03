@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import '../data/session_store.dart';
 import 'models.dart';
 
@@ -170,6 +171,10 @@ class SoulApi {
   /// it and nothing is shown if it fails. The detail is small and never
   /// carries what a person wrote or said.
   void event(String name, [Map<String, Object?> detail = const {}]) {
+    Sentry.addBreadcrumb(Breadcrumb(message: name, data: detail, category: 'app'));
+    if (name.endsWith('_failed')) {
+      Sentry.captureMessage('$name ${jsonEncode(detail)}', level: SentryLevel.warning);
+    }
     _post('/events', {'name': name, 'detail': detail}).then(
       (_) {},
       onError: (Object _) {},

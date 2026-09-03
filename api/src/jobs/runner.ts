@@ -1,4 +1,6 @@
 import { sql } from '../db.js'
+import * as Sentry from '@sentry/node'
+import { env } from '../env.js'
 import { tagEntry } from '../services/tagging/tag.js'
 import { releaseHeld } from '../services/reflection/release.js'
 import { checkBack } from '../services/decisions/checkBack.js'
@@ -147,6 +149,7 @@ export async function tick(): Promise<boolean> {
     await run(job)
     await sql`update jobs set status = 'done' where id = ${job.id}`
   } catch (error) {
+    Sentry.captureException(error, { tags: { job: job.type } })
     const message = (error as Error).message
     const dead = job.attempts >= MAX_ATTEMPTS
     await sql`

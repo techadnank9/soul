@@ -3426,3 +3426,27 @@ removes it. Accounts made before this were marked agreed in the same change.
 
 Reverses if: a district rosters students, whose consent is recorded by the
 district as before and is untouched by this.
+
+---
+
+### 202. Sentry, in the app and in the service
+Sep 2026, Adnan
+
+Decision: Sentry reports crashes and errors from the app and from the API
+and the worker, into one organisation. It is on only when a DSN is set, in
+the app at build time and in the service through the environment. The
+events the app already posts become breadcrumbs, so a crash carries the
+trail of what the app did before it, and any event ending in failed is
+raised as a warning.
+
+Why: the founder asked for one tool that shows every failure, and Sentry
+has first class SDKs for both Flutter and Node so the phone and the server
+land in the same place. The free plan covers a TestFlight app many times
+over. Crashlytics would have brought Firebase with it, and the rest are no
+better for this stack.
+
+What it does not carry: no personal data by default, and the only
+identifier attached is our own account id.
+
+Reverses if: the free plan is outgrown and the paid one is not worth it, in
+which case the events table and the logs remain and the SDKs come out.

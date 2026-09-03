@@ -51,6 +51,12 @@ export const env = {
    */
   resendFrom: (): string => optional('RESEND_FROM') ?? 'Soul <onboarding@resend.dev>',
 
+  /**
+   * Where errors are reported. Unset means they are only logged, which is
+   * what a laptop wants and what the service falls back to.
+   */
+  sentryDsn: (): string | undefined => optional('SENTRY_DSN'),
+
   providers: {
     openaiKey: optional('OPENAI_API_KEY'),
     resendKey: optional('RESEND_API_KEY'),

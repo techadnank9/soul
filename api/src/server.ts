@@ -1,6 +1,23 @@
+import * as Sentry from '@sentry/node'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { env } from './env.js'
+
+/**
+ * Errors go to Sentry when a DSN is set, alongside the log line. The DSN is
+ * an address, not a secret, and without one nothing here does anything.
+ * No personal data is attached: the student id is the only identifier and
+ * it is our own.
+ */
+if (env.sentryDsn()) {
+  Sentry.init({
+    dsn: env.sentryDsn(),
+    environment: process.env.RENDER ? 'render' : 'laptop',
+    release: process.env.RENDER_GIT_COMMIT,
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false,
+  })
+}
 import { resolveSession, type Session } from './session.js'
 import { entries } from './routes/entries.js'
 import { reads } from './routes/reads.js'
@@ -68,6 +85,10 @@ app.route('/', events)
 
 app.onError((error, c) => {
   console.error(`${c.req.method} ${c.req.path} failed:`, error)
+  Sentry.captureException(error, {
+    tags: { route: c.req.path, method: c.req.method },
+    user: c.get('session') ? { id: c.get('session').studentId } : undefined,
+  })
   return c.json({ error: 'something went wrong' }, 500)
 })
 
