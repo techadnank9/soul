@@ -255,10 +255,23 @@ class SoulApi {
     return json['token'] as String;
   }
 
-  /// The agreement on the sign in screen, recorded with its version. Until
-  /// this is recorded nothing a person writes leaves the server.
+  /// The agreement, recorded with its version. Until this is recorded
+  /// nothing a person writes or says leaves the server.
   Future<void> recordConsent(String version) async {
     await _post('/consent', {'version': version});
+  }
+
+  /// Whether this account has agreed. Asked on launch, because a phone can
+  /// hold an account from before the agreement screen existed, and the
+  /// keychain outlives the app on iOS. Unreachable reads as agreed, so an
+  /// offline launch is not a wall.
+  Future<bool> consentRecorded() async {
+    try {
+      final json = await _get('/consent');
+      return json['recorded'] == true;
+    } catch (_) {
+      return true;
+    }
   }
 
   /// Sign in with Apple, traded for a session token.

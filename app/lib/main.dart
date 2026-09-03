@@ -86,6 +86,8 @@ class SoulApp extends StatelessWidget {
 /// first launch, before a single question, so the token alone no longer
 /// means a person finished. What sits under the reads is the app's own
 /// background, so there is nothing worth spinning at for the length of them.
+enum _Start { firstRun, agreement, home }
+
 class _Launch extends StatefulWidget {
   const _Launch();
 
@@ -97,24 +99,48 @@ class _LaunchState extends State<_Launch> {
   /// Read once, held here. Calling this inside build handed the builder a new
   /// future on every rebuild, which dropped back to the waiting state and
   /// threw away whatever the app had built underneath it.
-  late final Future<bool> _returning = _check();
+  late final Future<_Start> _start = _check();
 
-  static Future<bool> _check() async {
-    if (await sessionToken() == null) return false;
-    return firstRunDone();
+  final _api = SoulApi.fromEnvironment();
+
+  Future<_Start> _check() async {
+    if (await sessionToken() == null) return _Start.firstRun;
+    if (!await firstRunDone()) return _Start.firstRun;
+    // A phone from before the agreement screen existed holds an account
+    // that never agreed, and the keychain outlives the app on iOS. Nothing
+    // that account says can leave until it does, so ask now rather than let
+    // the mic fail on every entry.
+    return await _api.consentRecorded() ? _Start.home : _Start.agreement;
   }
+
+  bool _agreed = false;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _returning,
+    return FutureBuilder<_Start>(
+      future: _start,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Screen(body: []);
         }
         // Home shows the week the server returns, so a person who signed in
         // months ago and one who signed in a minute ago both see their own.
-        return snapshot.data == true ? const Home() : const FirstRun();
+        return switch (snapshot.data) {
+          _Start.home => const Home(),
+          _Start.agreement when !_agreed => AgreementScreen(
+              onAgreed: () {
+                _api.recordConsent('v1').then(
+                  (_) => _api.event('consent_recorded', {'version': 'v1', 'late': true}),
+                  onError: (Object error) => _api.event('consent_failed', {
+                    'status': error is SoulApiException ? error.status : null,
+                  }),
+                );
+                setState(() => _agreed = true);
+              },
+            ),
+          _Start.agreement => const Home(),
+          _ => const FirstRun(),
+        };
       },
     );
   }
