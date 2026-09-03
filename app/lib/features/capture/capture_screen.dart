@@ -208,14 +208,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
     _recordingSince = DateTime.now();
     _bytes = 0;
+    _windowSum = 0;
+    _windowSamples = 0;
     _audio = stream.listen((chunk) {
       _bytes += chunk.length;
       live.send(chunk);
-      if (!mounted) return;
-      setState(() {
-        _levels.removeAt(0);
-        _levels.add(_rms(chunk));
-      });
+      _measure(chunk);
     });
 
     _api.event('speech_started');
@@ -229,22 +227,45 @@ class _CaptureScreenState extends State<CaptureScreen> {
     });
   }
 
-  /// The loudness of one chunk, 0 to 1. Root mean square of the samples,
-  /// read two bytes at a time so an unaligned buffer cannot throw, against
-  /// a ceiling well under full scale so ordinary speech fills the bar.
-  static double _rms(Uint8List chunk) {
+  /// Loudness, measured over windows of eighty milliseconds.
+  ///
+  /// The recorder hands over a chunk every twenty milliseconds or so, which
+  /// is too short to measure and too fast to draw: one bar per chunk made
+  /// the whole line race across the screen. Samples are summed until a
+  /// window is full, then one bar is pushed. A bar falls away over a few
+  /// windows rather than dropping to nothing, so the line reads as a voice.
+  static const _windowLength = 16000 ~/ 12;
+  double _windowSum = 0;
+  int _windowSamples = 0;
+
+  void _measure(Uint8List chunk) {
     final bytes = ByteData.sublistView(chunk);
     final count = chunk.length ~/ 2;
-    if (count == 0) return 0;
-    var sum = 0.0;
     for (var i = 0; i < count; i++) {
       final sample = bytes.getInt16(i * 2, Endian.little).toDouble();
-      sum += sample * sample;
+      _windowSum += sample * sample;
+      _windowSamples += 1;
+      if (_windowSamples >= _windowLength) {
+        final rms = math.sqrt(_windowSum / _windowSamples);
+        _windowSum = 0;
+        _windowSamples = 0;
+        _push(rms);
+      }
     }
-    final rms = math.sqrt(sum / count);
-    // About 2500 is a clear speaking voice a hand's width from the phone.
-    // Square root of the ratio so quiet speech still shows as movement.
-    return math.sqrt((rms / 2500).clamp(0.0, 1.0));
+  }
+
+  void _push(double rms) {
+    // About 2000 is a clear speaking voice a hand's width from the phone.
+    // Square root of the ratio so quiet speech still shows as movement, and
+    // a floor so silence is a resting line rather than nothing.
+    final instant = math.sqrt((rms / 2000).clamp(0.0, 1.0));
+    final previous = _levels.last;
+    final level = math.max(instant, previous * 0.75);
+    if (!mounted) return;
+    setState(() {
+      _levels.removeAt(0);
+      _levels.add(level);
+    });
   }
 
   void _onTranscript(Transcript transcript) {
