@@ -55,9 +55,13 @@ class LiveSpeech {
     final socket = await WebSocket.connect(url.toString())
         .timeout(const Duration(seconds: 8));
     _socket = socket;
-    socket.listen(_onMessage, onError: _transcripts.addError, onDone: () {
-      _settled?.complete();
-    });
+    socket.listen(_onMessage, onError: _transcripts.addError, onDone: _settle);
+  }
+
+  /// Once. The socket closing after a commit would otherwise complete it twice.
+  void _settle() {
+    final settled = _settled;
+    if (settled != null && !settled.isCompleted) settled.complete();
   }
 
   void _onMessage(dynamic raw) {
@@ -72,13 +76,13 @@ class LiveSpeech {
       case 'committed_transcript':
       case 'committed_transcript_with_timestamps':
         _transcripts.add(Transcript(text, committed: true));
-        _settled?.complete();
+        _settle();
       case 'session_started':
       case 'warning':
         break;
       case 'commit_throttled':
         // Nothing to settle yet. The words on the screen are already right.
-        _settled?.complete();
+        _settle();
       default:
         if (message['error'] != null) {
           _transcripts.addError(StateError('$type: ${message['error']}'));

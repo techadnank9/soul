@@ -88,7 +88,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   /// The last few seconds of what the microphone heard, newest last, one
   /// value per bar between 0 and 1. Flat in silence, a spike per word.
-  final List<double> _levels = List<double>.filled(_WavePainter.bars, 0);
+  final List<double> _levels = List<double>.filled(_WavePainter.bars, 0, growable: true);
 
   DateTime? _recordingSince;
   int _bytes = 0;
