@@ -17,10 +17,15 @@ class BaselineScreen extends StatefulWidget {
   const BaselineScreen({
     super.key,
     required this.onFinished,
+    this.onBack,
   });
 
   /// Answers, indexed by question, with null for anything skipped.
   final ValueChanged<List<int?>> onFinished;
+
+  /// The screen before this one. The chevron on the first question goes
+  /// there, so nothing in first run is a door that only opens one way.
+  final VoidCallback? onBack;
 
   @override
   State<BaselineScreen> createState() => _BaselineScreenState();
@@ -73,7 +78,10 @@ class _BaselineScreenState extends State<BaselineScreen> {
   }
 
   void _back() {
-    if (_index == 0) return;
+    if (_index == 0) {
+      widget.onBack?.call();
+      return;
+    }
     setState(() {
       _index--;
       _pressed = _answers[_index];
@@ -98,7 +106,7 @@ class _BaselineScreenState extends State<BaselineScreen> {
                 children: [
                   SizedBox(
                     width: 34,
-                    child: _index == 0
+                    child: _index == 0 && widget.onBack == null
                         ? null
                         : IconButton(
                             onPressed: _back,

@@ -96,14 +96,14 @@ class _ProfileTabState extends State<ProfileTab> {
 
   String? get _name => _held?['displayName'] as String?;
 
-  /// The stored position, as the user would read it. Four decimal places is
-  /// about eleven metres, which is the honest way to show something this
-  /// precise rather than rounding it into looking harmless.
+  /// Whether a position is held. Shown as the area it resolved to, never as
+  /// coordinates: a person reads a place name, not a number.
   String? get _position {
     final latitude = (_held?['latitude'] as num?)?.toDouble();
     final longitude = (_held?['longitude'] as num?)?.toDouble();
     if (latitude == null || longitude == null) return null;
-    return '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+    final region = _held?['region'] as String?;
+    return region == null || region.isEmpty ? 'Shared' : region;
   }
 
   @override
@@ -182,9 +182,8 @@ class _ProfileTabState extends State<ProfileTab> {
               // because it is a different kind of thing to hold about somebody
               // and it should not be able to sit there unnoticed.
               _Row(
-                label: 'Exact spot',
+                label: 'Location',
                 value: _position,
-                note: _position == null ? null : 'shared from this phone',
                 onTap: () => _location(context),
               ),
             ],
@@ -199,7 +198,7 @@ class _ProfileTabState extends State<ProfileTab> {
           label: 'what it does not hold',
           body: 'No surname and no birthdate. Your recordings are never kept, '
               'only the words. '
-              '${_position == null ? 'Your exact spot is not stored unless you share it.' : 'Your exact spot is stored, and removing it here removes it for good.'} '
+              '${_position == null ? 'Your location is not stored unless you share it.' : 'Your location is stored, and removing it here removes it for good.'} '
               'Everything above can be changed or emptied here.',
         ),
         const SizedBox(height: 90),
@@ -241,8 +240,8 @@ class _ProfileTabState extends State<ProfileTab> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Your exact spot is saved to your profile and sets your '
-                'region and the hour the app comes back to you.',
+                'Your location sets your region and the hour the app comes '
+                'back to you.',
                 style: SoulType.lead,
               ),
               const SizedBox(height: 18),

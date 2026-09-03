@@ -72,7 +72,11 @@ class Profile {
 /// band and not a birthdate, a region and not a place. These are children, and
 /// the answer to what else could we hold is almost always nothing.
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, required this.onFinished});
+  const ProfileScreen({super.key, required this.onFinished, this.onBack});
+
+  /// The screen before this one. The chevron on the first question goes
+  /// there, so nothing in first run is a door that only opens one way.
+  final VoidCallback? onBack;
 
   final ValueChanged<Profile> onFinished;
 
@@ -155,7 +159,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _back() {
-    if (_index == 0) return;
+    if (_index == 0) {
+      widget.onBack?.call();
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       _index--;
@@ -265,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     SizedBox(
                       width: 34,
-                      child: _index == 0
+                      child: _index == 0 && widget.onBack == null
                           ? null
                           : IconButton(
                               onPressed: _back,

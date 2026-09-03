@@ -20,9 +20,13 @@ class SignInScreen extends StatefulWidget {
     super.key,
     required this.onSignedIn,
     required this.onSkip,
+    this.onBack,
   });
 
   final VoidCallback onSignedIn;
+
+  /// The screen before this one.
+  final VoidCallback? onBack;
 
   /// Development only. Goes straight to home with no account. It is labelled
   /// as such on the screen so nobody ships it by forgetting it is there.
@@ -183,7 +187,19 @@ class _SignInScreenState extends State<SignInScreen> {
     return Screen(
       padding: const EdgeInsets.fromLTRB(22, 40, 22, 22),
       body: [
-        const SizedBox(height: 60),
+        if (widget.onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onBack,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 16, bottom: 12),
+                child: Icon(Icons.chevron_left, size: 26, color: SoulColors.text3),
+              ),
+            ),
+          ),
+        const SizedBox(height: 48),
         const Center(
           child: Icon(Icons.lock_outline, size: 34, color: SoulColors.clay),
         ),

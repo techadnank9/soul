@@ -67,6 +67,11 @@ export async function transcribe(
   form.set('tag_audio_events', 'true')
   form.set('diarize', 'false')
   form.set('timestamps_granularity', 'word')
+  // Told the language rather than left to guess it. A two second clip is
+  // not enough to detect a language from, and a wrong guess turns English
+  // into nothing. SOUL_SPEECH_LANGUAGE overrides it, empty means detect.
+  const language = process.env.SOUL_SPEECH_LANGUAGE ?? 'eng'
+  if (language) form.set('language_code', language)
   form.set('file', new Blob([audio as unknown as BlobPart], { type: contentType }), 'entry.wav')
 
   const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
@@ -84,18 +89,26 @@ export async function transcribe(
 
   const data = (await response.json()) as any
   const words: ScribeWord[] = Array.isArray(data?.words) ? data.words : []
+  const raw: string = typeof data?.text === 'string' ? data.text : ''
 
-  const text = words.length
-    ? wordsOnly(words)
-    : typeof data?.text === 'string'
-      ? data.text
-      : ''
+  // The words array without event tags, or the plain text with the tags
+  // stripped when the array is empty or holds only events.
+  let text = words.length ? wordsOnly(words).trim() : ''
+  if (!text) text = raw.replace(/\([^)]*\)/g, ' ').replace(/\s{2,}/g, ' ').trim()
 
-  return {
-    text: text.trim(),
-    provider: 'elevenlabs',
-    prosody: measure(words, data),
-  }
+  const prosody = measure(words, data)
+
+  // What the transcriber saw, without the words themselves. This is the line
+  // to read when a recording comes back empty: how long it was, what
+  // language it thought it heard, and whether it heard anything but noise.
+  console.log(
+    `scribe: ${prosody.durationMs ?? '?'}ms, ${words.filter((w) => w.type === 'word').length} words, ` +
+      `raw ${raw.length} chars, events [${prosody.audioEvents.join(', ')}], ` +
+      `lang ${prosody.languageCode ?? '?'} ${prosody.languageProbability?.toFixed(2) ?? ''}, ` +
+      `logprob ${prosody.meanLogprob?.toFixed(3) ?? '?'}`,
+  )
+
+  return { text, provider: 'elevenlabs', prosody }
 }
 
 /** The transcript without the event tags, so "(laughter)" is not a word the student said. */

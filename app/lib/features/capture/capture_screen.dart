@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
@@ -24,6 +24,7 @@ class CaptureScreen extends StatefulWidget {
     required this.onSubmitted,
     this.onTranscribed,
     this.onClose,
+    this.onBack,
     this.prompt = 'What is going on with you lately?',
     this.note = 'Anything. A few words is enough.',
     this.opener = 'to begin',
@@ -43,6 +44,10 @@ class CaptureScreen extends StatefulWidget {
   /// somebody who opened this and decided not to say anything, which has to
   /// stay an ordinary thing to do rather than something to back out of.
   final VoidCallback? onClose;
+
+  /// The previous screen, when this one sits in a sequence. Shown top left
+  /// as a chevron, the same one every screen in first run uses.
+  final VoidCallback? onBack;
 
   final String prompt;
   final String note;
@@ -72,12 +77,41 @@ class _CaptureScreenState extends State<CaptureScreen>
   final _recorder = AudioRecorder();
   final _api = SoulApi.fromEnvironment();
 
-  /// Drives the waves while recording. Runs only then, so an idle screen is
-  /// not animating a thing nobody is looking at.
-  late final _wave = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  );
+  /// The last few seconds of what the microphone heard, newest last, one
+  /// value per bar between 0 and 1. The waves are drawn from this and from
+  /// nothing else, so silence is flat and a word is a spike, the way a voice
+  /// recorder looks.
+  final List<double> _levels = List<double>.filled(_WavePainter.bars, 0);
+  StreamSubscription<Amplitude>? _listening;
+
+  /// Decibels relative to full scale into a bar height. Quiet rooms sit near
+  /// minus sixty and a voice a hand's width from the phone reaches minus ten,
+  /// so that is the range that fills the bar.
+  static double _level(double dbfs) {
+    if (!dbfs.isFinite) return 0;
+    return ((dbfs + 60) / 50).clamp(0.0, 1.0);
+  }
+
+  void _listen() {
+    _listening?.cancel();
+    _listening = _recorder
+        .onAmplitudeChanged(const Duration(milliseconds: 70))
+        .listen((amplitude) {
+      if (!mounted) return;
+      setState(() {
+        _levels.removeAt(0);
+        _levels.add(_level(amplitude.current));
+      });
+    });
+  }
+
+  void _stopListening() {
+    _listening?.cancel();
+    _listening = null;
+    for (var i = 0; i < _levels.length; i++) {
+      _levels[i] = 0;
+    }
+  }
 
   @override
   void initState() {
@@ -92,7 +126,7 @@ class _CaptureScreenState extends State<CaptureScreen>
   @override
   void dispose() {
     _controller.removeListener(_onChanged);
-    _wave.dispose();
+    _listening?.cancel();
     _recorder.dispose();
     _controller.dispose();
     super.dispose();
@@ -139,7 +173,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       _recording = true;
       _failure = null;
     });
-    _wave.repeat();
+    _listen();
   }
 
   /// Waits for the recorder to finish writing.
@@ -164,7 +198,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     // during it. Touching the animation after dispose throws, so the mounted
     // check comes first.
     if (!mounted) return;
-    _wave.stop();
+    _stopListening();
 
     setState(() {
       _recording = false;
@@ -247,8 +281,20 @@ class _CaptureScreenState extends State<CaptureScreen>
 
     return Screen(
       body: [
-        // Top right, out of the way of the words, reachable without leaving
-        // the screen. Absent when there is nowhere to close to.
+        // Back top left, close top right. Each absent when there is nowhere
+        // to go that way.
+        if (widget.onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onBack,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 16, bottom: 12),
+                child: Icon(Icons.chevron_left, size: 26, color: SoulColors.text3),
+              ),
+            ),
+          ),
         if (widget.onClose != null)
           Align(
             alignment: Alignment.centerRight,
@@ -286,9 +332,9 @@ class _CaptureScreenState extends State<CaptureScreen>
                 width: double.infinity,
                 child: _recording
                     ? AnimatedBuilder(
-                        animation: _wave,
+                        animation: _controller,
                         builder: (context, _) => CustomPaint(
-                          painter: _WavePainter(_wave.value),
+                          painter: _WavePainter(List<double>.of(_levels), recording: _recording),
                         ),
                       )
                     : null,
@@ -363,35 +409,31 @@ class _CaptureScreenState extends State<CaptureScreen>
 
 /// The waves while someone is speaking.
 ///
-/// Bars either side of the mic, rising and falling out of step so it reads as
-/// a voice rather than a loading spinner. Nothing here is driven by the
-/// microphone yet, because recording lands with task 3. When it does, the
-/// amplitude replaces the sine and nothing else about this changes.
+/// One bar per level from the microphone, newest on the right, so the line
+/// scrolls the way a voice recorder does: flat while nobody speaks, spiking
+/// with each word. Before recording starts the bars sit at their resting
+/// height so nothing jumps when they come alive.
 class _WavePainter extends CustomPainter {
-  _WavePainter(this.t);
-  final double t;
+  _WavePainter(this.levels, {required this.recording});
+  final List<double> levels;
+  final bool recording;
 
-  static const _bars = 21;
+  static const bars = 21;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = SoulColors.clay.withValues(alpha: 0.7)
+      ..color = SoulColors.clay.withValues(alpha: recording ? 0.8 : 0.35)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 4;
 
     final middle = size.height / 2;
-    final spacing = size.width / (_bars + 1);
+    final spacing = size.width / (bars + 1);
 
-    for (var i = 0; i < _bars; i++) {
-      // Out of step with its neighbours, and taller in the middle, so it reads
-      // as a voice rather than a loading spinner.
-      final phase = (t * 2 * math.pi) + i * 0.55;
-      final centreness = 1 - ((i - (_bars - 1) / 2).abs() / ((_bars - 1) / 2));
-      final height =
-          (6 + 44 * math.sin(phase).abs() * (0.35 + 0.65 * centreness));
+    for (var i = 0; i < bars; i++) {
+      final level = i < levels.length ? levels[i] : 0.0;
+      final height = 6 + 44 * level;
       final x = spacing * (i + 1);
-
       canvas.drawLine(
         Offset(x, middle - height / 2),
         Offset(x, middle + height / 2),
@@ -401,5 +443,14 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter old) => old.t != t;
+  bool shouldRepaint(covariant _WavePainter old) =>
+      old.recording != recording || !_same(old.levels, levels);
+
+  static bool _same(List<double> a, List<double> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 }

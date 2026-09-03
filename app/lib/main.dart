@@ -151,6 +151,7 @@ class _FirstRunState extends State<FirstRun> {
 
 
   void _next() => setState(() => _step++);
+  void _previous() => setState(() => _step = _step > 0 ? _step - 1 : 0);
 
   /// First run ends on home, empty, with whatever name was given. A user
   /// who has just arrived has no week behind them, so the day one version is
@@ -218,6 +219,7 @@ class _FirstRunState extends State<FirstRun> {
       // because a user should never wait on this, and a profile where
       // everything was skipped is never sent at all.
       1 => ProfileScreen(
+          onBack: _previous,
           onFinished: (profile) {
             setState(() => _profile = profile);
             if (!profile.isEmpty) _api.profile(profile.toJson()).ignore();
@@ -228,6 +230,7 @@ class _FirstRunState extends State<FirstRun> {
       // Nothing is scored and nothing is shown back. The answers are a
       // baseline for later, not a result for now.
       2 => BaselineScreen(
+          onBack: _previous,
           onFinished: (answers) {
             _api.baseline(baselineVersion, answers).ignore();
             _next();
@@ -244,6 +247,7 @@ class _FirstRunState extends State<FirstRun> {
       // to show what the product is, because describing the loop is not the
       // same as feeling it.
       3 => CaptureScreen(
+          onBack: _previous,
           opener: 'last one',
           prompt: 'Tell us about yourself.',
           note: 'Speak or type. What you are like, what you spend your time '
@@ -263,6 +267,7 @@ class _FirstRunState extends State<FirstRun> {
       // Last. Signing in comes after there is something to keep, not before
       // the user has seen what this is.
       _ => SignInScreen(
+          onBack: _previous,
           onSignedIn: () => _toHome(context),
           onSkip: () => _toHome(context),
         ),
