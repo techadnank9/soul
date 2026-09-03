@@ -125,6 +125,14 @@ class SignInAgain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future<void> home() async {
+      // Skipping with no session would open a home that every screen refuses.
+      if (await sessionToken() == null) {
+        try {
+          await storeSessionToken(await SoulApi.fromEnvironment().deviceSession());
+        } catch (_) {
+          return;
+        }
+      }
       await markFirstRunDone();
       if (!context.mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
