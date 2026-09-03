@@ -208,8 +208,12 @@ The client, pointed at that API:
 
 ```
 cd app
-flutter run --dart-define=SOUL_API=http://localhost:8080 \
+flutter run --flavor soul \
+            --dart-define=SOUL_API=http://localhost:8080 \
             --dart-define=SOUL_STUDENT=student_with_consent
+
+The flavor is the Xcode scheme, which is named Soul like everything else in
+the project. Flutter only finds a scheme by that name when told the flavor.
 ```
 
 Without provider keys the safety classifier cannot answer, so every entry
@@ -242,18 +246,18 @@ be created by an assistant.
    message and typed entries work. Put it in the Render dashboard and, for
    local runs, in `.env`.
 
-4. **The build.** From `app`, with the real API host:
+4. **The build and the upload.** Raise `version` in `app/pubspec.yaml`,
+   because Apple refuses a second upload with the same version, then:
 
    ```
-   flutter build ipa \
-     --dart-define=SOUL_API=https://soul-api.onrender.com \
-     --dart-define=SOUL_STUDENT=student_with_consent
+   app/release.sh
    ```
 
-   That writes `build/ios/ipa/soul.ipa`. Upload it with the Transporter app
-   or `xcrun altool`, then add internal testers in App Store Connect. The
-   build needs no test student: a phone gets its own account on first
-   launch.
+   It builds the signed archive against the Render API and uploads it through
+   the Apple account Xcode is signed in to. `SOUL_API=https://...` in front
+   of it points the build somewhere else. Apple processes the build for ten
+   to twenty minutes and it appears under the app's TestFlight tab, where
+   internal testers are added. Nothing is submitted for review by this.
 
 5. **On the device.** First run is the intro, the profile questions, the ten
    baseline questions, the spoken introduction, then sign in. The simulator

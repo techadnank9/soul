@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Soul asks where you are once, to set your region and your time zone. It never tracks you and never uses your location in the background.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Soul records what you say so it can turn it into text. The recording is deleted straight away and never kept.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

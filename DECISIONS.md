@@ -3329,3 +3329,28 @@ change with its own test run rather than a side effect of a copy edit.
 
 Reverses if: never for the app. The schema rename is a separate decision
 still to be taken.
+
+---
+
+### 198. The Xcode project is named Soul, and the source folder keeps the name Flutter writes to
+Sep 2026, Adnan
+
+Decision: the project, workspace, target, test target, scheme, entitlements
+and bridging header are all named Soul. The one thing still called Runner is
+the folder on disk under `ios`, and in Xcode it is shown as Soul.
+
+Why: the founder wants nothing a person can see called Runner. Flutter's
+tooling in this version finds the project and the workspace by extension and
+accepts any scheme name as a flavor, so those could go. It still writes
+`GeneratedPluginRegistrant` into `ios/Runner` on every build and reads
+`Info.plist` from there, so that folder name is load bearing and the group is
+renamed instead of the directory.
+
+What it costs: every Flutter command that touches iOS needs `--flavor soul`,
+because that is how Flutter is told which scheme to use. `app/release.sh`
+and the README carry it. Flutter prints a notice that no Release-Soul build
+configuration exists, which is only a notice: the plain Release
+configuration is used.
+
+Reverses if: Flutter stops hard coding the folder, at which point the
+directory is renamed too.
