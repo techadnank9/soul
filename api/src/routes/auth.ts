@@ -27,6 +27,7 @@ export const auth = new Hono<Vars>()
 /** A new account for a phone that has never been seen. The session comes with it. */
 auth.post('/auth/device', async (c) => {
   const account = await createAccount()
+  console.log(`account: created ${account.id.slice(0, 8)}`)
   return c.json(await issueSession(account))
 })
 

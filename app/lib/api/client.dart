@@ -130,6 +130,7 @@ class SoulApi {
     '/auth/email/start',
     '/auth/email/verify',
     '/auth/apple',
+    '/events',
     '/profile',
     '/baseline',
     '/consent',
@@ -162,6 +163,17 @@ class SoulApi {
       throw SoulApiException(response.statusCode, text);
     }
     return text.isEmpty ? {} : jsonDecode(text) as Map<String, dynamic>;
+  }
+
+  /// The app saying what it did, so a failure on a phone can be read in the
+  /// service logs and later in a table. Fire and forget: no screen waits on
+  /// it and nothing is shown if it fails. The detail is small and never
+  /// carries what a person wrote or said.
+  void event(String name, [Map<String, Object?> detail = const {}]) {
+    _post('/events', {'name': name, 'detail': detail}).then(
+      (_) {},
+      onError: (Object _) {},
+    );
   }
 
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>

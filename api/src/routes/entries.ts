@@ -21,7 +21,9 @@ entries.post('/entries', async (c) => {
   const parsed = contracts.submitEntry.safeParse(await c.req.json())
   if (!parsed.success) return c.json({ error: 'invalid entry' }, 400)
 
+  const startedAt = Date.now()
   const result = await submit(c.get('session'), parsed.data)
+  console.log(`entry: ${result.state}, ${parsed.data.inputMode}, ${Date.now() - startedAt}ms`)
   return c.json(result)
 })
 

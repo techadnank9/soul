@@ -59,6 +59,7 @@ consent.post('/consent', async (c) => {
   // Anything written before this moment was stored held. Now it can go
   // through the classifier and the tagger, in the queue, in that order.
   if (!before[0]?.recordedAt) await enqueue('release_held', {}, session)
+  console.log(`consent: ${parsed.data.version} recorded for user ${session.studentId.slice(0, 8)}`)
 
   // Districts have inspection rights and will ask when a student agreed and to
   // which wording. This is the row that answers them.

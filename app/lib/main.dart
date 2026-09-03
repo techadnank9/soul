@@ -12,6 +12,7 @@ import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/mirror/mirror_screen.dart';
 import 'features/onboarding/baseline.dart';
+import 'features/onboarding/agreement_screen.dart';
 import 'features/onboarding/baseline_screen.dart';
 import 'features/onboarding/intro_screen.dart';
 import 'features/onboarding/profile_screen.dart';
@@ -143,8 +144,25 @@ class _FirstRunState extends State<FirstRun> {
     if (await sessionToken() != null) return;
     try {
       await storeSessionToken(await _api.deviceSession());
+      _api.event('account_created');
     } catch (_) {
       // Nothing to tell them yet. Sign in at the end makes another attempt.
+    }
+  }
+
+  /// The agreement, recorded the moment it is made. Until it is recorded
+  /// nothing this person says or writes leaves the server, which is why it
+  /// comes before the introduction rather than after it.
+  static const _consentVersion = 'v1';
+
+  Future<void> _recordAgreement() async {
+    try {
+      await _api.recordConsent(_consentVersion);
+      _api.event('consent_recorded', {'version': _consentVersion});
+    } catch (error) {
+      _api.event('consent_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
     }
   }
 
@@ -170,7 +188,15 @@ class _FirstRunState extends State<FirstRun> {
   /// says something serious here sees home, the same as everyone else.
   void _submitIntroduction(BuildContext context, String text,
       {required bool spoken, String? toneId}) {
-    _api.submit(text: text, spoken: spoken, toneId: toneId).ignore();
+    _api.submit(text: text, spoken: spoken, toneId: toneId).then(
+      (result) => _api.event('introduction_stored', {
+        'state': result.runtimeType.toString(),
+        'spoken': spoken,
+      }),
+      onError: (Object error) => _api.event('introduction_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      }),
+    );
     setState(() => _step++);
   }
 
@@ -204,10 +230,19 @@ class _FirstRunState extends State<FirstRun> {
           },
         ),
 
+      // The agreement, before a word is said. Recorded in the background:
+      // the introduction is two screens away and the post is quick.
+      1 => AgreementScreen(
+          onAgreed: () {
+            _recordAgreement();
+            _next();
+          },
+        ),
+
       // Four questions, every one of them skippable. Sent in the background,
       // because a user should never wait on this, and a profile where
       // everything was skipped is never sent at all.
-      1 => ProfileScreen(
+      2 => ProfileScreen(
           onFinished: (profile) {
             setState(() => _profile = profile);
             if (!profile.isEmpty) _api.profile(profile.toJson()).ignore();
@@ -217,7 +252,7 @@ class _FirstRunState extends State<FirstRun> {
 
       // Nothing is scored and nothing is shown back. The answers are a
       // baseline for later, not a result for now.
-      2 => BaselineScreen(
+      3 => BaselineScreen(
           onFinished: (answers) {
             _api.baseline(baselineVersion, answers).ignore();
             _next();
@@ -225,7 +260,7 @@ class _FirstRunState extends State<FirstRun> {
         ),
 
       // The first real pass through the loop, at the end of first run.
-      // Step 3.
+      // Step 4.
       //
       // Everything before this was answered by tapping. This is the first
       // time a user says something in their own words, and it goes the
@@ -233,7 +268,7 @@ class _FirstRunState extends State<FirstRun> {
       // that names something only they said. It is also the only honest way
       // to show what the product is, because describing the loop is not the
       // same as feeling it.
-      3 => CaptureScreen(
+      4 => CaptureScreen(
           opener: 'last one',
           prompt: 'Tell us about yourself.',
           note: 'Speak or type. What you are like, what you spend your time '
@@ -391,6 +426,9 @@ class _SessionState extends State<Session> {
         spoken: widget.spoken,
         toneId: widget.toneId,
       );
+      _api.event('entry_${result.runtimeType.toString().toLowerCase()}', {
+        'spoken': widget.spoken,
+      });
       if (!mounted) return;
 
       switch (result) {
@@ -413,8 +451,12 @@ class _SessionState extends State<Session> {
             _beat = _Beat.failed;
           });
       }
-    } catch (_) {
+    } catch (error) {
       // The request itself failed, so nothing reached the server.
+      _api.event('entry_failed', {
+        'status': error is SoulApiException ? error.status : null,
+        'spoken': widget.spoken,
+      });
       if (mounted) {
         setState(() {
           _stored = false;

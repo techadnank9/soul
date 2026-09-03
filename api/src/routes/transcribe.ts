@@ -39,17 +39,30 @@ transcription.post('/transcribe', async (c) => {
     },
   )
 
+  const startedAt = Date.now()
   try {
     const { text, prosody } = await transcribe(audio, contentType, session)
     const judged = await judging
-    if (!text) return c.json({ error: 'nothing was heard' }, 422)
+    if (!text) {
+      console.log(`transcribe: nothing heard, ${Date.now() - startedAt}ms`)
+      return c.json({ error: 'nothing was heard' }, 422)
+    }
 
     const body: TranscribeResult = { text }
     if (judged) body.toneId = await storeTone(session, judged, prosody)
+    // Word count and timing only. Never the words.
+    console.log(
+      `transcribe: ${text.split(/\s+/).length} words, tone ${judged ? 'judged' : 'absent'}, ` +
+        `${prosody.durationMs ?? '?'}ms of audio, ${Date.now() - startedAt}ms`,
+    )
     return c.json(body)
   } catch (error) {
     await judging
-    if (error instanceof ConsentRequired) return c.json({ error: 'held' }, 403)
+    if (error instanceof ConsentRequired) {
+      console.log(`transcribe: held, consent not recorded for user ${session.studentId.slice(0, 8)}`)
+      return c.json({ error: 'held' }, 403)
+    }
+    console.error(`transcribe: failed after ${Date.now() - startedAt}ms:`, (error as Error).message)
     throw error
   }
 })

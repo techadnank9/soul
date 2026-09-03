@@ -11,6 +11,7 @@ import { profile } from './routes/profile.js'
 import { peopleRoutes } from './routes/people.js'
 import { auth } from './routes/auth.js'
 import { jobs } from './routes/jobs.js'
+import { events } from './routes/events.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -63,9 +64,10 @@ app.route('/', transcription)
 app.route('/', consent)
 app.route('/', profile)
 app.route('/', peopleRoutes)
+app.route('/', events)
 
 app.onError((error, c) => {
-  console.error(error)
+  console.error(`${c.req.method} ${c.req.path} failed:`, error)
   return c.json({ error: 'something went wrong' }, 500)
 })
 

@@ -109,6 +109,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     if (!await _recorder.hasPermission()) {
       // The permission sheet can sit there for as long as the user leaves
       // it, and the screen can be closed underneath it.
+      _api.event('record_no_permission');
       if (!mounted) return;
       setState(() => _failure = 'Soul needs the microphone to hear you.');
       return;
@@ -176,10 +177,19 @@ class _CaptureScreenState extends State<CaptureScreen>
     }
 
     final file = File(path);
+    final startedAt = DateTime.now();
+    var bytes = 0;
     try {
       await _settled(file);
       final audio = await file.readAsBytes();
+      bytes = audio.length;
       final transcript = await _api.transcribe(audio, 'audio/wav');
+      _api.event('transcribe_ok', {
+        'bytes': bytes,
+        'ms': DateTime.now().difference(startedAt).inMilliseconds,
+        'words': transcript.text.trim().split(RegExp(r'\s+')).length,
+        'tone': transcript.toneId != null,
+      });
 
       if (!mounted) return;
       setState(() => _transcribing = false);
@@ -194,10 +204,26 @@ class _CaptureScreenState extends State<CaptureScreen>
       // chooses send or discard first.
       widget.onTranscribed?.call(transcript);
     } catch (error) {
+      final status = error is SoulApiException ? error.status : null;
+      _api.event('transcribe_failed', {
+        'status': status,
+        'bytes': bytes,
+        'ms': DateTime.now().difference(startedAt).inMilliseconds,
+        'error': status == null ? error.runtimeType.toString() : null,
+      });
       if (!mounted) return;
       setState(() {
         _transcribing = false;
-        _failure = 'That did not go through. You can type it instead.';
+        // Which thing failed, in one line, so a person can act on it. The
+        // exact words in a status are on the server, never shown here.
+        _failure = switch (status) {
+          403 => 'Nothing left the app. Agree to the terms first.',
+          401 => 'This phone is not signed in yet. Close the app and open it again.',
+          422 => 'Nothing came through. Try again.',
+          final int s when s >= 500 => 'The service had a problem. Try again in a moment.',
+          null => 'No connection. You can type it instead.',
+          _ => 'That did not go through. You can type it instead.',
+        };
       });
     } finally {
       // The audio is deleted the moment we are done with it, success or not.

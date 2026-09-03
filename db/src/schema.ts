@@ -6,10 +6,10 @@ import {
   text,
   integer,
   smallint,
+  jsonb,
   boolean,
   timestamp,
   date,
-  jsonb,
   real,
   doublePrecision,
   index,
@@ -186,6 +186,33 @@ export const students = pgTable(
     uniqueIndex('students_school_external_ref_idx').on(t.schoolId, t.externalRef),
     uniqueIndex('students_apple_user_id_idx').on(t.appleUserId),
     uniqueIndex('students_email_idx').on(t.email),
+  ],
+)
+
+/**
+ * What the app did and what it saw, one row per event, written by the app.
+ *
+ * This is the product's own diagnostics. No analytics or crash reporting SDK
+ * goes in the app, so when a recording fails on a phone the only way to know
+ * what happened is for the app to say so here. Names are fixed strings the
+ * client chooses, detail is a short JSON object with things like a status
+ * code, and neither ever carries what a person wrote or said.
+ */
+export const appEvents = pgTable(
+  'app_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    name: text('name').notNull(),
+    detail: jsonb('detail'),
+    appVersion: text('app_version'),
+    createdAt: now(),
+  },
+  (t) => [
+    index('app_events_created_idx').on(t.createdAt.desc()),
+    index('app_events_student_created_idx').on(t.studentId, t.createdAt.desc()),
   ],
 )
 

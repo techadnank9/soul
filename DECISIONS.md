@@ -3373,3 +3373,38 @@ one real host, the release default is that host.
 
 Reverses if: there is more than one environment worth pointing a release at,
 in which case the define comes back as the only way and the guard with it.
+
+---
+
+### 200. The agreement comes before the first word, and the app reports what it did
+Sep 2026, Adnan and Claude
+
+Decision: the terms and privacy agreement is the second screen of first run,
+before the profile, the baseline and the spoken introduction. The sign in
+screen at the end only signs in. The app posts small events to the service
+about what it did, and the service logs how every recording and every entry
+ended.
+
+Why: the first TestFlight build failed on the very first recording. The
+introduction was spoken before anybody had agreed to anything, an account a
+person makes for themselves has no consent until they agree, and the server
+correctly refused to let the audio leave. The gate worked. The order of the
+screens was wrong, and the app said nothing more useful than that it did not
+go through.
+
+Why events and not an SDK: the client rule in CLAUDE.md, no analytics or
+crash reporting SDKs, is a COPPA rule, and it stands. Apple's kids category
+guidance says such apps may not send device information to third parties,
+and the FTC has said an SDK's collection is the app's collection. Sentry's
+mobile SDK avoids advertising identifiers but is still a third party with a
+name in every data agreement. A first party events table gives the same
+answer to the question that matters, what happened on this phone, with no
+new sub processor. Events carry names and numbers, never words.
+
+The failure copy in the capture screen now says which thing failed, by
+status: not agreed, not signed in, nothing heard, the service, or no
+connection.
+
+Reverses if: the service grows to where a hosted error tracker on the server
+side earns its place. That would be a server dependency, not a client one,
+and a separate decision.

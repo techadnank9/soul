@@ -76,6 +76,14 @@ The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random
 `external_ref`, and look like every other row.
 
+## app_events
+`id`, `student_id`, `school_id`, `district_id`, `name`, `detail`,
+`app_version`, `created_at`
+
+What the app did and what it saw, written by the app. The product's own
+diagnostics, since no third party SDK goes in the client. `detail` is a small
+JSON object and never carries what a person wrote or said.
+
 ## email_codes
 `id`, `email`, `code_hash`, `expires_at`, `attempts`, `consumed_at`,
 `created_at`
