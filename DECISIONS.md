@@ -3354,3 +3354,22 @@ configuration is used.
 
 Reverses if: Flutter stops hard coding the folder, at which point the
 directory is renamed too.
+
+---
+
+### 199. A release build points at Render by default, so an archive from the Xcode window works
+Sep 2026, Adnan
+
+Decision: without a SOUL_API define, a debug build talks to the laptop and a
+release build talks to the API on Render. The define still overrides both.
+The app also declares that it uses no non exempt encryption, so App Store
+Connect stops asking the export compliance question on every build.
+
+Why: the founder ships from the Xcode window, Product then Archive, and Xcode
+passes no Dart defines. The old default of localhost for every build was a
+guard against a release pointing somewhere by accident, and it now had the
+opposite effect: an archive from Xcode pointed at nothing. Now that there is
+one real host, the release default is that host.
+
+Reverses if: there is more than one environment worth pointing a release at,
+in which case the define comes back as the only way and the guard with it.

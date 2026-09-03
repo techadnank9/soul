@@ -11,6 +11,7 @@ API="${SOUL_API:-https://soul-api-i6mr.onrender.com}"
 
 echo "building against $API"
 flutter build ipa --flavor soul --dart-define="SOUL_API=$API"
+# The dart define above is optional now: a release build defaults to Render.
 
 echo "uploading to App Store Connect"
 xcodebuild -exportArchive \

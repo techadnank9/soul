@@ -4,6 +4,8 @@
 <dict>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Soul asks where you are once, to set your region and your time zone. It never tracks you and never uses your location in the background.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Soul records what you say so it can turn it into text. The recording is deleted straight away and never kept.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
