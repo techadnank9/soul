@@ -225,7 +225,7 @@ be created by an assistant.
    and Xcode has no team. Join at developer.apple.com, then in Xcode open
    `app/ios/Runner.xcworkspace`, select the Runner target, Signing and
    Capabilities, and pick the team. Automatic signing is already on and the
-   bundle identifier is `space.soul.soul`. Add the Sign in with Apple
+   bundle identifier is `com.soulspacehealth.soul`. Add the Sign in with Apple
    capability on the same screen. Register the bundle identifier in App Store
    Connect and create the app record there.
 
@@ -322,7 +322,7 @@ Once a team id exists, a human has to do four things in Xcode:
 
 1. Open `app/ios/Runner.xcworkspace` and select the Runner target.
 2. Under Signing and Capabilities, choose the team. The bundle identifier is
-   `space.soul.soul` and it does not change.
+   `com.soulspacehealth.soul` and it does not change.
 3. Check that Sign in with Apple is listed as a capability. It is read from the
    entitlements file, so it should already be there.
 4. Enable Sign in with Apple for the same identifier in the Apple developer

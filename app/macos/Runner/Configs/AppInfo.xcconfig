@@ -8,7 +8,7 @@
 PRODUCT_NAME = soul
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = space.soul.soul
+PRODUCT_BUNDLE_IDENTIFIER = com.soulspacehealth.soul
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 space.soul. All rights reserved.

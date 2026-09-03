@@ -20,7 +20,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: APPLE_BUNDLE_ID
-        value: space.soul.soul
+        value: com.soulspacehealth.soul
       - key: OPENAI_API_KEY
         sync: false
       - key: ELEVENLABS_API_KEY
@@ -43,7 +43,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: APPLE_BUNDLE_ID
-        value: space.soul.soul
+        value: com.soulspacehealth.soul
       - key: OPENAI_API_KEY
         sync: false
       - key: ELEVENLABS_API_KEY
