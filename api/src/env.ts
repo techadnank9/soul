@@ -47,6 +47,6 @@ export const env = {
     openaiKey: optional('OPENAI_API_KEY'),
     geminiKey: optional('GEMINI_API_KEY'),
     openrouterKey: optional('OPENROUTER_API_KEY'),
-    deepgramKey: optional('DEEPGRAM_API_KEY'),
+    elevenlabsKey: optional('ELEVENLABS_API_KEY'),
   },
 }

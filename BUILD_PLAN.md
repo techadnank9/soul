@@ -25,7 +25,7 @@ feels broken, and it is cheap to find out now.
 
 **0b. The transcription comparison.** Record forty clips from students in the
 real age range and the real environment, noisy corridors included. Run each
-through Deepgram and through Whisper. Correct both by hand. Count meaning
+through ElevenLabs Scribe and through Whisper. Correct both by hand. Count meaning
 changes, not word errors.
 
 This matters more than it sounds. Published research puts word error rates for

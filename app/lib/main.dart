@@ -151,8 +151,8 @@ class _FirstRunState extends State<FirstRun> {
   /// escalation path is built. What is missing is the screen: a student who
   /// says something serious here sees home, the same as everyone else.
   void _submitIntroduction(BuildContext context, String text,
-      {required bool spoken}) {
-    _api.submit(text: text, spoken: spoken).ignore();
+      {required bool spoken, String? toneId}) {
+    _api.submit(text: text, spoken: spoken, toneId: toneId).ignore();
     setState(() => _step++);
   }
 
@@ -217,8 +217,14 @@ class _FirstRunState extends State<FirstRun> {
               'on, what is on your mind lately.',
           onSubmitted: (text) =>
               _submitIntroduction(context, text, spoken: false),
-          onTranscribed: (text) =>
-              _submitIntroduction(context, text, spoken: true),
+          // The introduction has no confirm step, so the spoken words and how
+          // they sounded go straight in together.
+          onTranscribed: (transcript) => _submitIntroduction(
+            context,
+            transcript.text,
+            spoken: true,
+            toneId: transcript.toneId,
+          ),
         ),
 
       // Last. Signing in comes after there is something to keep, not before
@@ -258,12 +264,18 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _openSession(BuildContext context, String text, {required bool spoken}) {
+  void _openSession(
+    BuildContext context,
+    String text, {
+    required bool spoken,
+    String? toneId,
+  }) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (session) => Session(
           transcript: text,
           spoken: spoken,
+          toneId: toneId,
           onFinished: () {
             Navigator.of(session).popUntil((route) => route.isFirst);
             setState(() => _entries++);
@@ -282,7 +294,12 @@ class _HomeState extends State<Home> {
           note: 'Thirty seconds is plenty.',
           onClose: () => Navigator.of(capture).pop(),
           onSubmitted: (text) => _openSession(capture, text, spoken: false),
-          onTranscribed: (text) => _openSession(capture, text, spoken: true),
+          onTranscribed: (transcript) => _openSession(
+            capture,
+            transcript.text,
+            spoken: true,
+            toneId: transcript.toneId,
+          ),
         ),
       ),
     );
@@ -300,10 +317,16 @@ class Session extends StatefulWidget {
     required this.transcript,
     required this.onFinished,
     this.spoken = false,
+    this.toneId,
   });
 
   final String transcript;
   final VoidCallback onFinished;
+
+  /// How the spoken words sounded, as a handle the server gave back with the
+  /// transcript. Sent with the entry, or discarded with the transcript. Null
+  /// for a typed entry and for a recording nothing managed to listen to.
+  final String? toneId;
 
   /// Whether this came from the mic. The confirm step exists because
   /// transcription can be wrong, and recognition on children's voices is
@@ -343,6 +366,7 @@ class _SessionState extends State<Session> {
       final result = await _api.submit(
         text: widget.transcript,
         spoken: widget.spoken,
+        toneId: widget.toneId,
       );
       if (!mounted) return;
 
@@ -414,7 +438,14 @@ class _SessionState extends State<Session> {
       _Beat.confirm => ConfirmTranscript(
           transcript: widget.transcript,
           onSend: _submit,
-          onDiscard: () => Navigator.of(context).pop(),
+          onDiscard: () {
+            // The transcript goes, and how it sounded goes with it. Nobody
+            // waits on the delete and a failed one is swept up by the next
+            // recording on the server.
+            final toneId = widget.toneId;
+            if (toneId != null) _api.discardTone(toneId).ignore();
+            Navigator.of(context).pop();
+          },
         ),
       _Beat.waiting => const _Waiting(note: 'reading what you said'),
       _Beat.one => BeatOneScreen(

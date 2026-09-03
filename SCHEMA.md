@@ -100,7 +100,7 @@ student who already has a token of their own. See decision 063.
 without a rewrite. `input_mode` is voice or typed. `transcript_confirmed`
 records that the student saw the transcript and sent it.
 
-No audio is stored. Ever.
+No audio is stored. Ever. How it sounded is a `voice_tones` row.
 
 ## kept_lines
 `id`, `entry_id`, `student_id`, `text`, `created_at`
@@ -116,6 +116,22 @@ The sentence the student chose to carry forward, in their words.
 Written by the async tagger. Never shown to the student directly. Values
 describe situations, never traits. Low confidence tags must not support a
 pattern claim.
+
+## voice_tones
+`id`, `entry_id`, `student_id`, `school_id`, `district_id`, `emotion`,
+`intensity`, `intent`, `sounded`, `confidence`, `words_per_minute`, `pauses`,
+`longest_pause_ms`, `hesitations`, `audio_events`, `language_code`,
+`language_probability`, `mean_logprob`, `duration_ms`, `model_version`,
+`created_at`
+
+How a spoken entry sounded. One row per spoken entry, none for a typed one.
+Written on the transcribe path before the entry exists, because the audio is
+gone the moment the transcript returns, so `entry_id` is null until the
+student sends and the row is deleted if they discard. `emotion` and `intent`
+are fixed vocabularies so they can be counted. `sounded` is one sentence about
+the recording, never the person. The prosody columns are measured from the
+transcriber's word timings and are not opinions. Nothing here is shown to the
+student yet. No audio is stored.
 
 ## entry_embeddings
 `entry_id`, `embedding vector(N)`, `model_version`

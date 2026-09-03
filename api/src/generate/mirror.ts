@@ -2,6 +2,8 @@ import { and, eq } from 'drizzle-orm'
 import { db, entries } from '../db.js'
 import { call } from '../gateway/call.js'
 import { loadContext, renderContext } from '../memory/buildContext.js'
+import { renderTone } from '../services/tone/render.js'
+import { loadTone, type Tone } from '../services/tone/store.js'
 import { mirrorResult, type MirrorResult } from '../contracts.js'
 import type { Session } from '../session.js'
 
@@ -15,11 +17,16 @@ import type { Session } from '../session.js'
  * The reply is validated against a schema before display or storage. Prose is
  * rejected, never stored.
  */
-export function buildMirrorPrompt(history: string, entryText: string): string {
+export function buildMirrorPrompt(
+  history: string,
+  entryText: string,
+  tone: Tone | null = null,
+): string {
+  const sounded = tone ? `\n\nHow they sounded, from their voice:\n${renderTone(tone)}` : ''
   return (
     `${history}\n\n` +
     `----\n` +
-    `What they just said:\n\n${entryText}`
+    `What they just said:\n\n${entryText}${sounded}`
   )
 }
 
@@ -48,11 +55,14 @@ export async function mirror(
   const entry = rows[0]
   if (!entry) throw new Error('entry not found')
 
-  const context = await loadContext(session, entryId)
+  const [context, tone] = await Promise.all([
+    loadContext(session, entryId),
+    loadTone(entryId, session),
+  ])
   const history = renderContext(context)
 
   const result = await call('mirror', {
-    user: buildMirrorPrompt(history, entry.text),
+    user: buildMirrorPrompt(history, entry.text, tone),
     schema: mirrorResult,
     session,
     entryId,

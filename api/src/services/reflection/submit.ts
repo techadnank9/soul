@@ -4,6 +4,7 @@ import { helpScreen } from '../../safety/help.js'
 import { storeEntry, markProcessed } from '../../entries/store.js'
 import { beatOne } from '../../generate/beatOne.js'
 import { enqueue } from '../../jobs/enqueue.js'
+import { linkTone, loadTone } from '../tone/store.js'
 import type { Session } from '../../session.js'
 import type { SubmitEntry, SubmitResult } from '../../contracts.js'
 
@@ -12,8 +13,9 @@ import type { SubmitEntry, SubmitResult } from '../../contracts.js'
  *
  *   1. consent      no consent, nothing goes out, entry stored unprocessed
  *   2. store        the entry exists before anything is said about it
+ *      link         a spoken entry picks up how it sounded, judged earlier
  *   3. safety       blocking, always written, hit or miss
- *   4. beat one     only reached if safety passed
+ *   4. beat one     only reached if safety passed, told how they sounded
  *   5. enqueue      tagging and embedding, nobody waits
  *
  * Consent and safety come before generation, so there is no code path where
@@ -29,6 +31,15 @@ export async function submit(
 
   const entryId = await storeEntry(session, input)
 
+  // The tone was judged on the transcribe path, before this entry existed.
+  // Linked here, scoped to the student, and only ever for a spoken entry. A
+  // held entry links too: the row already exists, and it belongs with its
+  // entry rather than as an orphan.
+  const tone =
+    input.inputMode === 'voice' && input.toneId && (await linkTone(input.toneId, entryId, session))
+      ? await loadTone(entryId, session)
+      : null
+
   if (!consented) {
     return { state: 'held', entryId }
   }
@@ -42,7 +53,7 @@ export async function submit(
   }
 
   // 3. Beat one. The first thing the student reads.
-  const { line } = await beatOne(input.text, session, entryId)
+  const { line } = await beatOne(input.text, session, entryId, tone)
 
   // 4. Everything that can happen later, happens later. The student already
   //    has their response by the time any of this runs.

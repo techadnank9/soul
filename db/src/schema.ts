@@ -62,6 +62,7 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'pattern_verdict',
   'people',
   'person_profile',
+  'voice_tone',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
@@ -302,6 +303,51 @@ export const tags = pgTable(
     index('tags_student_feeling_idx').on(t.studentId, t.feeling),
     index('tags_student_trigger_idx').on(t.studentId, t.trigger),
     index('tags_entry_idx').on(t.entryId),
+  ],
+)
+
+/**
+ * How a spoken entry sounded. One row per spoken entry, none for a typed one.
+ *
+ * Written on the transcribe path, before the entry exists, because the audio
+ * is gone the moment the transcript returns and this is the only moment it can
+ * be heard. entry_id is filled in when the student sends the transcript, and
+ * a row whose transcript was discarded is deleted with it.
+ *
+ * emotion and intent are a fixed vocabulary so they can be counted. sounded
+ * is the model's short description in plain words. The prosody columns come
+ * from the transcriber's word timings and are measured, not judged. Nothing
+ * here is shown to the student yet, and no audio is stored, ever.
+ */
+export const voiceTones = pgTable(
+  'voice_tones',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entryId: uuid('entry_id').references(() => entries.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    emotion: text('emotion').notNull(),
+    intensity: real('intensity').notNull(),
+    intent: text('intent').notNull(),
+    sounded: text('sounded').notNull(),
+    confidence: real('confidence').notNull(),
+    wordsPerMinute: smallint('words_per_minute'),
+    pauses: smallint('pauses'),
+    longestPauseMs: integer('longest_pause_ms'),
+    hesitations: smallint('hesitations'),
+    audioEvents: text('audio_events').array().notNull().default([]),
+    languageCode: text('language_code'),
+    languageProbability: real('language_probability'),
+    meanLogprob: real('mean_logprob'),
+    durationMs: integer('duration_ms'),
+    modelVersion: text('model_version').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    uniqueIndex('voice_tones_entry_idx').on(t.entryId),
+    index('voice_tones_student_created_idx').on(t.studentId, t.createdAt.desc()),
+    index('voice_tones_student_emotion_idx').on(t.studentId, t.emotion),
   ],
 )
 

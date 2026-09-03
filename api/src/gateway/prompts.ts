@@ -10,6 +10,7 @@ export type Purpose =
   | 'pattern_verdict'
   | 'people'
   | 'person_profile'
+  | 'voice_tone'
 
 /**
  * Prompt text comes from the database, never from the binary.

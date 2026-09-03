@@ -14,8 +14,65 @@ export const submitEntry = z.object({
   transcriptConfirmed: z.boolean(),
   durationMs: z.number().int().positive().max(600_000).optional(),
   localHour: z.number().int().min(0).max(23).optional(),
+  /**
+   * The handle /transcribe returned for how this entry sounded. Only a spoken
+   * entry has one. The server checks it belongs to this student before it is
+   * linked, so a guessed id links nothing.
+   */
+  toneId: z.string().uuid().optional(),
 })
 export type SubmitEntry = z.infer<typeof submitEntry>
+
+/**
+ * What /transcribe returns. toneId is absent when the entry was heard but not
+ * judged, which must never cost a student their transcript.
+ */
+export const transcribeResult = z.object({
+  text: z.string(),
+  toneId: z.string().uuid().optional(),
+})
+export type TranscribeResult = z.infer<typeof transcribeResult>
+
+/**
+ * How a recording sounded, from the model that listened to it.
+ *
+ * Both vocabularies are fixed so they can be counted across months. sounded is
+ * the one free field and it describes this recording, never the person.
+ */
+export const toneEmotions = [
+  'calm',
+  'flat',
+  'tired',
+  'tense',
+  'upset',
+  'angry',
+  'sad',
+  'excited',
+  'glad',
+  'unsure',
+  'rushed',
+  'guarded',
+] as const
+
+export const toneIntents = [
+  'venting',
+  'deciding',
+  'asking',
+  'reporting',
+  'rehearsing',
+  'celebrating',
+  'checking_in',
+  'unsure',
+] as const
+
+export const voiceToneResult = z.object({
+  emotion: z.enum(toneEmotions),
+  intensity: z.number().min(0).max(1),
+  intent: z.enum(toneIntents),
+  sounded: z.string().min(1).max(160),
+  confidence: z.number().min(0).max(1),
+})
+export type VoiceToneResult = z.infer<typeof voiceToneResult>
 
 /**
  * Three shapes come back from a submission and the client must handle all

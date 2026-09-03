@@ -183,8 +183,10 @@ class SoulApi {
   }
 
   /// Audio in, text out. The bytes are sent and forgotten; the server deletes
-  /// them the moment the provider returns a transcript.
-  Future<String> transcribe(List<int> audio, String contentType) async {
+  /// them the moment the provider returns a transcript. The same bytes are
+  /// listened to for how they sounded, and the handle for that rides back
+  /// with the words.
+  Future<Transcript> transcribe(List<int> audio, String contentType) async {
     final bearer = await _bearer();
     final request = await _client.postUrl(Uri.parse('$baseUrl/transcribe'));
     request.headers.set('content-type', contentType);
@@ -198,7 +200,16 @@ class SoulApi {
       await _forgetDeadToken(response.statusCode);
       throw SoulApiException(response.statusCode, text);
     }
-    return (jsonDecode(text) as Map<String, dynamic>)['text'] as String;
+    final json = jsonDecode(text) as Map<String, dynamic>;
+    return Transcript(
+      text: json['text'] as String,
+      toneId: json['toneId'] as String?,
+    );
+  }
+
+  /// A discarded transcript takes how it sounded with it.
+  Future<void> discardTone(String toneId) async {
+    await _delete('/transcribe/$toneId');
   }
 
   /// Sign in with Apple, traded for a session token.
@@ -225,6 +236,7 @@ class SoulApi {
     required String text,
     required bool spoken,
     int? durationMs,
+    String? toneId,
   }) async {
     final json = await _post('/entries', {
       'text': text,
@@ -232,6 +244,7 @@ class SoulApi {
       'transcriptConfirmed': spoken,
       'durationMs': ?durationMs,
       'localHour': DateTime.now().hour,
+      'toneId': ?toneId,
     });
     return SubmitResult.fromJson(json);
   }

@@ -3,6 +3,8 @@ import { db, entries, tags } from '../../db.js'
 import { call } from '../../gateway/call.js'
 import { enqueue } from '../../jobs/enqueue.js'
 import { taggerResult } from '../../contracts.js'
+import { renderTone } from '../tone/render.js'
+import { loadTone } from '../tone/store.js'
 import type { Session } from '../../session.js'
 
 /**
@@ -27,8 +29,16 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   const entry = rows[0]
   if (!entry) return
 
+  // A spoken entry is described with how it sounded. The words still come
+  // first and the prompt says the voice may sharpen the feeling or lower the
+  // confidence, never replace what was said.
+  const tone = await loadTone(entryId, session)
+  const user = tone
+    ? `${entry.text}\n\nHow they sounded, from their voice:\n${renderTone(tone)}`
+    : entry.text
+
   const result = await call('tagger', {
-    user: entry.text,
+    user,
     schema: taggerResult,
     session,
     entryId,

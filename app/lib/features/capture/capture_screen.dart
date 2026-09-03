@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 import '../../api/client.dart';
+import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 
@@ -34,8 +35,9 @@ class CaptureScreen extends StatefulWidget {
 
   /// Called with a transcript that still needs confirming. The caller shows
   /// the confirm screen, because send or discard belongs to the flow rather
-  /// than to this screen.
-  final ValueChanged<String>? onTranscribed;
+  /// than to this screen. The transcript carries the handle for how it
+  /// sounded, which goes with the entry or goes when it is discarded.
+  final ValueChanged<Transcript>? onTranscribed;
 
   /// Closes the screen. Not a skip and not an answer: it is the way out for
   /// somebody who opened this and decided not to say anything, which has to
@@ -177,12 +179,12 @@ class _CaptureScreenState extends State<CaptureScreen>
     try {
       await _settled(file);
       final audio = await file.readAsBytes();
-      final text = await _api.transcribe(audio, 'audio/wav');
+      final transcript = await _api.transcribe(audio, 'audio/wav');
 
       if (!mounted) return;
       setState(() => _transcribing = false);
 
-      if (text.trim().isEmpty) {
+      if (transcript.text.trim().isEmpty) {
         setState(() => _failure = 'Nothing came through. Try again.');
         return;
       }
@@ -190,7 +192,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       // Never straight into the field. The transcript is the permanent record
       // and the text the safety classifier reads, so the student sees it and
       // chooses send or discard first.
-      widget.onTranscribed?.call(text);
+      widget.onTranscribed?.call(transcript);
     } catch (error) {
       if (!mounted) return;
       setState(() {

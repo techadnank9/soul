@@ -166,6 +166,28 @@ const config: Record<Purpose, PurposeConfig> = {
     // it gets wrong when it is hurried, the same way the cue card call does.
     reasoning: 'medium',
   },
+  /**
+   * How a spoken entry sounded. The only call that hears audio.
+   *
+   * It runs on the transcribe path, in parallel with the transcriber, so it
+   * costs the student no extra wait, and it has to finish inside the time a
+   * transcript takes. OpenRouter is not in the order because audio input
+   * there depends on the model behind it, and a call that silently reads
+   * nothing is worse than one that fails over to Gemini.
+   */
+  voice_tone: {
+    order: ['openai', 'gemini'],
+    model: {
+      openai: 'gpt-audio-1.5',
+      gemini: 'gemini-2.5-flash',
+      openrouter: 'openai/gpt-audio-1.5',
+    },
+    temperature: 0.2,
+    maxTokens: 1000,
+    timeoutMs: 20_000,
+    json: true,
+    reasoning: 'low',
+  },
   cue_cards: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
@@ -207,13 +229,23 @@ export class GatewayError extends Error {}
 function parseStructured<T>(schema: ZodType<T>, raw: string): T {
   let value: unknown
   try {
-    value = JSON.parse(raw)
+    value = JSON.parse(unfence(raw))
   } catch {
     throw new GatewayError('reply was not json')
   }
   const result = schema.safeParse(value)
   if (!result.success) throw new GatewayError('reply did not match the schema')
   return result.data
+}
+
+/**
+ * A model that was not given a json response format sometimes wraps its
+ * answer in a code fence. The fence is not the answer.
+ */
+function unfence(raw: string): string {
+  const trimmed = raw.trim()
+  const match = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed)
+  return match ? match[1]! : trimmed
 }
 
 export type GatewayResult<T> = {
@@ -231,6 +263,7 @@ export async function call<T>(
     schema?: ZodType<T>
     session: Session
     entryId?: string
+    audio?: { bytes: Uint8Array; mimeType: string }
   },
 ): Promise<GatewayResult<T>> {
   const settings = config[purpose]
@@ -258,6 +291,7 @@ export async function call<T>(
         json: settings.json,
         reasoning: settings.reasoning,
         signal: controller.signal,
+        ...(input.audio ? { audio: input.audio } : {}),
       }
 
       const reply = await providers[provider](key, request)

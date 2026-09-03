@@ -87,13 +87,16 @@ photos, no browsing, and no advertising identifiers.
 AUDIO IS NEVER KEPT
 
 If you speak instead of typing, the recording is sent to be turned into text
-and then it is gone. It is never saved, never backed up, and never listened to
-by us. The transcript is what is kept, which is why you are shown it and asked
-whether to send it.
+and to be described in a few words for how it sounded, and then it is gone. It
+is never saved, never backed up, and never listened to by us. The transcript
+and that short description are what is kept, which is why you are shown the
+transcript and asked whether to send it. Discard it and the description goes
+too.
 
 WHO ELSE SEES IT
 
-To turn speech into text: Deepgram.
+To turn speech into text: ElevenLabs.
+To describe how you sounded when you spoke: OpenAI.
 To write a line back and to describe your entries in a few words: OpenAI.
 
 They process what is sent and nothing more. Your words are not used to train

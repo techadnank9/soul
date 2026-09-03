@@ -1,5 +1,6 @@
 import { and, desc, eq, isNull, sql as raw } from 'drizzle-orm'
-import { db, entries, keptLines, confirmedPatterns, decisions, outcomes } from '../db.js'
+import { db, entries, keptLines, confirmedPatterns, decisions, outcomes, voiceTones } from '../db.js'
+import { renderToneBrief } from '../services/tone/render.js'
 import type { Session } from '../session.js'
 
 /**
@@ -18,7 +19,12 @@ export type Context = {
   keptLines: string[]
   openDecisions: { chose: string; horizon: Date }[]
   pastOutcomes: { chose: string; happened: string | null; felt: string | null }[]
-  recentEntries: { text: string; at: Date }[]
+  /**
+   * sounded is one clause on how a spoken entry came across, and null for a
+   * typed one. It rides along with the entry so the Mirror knows not just
+   * what was said lately but how, which is the whole reason tone is stored.
+   */
+  recentEntries: { text: string; at: Date; sounded: string | null }[]
 }
 
 const RECENT_ENTRIES = 8
@@ -79,8 +85,14 @@ export async function loadContext(
       .limit(PAST_OUTCOMES),
 
     db
-      .select({ text: entries.text, at: entries.createdAt })
+      .select({
+        text: entries.text,
+        at: entries.createdAt,
+        emotion: voiceTones.emotion,
+        intent: voiceTones.intent,
+      })
       .from(entries)
+      .leftJoin(voiceTones, eq(voiceTones.entryId, entries.id))
       .where(
         excludeEntryId
           ? and(
@@ -98,7 +110,26 @@ export async function loadContext(
     keptLines: kept.map((k) => k.text),
     openDecisions: open.map((d) => ({ chose: d.chose, horizon: d.horizon })),
     pastOutcomes: past,
-    recentEntries: recent,
+    recentEntries: recent.map((e) => ({
+      text: e.text,
+      at: e.at,
+      sounded:
+        e.emotion && e.intent
+          ? renderToneBrief({
+              emotion: e.emotion,
+              intent: e.intent,
+              intensity: 0,
+              sounded: '',
+              confidence: 0,
+              wordsPerMinute: null,
+              pauses: null,
+              longestPauseMs: null,
+              hesitations: null,
+              audioEvents: [],
+              languageCode: null,
+            })
+          : null,
+    })),
   }
 }
 
@@ -155,7 +186,11 @@ export function renderContext(context: Context): string {
       'Recent entries, newest last:\n' +
         [...context.recentEntries]
           .reverse()
-          .map((e) => `  [${e.at.toDateString()}] ${e.text}`)
+          .map(
+            (e) =>
+              `  [${e.at.toDateString()}] ${e.text}` +
+              (e.sounded ? ` (${e.sounded})` : ''),
+          )
           .join('\n'),
     )
   }

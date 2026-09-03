@@ -105,16 +105,26 @@ capture_screen.dart
   └─ records wav, sixteen kilohertz mono, to the system temp directory
   └─ waits for the file size to settle before reading it
      an unfinalised container reaches the provider as corrupt audio
-  └─ POST /transcribe  → services/transcribe/run.ts
-  │     ├─ consent/gate.ts   ← checked here too, before audio leaves
-  │     ├─ provider call (Deepgram, config driven)
+  └─ POST /transcribe  → routes/transcribe.ts, two calls on the same bytes
+  │     ├─ services/transcribe/run.ts
+  │     │    ├─ consent/gate.ts   ← checked here too, before audio leaves
+  │     │    ├─ provider call (ElevenLabs Scribe, config driven)
+  │     │    └─ word timings measured into prosody: pace, pauses, hesitations,
+  │     │       audio events, language. Measured, not judged
+  │     ├─ services/tone/judge.ts, in parallel, allowed to fail
+  │     │    ├─ consent/gate.ts   ← checked again, a second place audio leaves
+  │     │    ├─ gateway.call('voice_tone', audio)  ← the only call that hears
+  │     │    │    emotion, intensity, intent, one sentence, confidence
+  │     │    └─ storeTone() → voice_tones row, entry_id null, returns toneId
+  │     │       a failure here costs the student nothing. Transcript still returns
   │     └─ audio deleted immediately, never persisted
   │        the client deletes its temp file too, success or failure
+  │        DELETE /transcribe/:toneId when the student discards the transcript
   └─ a typed entry skips all of the above and the confirm step with it.
      There is nothing to confirm about words a student typed themselves.
   └─ shows the transcript, student sends or discards
   └─ writes to local queue (survives connection loss)
-  └─ POST /entries
+  └─ POST /entries, carrying toneId for a spoken entry
        │
 api/src/routes/entries.ts            ← HTTP boundary, zod validation only
   └─ resolveSession()                 → student, school, district
@@ -126,6 +136,9 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        │
        ├─ 2. entries/store.ts
        │     insert entry, return entryId
+       │     services/tone/store.ts linkTone(toneId, entryId)
+       │        spoken entries only, scoped to the student and to rows not
+       │        yet linked. A guessed id links nothing. Then loadTone()
        │     Storage comes before classification because a safety_flags row
        │     carries entry_id and cannot be written for an entry that does not
        │     exist yet. Nothing is generated here and nothing is sent out.
@@ -137,7 +150,8 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        │     HIT → returns help screen payload, STOP. No generation happens.
        │
        ├─ 4. generate/beatOne.ts
-       │     buildBeatOnePrompt(entry)      ← current entry only, minimal history
+       │     buildBeatOnePrompt(entry, tone) ← current entry only, minimal history
+       │                                      plus how it sounded, when spoken
        │     gateway.call('beat_one', ...)  ← not streamed, see the note below
        │     writes generations row with prompt_version, model_version
        │
@@ -170,12 +184,13 @@ api/src/routes/entries.ts
        │     confirmed patterns (verbatim)
        │     kept lines
        │     open decisions and past outcomes
-       │     recent entries
+       │     recent entries, each with one clause on how it sounded if spoken
+       │     services/tone/store.ts loadTone(entryId) for this entry
        │     pgvector neighbours of this entry
        │     returns a stable prefix, ordered identically every time
        │
        ├─ 2. generate/mirror.ts
-       │     buildMirrorPrompt(context, entry)  ← history first, entry last
+       │     buildMirrorPrompt(context, entry, tone)  ← history first, entry last
        │     gateway.call('mirror', ...)
        │     parseStructured() → zod schema, REJECT on failure, never store prose
        │
@@ -221,7 +236,8 @@ the system. Never collapse them into one column.
 ```
 jobs/runner.ts fires tag_entry
   └─ services/tagging/tag.ts
-       ├─ gateway.call('tagger', entryText)
+       ├─ services/tone/store.ts loadTone(entryId), null for a typed entry
+       ├─ gateway.call('tagger', entryText + how it sounded)
        ├─ parseStructured() → { trigger, feeling, coping, confidence }
        └─ insert tags row
 ```
@@ -395,7 +411,10 @@ If you cannot answer, you do not understand the change well enough to own it at
 These hold everywhere. A change that breaks one is wrong regardless of what it
 improves.
 
-1. No generation before `classify()` returns.
+1. No generation before `classify()` returns. The tone call on the transcribe
+   path is a classification of the audio, not a generation: nothing it
+   returns is shown to a student, and the words still pass `classify()`
+   before anything is written back.
 2. No outbound model call before `checkConsent()` passes.
 3. Every query carries student, school and district. Row level security enforces
    it; application code does not get to be the only guard.
@@ -412,6 +431,10 @@ improves.
    guidance, on purpose, and it is written up in CONTEXT.md and the decision
    log. The student's own outcomes still outrank it.
 9. Audio is never persisted. It is deleted the moment a transcript returns.
+   What is kept about a recording is a `voice_tones` row: a fixed vocabulary
+   word for emotion and one for intent, one sentence, and numbers measured
+   from word timings. The row goes when the transcript is discarded and
+   cascades when the entry is deleted.
 10. No entry is submitted without the student having seen the transcript. A
     typed entry has nothing to confirm and skips the step; a spoken one never
     does.

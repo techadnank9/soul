@@ -24,6 +24,7 @@ const purposes = [
   'pattern_verdict',
   'people',
   'person_profile',
+  'voice_tone',
 ] as const
 
 async function main() {
@@ -40,6 +41,15 @@ async function main() {
     const text = readFileSync(join(folder, file), 'utf8')
     const typed = purpose as (typeof purposes)[number]
 
+    // One active prompt per purpose. The unique index enforces it, so the old
+    // one has to be stood down before the new one is raised, not after. The
+    // other order held only while each purpose had a single version, and it
+    // failed the first time a second one arrived.
+    await db
+      .update(prompts)
+      .set({ active: false })
+      .where(and(eq(prompts.purpose, typed), ne(prompts.version, version!)))
+
     await db
       .insert(prompts)
       .values({ purpose: typed, version: version!, text, active: true })
@@ -47,13 +57,6 @@ async function main() {
         target: [prompts.purpose, prompts.version],
         set: { text, active: true },
       })
-
-    // One active prompt per purpose. The unique index enforces it, so the old
-    // one has to be stood down in the same transaction.
-    await db
-      .update(prompts)
-      .set({ active: false })
-      .where(and(eq(prompts.purpose, typed), ne(prompts.version, version!)))
 
     console.log(`${purpose} ${version} is active`)
   }

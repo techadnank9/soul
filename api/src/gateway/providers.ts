@@ -23,6 +23,23 @@ export type ProviderCall = {
    */
   reasoning: 'minimal' | 'low' | 'medium' | 'high'
   signal: AbortSignal
+  /**
+   * A recording to listen to alongside the text, for the one purpose that
+   * hears rather than reads. The bytes are encoded into the request body and
+   * dropped with it. They never touch a disk here either.
+   */
+  audio?: { bytes: Uint8Array; mimeType: string }
+}
+
+/** The short format name the audio models want, from a mime type. */
+function audioFormat(mimeType: string): string {
+  const lower = mimeType.toLowerCase()
+  if (lower.includes('mp3') || lower.includes('mpeg')) return 'mp3'
+  return 'wav'
+}
+
+function base64(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString('base64')
 }
 
 export type ProviderReply = {
@@ -74,10 +91,28 @@ async function openaiShaped(
       ...(acceptsTemperature(call.model) ? { temperature: call.temperature } : {}),
       ...(isReasoning(call.model) ? { reasoning_effort: call.reasoning } : {}),
       max_completion_tokens: call.maxTokens,
-      ...(call.json ? { response_format: { type: 'json_object' } } : {}),
+      // The audio models answer in text only when told so, and the json
+      // response format is not documented for them, so the prompt asks for
+      // JSON and the gateway strips any fence before parsing.
+      ...(call.audio ? { modalities: ['text'] } : {}),
+      ...(call.json && !call.audio ? { response_format: { type: 'json_object' } } : {}),
       messages: [
         { role: 'system', content: call.system },
-        { role: 'user', content: call.user },
+        {
+          role: 'user',
+          content: call.audio
+            ? [
+                { type: 'text', text: call.user },
+                {
+                  type: 'input_audio',
+                  input_audio: {
+                    data: base64(call.audio.bytes),
+                    format: audioFormat(call.audio.mimeType),
+                  },
+                },
+              ]
+            : call.user,
+        },
       ],
     },
     call.signal,
@@ -110,7 +145,24 @@ export const providers: Record<
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: call.system }] },
-        contents: [{ role: 'user', parts: [{ text: call.user }] }],
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: call.user },
+              ...(call.audio
+                ? [
+                    {
+                      inline_data: {
+                        mime_type: call.audio.mimeType,
+                        data: base64(call.audio.bytes),
+                      },
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ],
         generationConfig: {
           temperature: call.temperature,
           maxOutputTokens: call.maxTokens,
