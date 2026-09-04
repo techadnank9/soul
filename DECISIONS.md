@@ -4003,3 +4003,49 @@ Reverses if: a question needs poles that the options do not already name, in
 which case they come back as part of that question rather than as a field
 every question carries.
 
+---
+
+### 218. The last screen of first run is written from the answers
+Sep 2026, Adnan
+
+Decision: the paragraph on the ready screen is written by a model from the
+fifteen answers just given, in the person's own wording, rather than being
+the same three sentences for everybody. The request goes out the moment the
+baseline ends, so the spoken introduction stands between asking and reading
+and there is nothing to wait for.
+
+Why: the founder asked for it. The screen exists so that fifteen questions
+land somewhere, and the same paragraph for everybody was not a landing.
+
+What holds it inside the voice: the prompt is told situations never traits,
+no praise, no advice, no feeling named for them, and nothing scored, ranked
+or totalled. It says back two or three of their own choices and then what
+happens from here. The doc comment on the screen said nothing on it is a
+result, and that is still true: it is their answers repeated, not a reading
+of them.
+
+The questions live in the app and are sent with the answers, rather than
+kept a second time on the server where the two copies would drift.
+
+It is allowed to fail. The screen holds room for three lines from the start
+and shows the heading, the chips and the button either way, so a failure
+costs a paragraph and nothing else.
+
+---
+
+### 219. Sign in shows one way in, and the second appears when the first does not work
+Sep 2026, Adnan
+
+Decision: the sign in screen shows the lock, one line, the terms and the
+Apple button. The email field appears only after Apple has been tried and
+failed. The code is asked for on a screen of its own.
+
+Why: the founder gave the reference and said to match it. One way in is less
+to read, and the second arriving at the moment it is the answer to something
+is better than two offered at once. The code being on its own screen means
+the one thing being asked for is the only thing on that screen.
+
+The terms sit above the button as a sentence with two links rather than as a
+tick to give. Using the app is the agreement, per decision 201, so nothing
+here stands between somebody and their account.
+

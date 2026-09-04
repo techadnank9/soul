@@ -16,10 +16,15 @@ class ReadyScreen extends StatelessWidget {
     super.key,
     required this.profile,
     required this.onContinue,
+    this.line,
   });
 
   final Profile profile;
   final VoidCallback onContinue;
+
+  /// Written from the answers just given, asked for when the baseline
+  /// ended. Absent until it lands, and absent for good if it never does.
+  final Future<String>? line;
 
   List<String> get _chips => [
         if (profile.displayName != null) profile.displayName!,
@@ -46,17 +51,28 @@ class ReadyScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Settle(
-            delay: const Duration(milliseconds: 220),
-            child: Text(
-              'What you said is kept on this phone. Nothing in it is scored. '
-              'From here the app fills in as you go, one moment at a time.',
-              style: const TextStyle(
-                fontFamily: SoulType.serif,
-                fontSize: 19,
-                height: 1.4,
-                color: SoulColors.text,
-              ),
+          // Room for three lines is held from the start, so nothing below
+          // moves when the line arrives.
+          SizedBox(
+            height: 84,
+            child: FutureBuilder<String>(
+              future: line,
+              builder: (context, snapshot) {
+                final text = snapshot.data;
+                return AnimatedOpacity(
+                  duration: const Duration(milliseconds: 400),
+                  opacity: text == null ? 0 : 1,
+                  child: Text(
+                    text ?? '',
+                    style: const TextStyle(
+                      fontFamily: SoulType.serif,
+                      fontSize: 19,
+                      height: 1.4,
+                      color: SoulColors.text,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           if (_chips.isNotEmpty) ...[

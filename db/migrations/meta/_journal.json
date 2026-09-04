@@ -141,6 +141,13 @@
       "when": 1788478723436,
       "tag": "0019_consolidate",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788559206355,
+      "tag": "0020_welcome",
+      "breakpoints": true
     }
   ]
 }

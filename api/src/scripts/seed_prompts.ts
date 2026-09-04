@@ -26,6 +26,7 @@ const purposes = [
   'person_profile',
   'voice_tone',
   'facts',
+  'welcome',
   'consolidate',
 ] as const
 

@@ -4,6 +4,7 @@ import '../../api/client.dart';
 import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import 'policies.dart';
 
 /// The last screen of first run. Sign in with Apple, or with an email code.
 ///
@@ -42,19 +43,21 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _running = false;
   bool _failed = false;
 
+  /// Email is not offered until Apple has been tried and did not work.
+  /// One way in is less to read; the second appears at the moment it is
+  /// the answer to something.
+  bool _emailOffered = false;
+
   /// The email path. An address, then a code, then in. It sits under Apple's
   /// button for anybody Apple's sheet does not work for, and it is a full
   /// sign in rather than a fallback: the address is the way back in.
   final _email = TextEditingController();
-  final _code = TextEditingController();
-  bool _codeSent = false;
   bool _emailRunning = false;
   String? _emailNote;
 
   @override
   void dispose() {
     _email.dispose();
-    _code.dispose();
     super.dispose();
   }
 
@@ -79,11 +82,17 @@ class _SignInScreenState extends State<SignInScreen> {
       await _api.emailStart(email);
       _api.event('signin_email_code_sent');
       if (!mounted) return;
-      setState(() {
-        _emailRunning = false;
-        _codeSent = true;
-        _emailNote = 'A six digit code is on its way to $email.';
-      });
+      setState(() => _emailRunning = false);
+      // The code has a screen of its own, so the one thing being asked for
+      // is the only thing on it.
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => EmailCodeScreen(
+            email: email,
+            onSignedIn: (token) => _finish(token, 'email'),
+          ),
+        ),
+      );
     } on SoulApiException catch (error) {
       _api.event('signin_email_start_failed', {'status': error.status});
       if (!mounted) return;
@@ -100,31 +109,6 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _emailRunning = false;
         _emailNote = 'That did not go through.';
-      });
-    }
-  }
-
-  Future<void> _verifyCode() async {
-    final code = _code.text.trim();
-    if (code.length != 6) {
-      setState(() => _emailNote = 'The code is six digits.');
-      return;
-    }
-    setState(() {
-      _emailRunning = true;
-      _emailNote = null;
-    });
-    try {
-      final token = await _api.emailVerify(_email.text.trim(), code);
-      await _finish(token, 'email');
-    } catch (error) {
-      _api.event('signin_email_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      });
-      if (!mounted) return;
-      setState(() {
-        _emailRunning = false;
-        _emailNote = 'That code did not work. Check it, or ask for another.';
       });
     }
   }
@@ -167,6 +151,7 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _running = false;
         _failed = error.code != AuthorizationErrorCode.canceled;
+        if (_failed) _emailOffered = true;
       });
     } catch (error) {
       // Refused, offline, or the server said no. One line, and the button is
@@ -178,6 +163,7 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _running = false;
         _failed = true;
+        _emailOffered = true;
       });
     }
   }
@@ -187,39 +173,74 @@ class _SignInScreenState extends State<SignInScreen> {
     return Screen(
       padding: const EdgeInsets.fromLTRB(22, 40, 22, 22),
       body: [
+        // The way out sits top right, away from the thumb that is about to
+        // press the button at the bottom.
         if (widget.onBack != null)
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.centerRight,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: widget.onBack,
               child: const Padding(
-                padding: EdgeInsets.only(right: 16, bottom: 12),
-                child: Icon(Icons.chevron_left, size: 26, color: SoulColors.text3),
+                padding: EdgeInsets.only(left: 16, bottom: 12),
+                child: Icon(Icons.close, size: 24, color: SoulColors.text3),
               ),
             ),
           ),
-        const SizedBox(height: 48),
+        // The lock and the line sit together in the upper middle, with the
+        // room below them empty. Nothing else on this screen is a reason to
+        // read, so nothing else is on it.
+        const SizedBox(height: 150),
         const Center(
-          child: Icon(Icons.lock_outline, size: 34, color: SoulColors.clay),
+          child: Icon(Icons.lock_outline, size: 30, color: SoulColors.clay),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 26),
         Text(
-          'This space is yours.\nSign in to keep it.',
+          'This space is yours.\nSign in to keep what you have said.',
           textAlign: TextAlign.center,
-          style: SoulType.heading.copyWith(fontSize: 27, height: 1.25),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'What you have written is already saved. Signing in is what keeps it '
-          'yours if you ever change phones.',
-          textAlign: TextAlign.center,
-          style: SoulType.secondary,
+          style: SoulType.heading.copyWith(fontSize: 26, height: 1.35),
         ),
       ],
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // The terms, reachable, and not a gate. Using the app is the
+          // agreement, per decision 201, so this says so rather than asking
+          // for a tick that would stand between somebody and their account.
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            decoration: BoxDecoration(
+              color: SoulColors.s2,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'By signing in you agree to the Terms of Service and the '
+                  'Privacy Policy, and to what you write being sent to the '
+                  'providers named there so the app can answer.',
+                  textAlign: TextAlign.center,
+                  style: SoulType.secondary.copyWith(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _Link(
+                      'Terms of Service',
+                      onTap: () => openPolicy(context, 'Terms of Service', termsOfService),
+                    ),
+                    const SizedBox(width: 20),
+                    _Link(
+                      'Privacy Policy',
+                      onTap: () => openPolicy(context, 'Privacy Policy', privacyPolicy),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           _AppleButton(
             enabled: true,
             running: _running,
@@ -228,22 +249,21 @@ class _SignInScreenState extends State<SignInScreen> {
           if (_failed) ...[
             const SizedBox(height: 10),
             Text(
-              'That did not go through.',
+              'That did not go through. Your email works too.',
               textAlign: TextAlign.center,
               style: SoulType.secondary.copyWith(color: SoulColors.clay),
             ),
           ],
+          if (_emailOffered) ...[
           const SizedBox(height: 14),
           _EmailSignIn(
             enabled: !_running,
             running: _emailRunning,
-            codeSent: _codeSent,
             note: _emailNote,
             email: _email,
-            code: _code,
             onSendCode: _sendCode,
-            onVerify: _verifyCode,
           ),
+          ],
           const SizedBox(height: 6),
           // Development only, and it says so. It exists because first run is
           // fifteen questions long and testing the rest of the app should not
@@ -338,26 +358,22 @@ class _AppleButton extends StatelessWidget {
 /// It is quieter than Apple's button and sits under it, and it is dimmed the
 /// same way until the box is ticked. The note under it says what happened
 /// last, in one line, and is the only feedback: no toasts, no dialogs.
+/// The address, and the button that sends a code to it. The code itself is
+/// asked for on its own screen.
 class _EmailSignIn extends StatelessWidget {
   const _EmailSignIn({
     required this.enabled,
     required this.running,
-    required this.codeSent,
     required this.note,
     required this.email,
-    required this.code,
     required this.onSendCode,
-    required this.onVerify,
   });
 
   final bool enabled;
   final bool running;
-  final bool codeSent;
   final String? note;
   final TextEditingController email;
-  final TextEditingController code;
   final VoidCallback onSendCode;
-  final VoidCallback onVerify;
 
   @override
   Widget build(BuildContext context) {
@@ -367,55 +383,18 @@ class _EmailSignIn extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Or use your email',
-            textAlign: TextAlign.center,
-            style: SoulType.secondary.copyWith(fontSize: 14),
+          _Field(
+            controller: email,
+            hint: 'Email',
+            keyboard: TextInputType.emailAddress,
+            enabled: enabled && !running,
+            onDone: onSendCode,
           ),
-          const SizedBox(height: 10),
-          if (!codeSent) ...[
-            _Field(
-              controller: email,
-              hint: 'you@somewhere.com',
-              keyboard: TextInputType.emailAddress,
-              enabled: enabled && !running,
-              onDone: onSendCode,
-            ),
-            const SizedBox(height: 8),
-            SoulButton(
-              running ? 'Sending' : 'Send code',
-              onPressed: enabled && !running ? onSendCode : null,
-            ),
-          ] else ...[
-            _Field(
-              controller: code,
-              hint: '6 digit code',
-              keyboard: TextInputType.number,
-              enabled: enabled && !running,
-              onDone: onVerify,
-            ),
-            const SizedBox(height: 8),
-            SoulButton(
-              running ? 'Checking' : 'Log in',
-              kind: SoulButtonKind.filled,
-              onPressed: enabled && !running ? onVerify : null,
-            ),
-          ],
-          if (codeSent) ...[
-            const SizedBox(height: 6),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: enabled && !running ? onSendCode : null,
-              child: Text(
-                'Send another code',
-                textAlign: TextAlign.center,
-                style: SoulType.secondary.copyWith(
-                  fontSize: 13,
-                  color: SoulColors.clay,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: 8),
+          SoulButton(
+            running ? 'Sending' : 'Continue',
+            onPressed: enabled && !running ? onSendCode : null,
+          ),
           if (note != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -429,6 +408,149 @@ class _EmailSignIn extends StatelessWidget {
     );
   }
 }
+
+/// The code, on its own screen, because it is one thing to do and the screen
+/// behind it has three.
+class EmailCodeScreen extends StatefulWidget {
+  const EmailCodeScreen({
+    super.key,
+    required this.email,
+    required this.onSignedIn,
+  });
+
+  final String email;
+
+  /// Handed the session token. The screen behind this one stores it and
+  /// carries on, so this one only has to close.
+  final Future<void> Function(String token) onSignedIn;
+
+  @override
+  State<EmailCodeScreen> createState() => _EmailCodeScreenState();
+}
+
+class _EmailCodeScreenState extends State<EmailCodeScreen> {
+  final _api = SoulApi.fromEnvironment();
+  final _code = TextEditingController();
+  bool _running = false;
+  String? _note;
+
+  @override
+  void dispose() {
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    final code = _code.text.trim();
+    if (code.length != 6) {
+      setState(() => _note = 'The code is six digits.');
+      return;
+    }
+    setState(() {
+      _running = true;
+      _note = null;
+    });
+    try {
+      final token = await _api.emailVerify(widget.email, code);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      await widget.onSignedIn(token);
+    } catch (error) {
+      _api.event('signin_email_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _note = 'That code did not work. Check it, or ask for another.';
+      });
+    }
+  }
+
+  Future<void> _again() async {
+    setState(() {
+      _running = true;
+      _note = null;
+    });
+    try {
+      await _api.emailStart(widget.email);
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _note = 'Another code is on its way.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _note = 'That did not go through.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Screen(
+      padding: const EdgeInsets.fromLTRB(22, 40, 22, 22),
+      body: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).maybePop(),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16, bottom: 12),
+              child: Icon(Icons.chevron_left, size: 26, color: SoulColors.text3),
+            ),
+          ),
+        ),
+        const SizedBox(height: 150),
+        const Center(
+          child: Icon(Icons.mail_outline, size: 30, color: SoulColors.clay),
+        ),
+        const SizedBox(height: 26),
+        Text(
+          'Enter the code sent to\n${widget.email}',
+          textAlign: TextAlign.center,
+          style: SoulType.heading.copyWith(fontSize: 24, height: 1.35),
+        ),
+        const SizedBox(height: 26),
+        _Field(
+          controller: _code,
+          hint: '6 digit code',
+          keyboard: TextInputType.number,
+          enabled: !_running,
+          onDone: _verify,
+        ),
+        const SizedBox(height: 8),
+        SoulButton(
+          _running ? 'Checking' : 'Continue',
+          kind: SoulButtonKind.filled,
+          onPressed: _running ? null : _verify,
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _running ? null : _again,
+          child: Text(
+            'Send another code',
+            textAlign: TextAlign.center,
+            style: SoulType.secondary.copyWith(fontSize: 13, color: SoulColors.clay),
+          ),
+        ),
+        if (_note != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            _note!,
+            textAlign: TextAlign.center,
+            style: SoulType.secondary.copyWith(fontSize: 13),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 
 class _Field extends StatelessWidget {
   const _Field({
@@ -477,3 +599,74 @@ class _Field extends StatelessWidget {
     );
   }
 }
+
+/// One of the two policy links under the button.
+class _Link extends StatelessWidget {
+  const _Link(this.text, {required this.onTap});
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: SoulType.sans,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: SoulColors.clay,
+          decoration: TextDecoration.underline,
+          decorationColor: SoulColors.clay,
+        ),
+      ),
+    );
+  }
+}
+
+/// A policy, in full, in a sheet.
+void openPolicy(BuildContext context, String title, String body) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: SoulColors.bg,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (sheet) => FractionallySizedBox(
+      heightFactor: 0.9,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 14, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(title, style: SoulType.heading.copyWith(fontSize: 24)),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(sheet).pop(),
+                  icon: const Icon(Icons.close, size: 22, color: SoulColors.text3),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22),
+            child: Rule(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 16, 22, 40),
+              child: Text(body.trim(), style: SoulType.secondary),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+

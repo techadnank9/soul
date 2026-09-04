@@ -209,6 +209,22 @@ class SoulApi {
     return json['token'] as String;
   }
 
+  /// The line on the last screen of first run, written from the answers
+  /// just given. Asked for the moment the baseline ends, so it is ready
+  /// before the screen that shows it.
+  Future<String> welcomeLine({
+    String? name,
+    required List<({String question, String answer})> answers,
+  }) async {
+    final json = await _post('/welcome', {
+      'name': ?name,
+      'answers': [
+        for (final a in answers) {'question': a.question, 'answer': a.answer},
+      ],
+    });
+    return json['line'] as String;
+  }
+
   /// A single use token that opens one live connection to the transcriber,
   /// minted by our service so the transcriber's key never reaches the phone.
   Future<String> speechToken() async {

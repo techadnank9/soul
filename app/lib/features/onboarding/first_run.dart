@@ -172,8 +172,30 @@ class _FirstRunState extends State<FirstRun> {
 
   /// Nothing is scored and nothing is shown back. The answers are a baseline
   /// for later, not a result for now.
+  /// The line the last screen shows, asked for the moment the answers exist.
+  ///
+  /// A spoken introduction stands between here and that screen, so by the
+  /// time it is read the line is already back. It is allowed to fail: the
+  /// screen holds room for it and shows the rest either way.
+  Future<String>? _welcome;
+
   void _leaveBaseline() {
     _api.baseline(baselineVersion, _answers).ignore();
+    _welcome = _api
+        .welcomeLine(
+          name: _profile.displayName,
+          answers: [
+            for (var i = 0; i < baseline.length; i++)
+              if (_answers[i] != null)
+                (question: baseline[i].text, answer: baseline[i].options[_answers[i]!]),
+          ],
+        )
+        .catchError((Object error) {
+      _api.event('welcome_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
+      throw error;
+    });
     _next();
   }
 
@@ -249,7 +271,7 @@ class _FirstRunState extends State<FirstRun> {
           onSubmitted: (text, {required spoken, toneId}) =>
               _submitIntroduction(text, spoken: spoken, toneId: toneId),
         ),
-      _Kind.ready => ReadyScreen(profile: _profile, onContinue: _next),
+      _Kind.ready => ReadyScreen(profile: _profile, line: _welcome, onContinue: _next),
       // Last. Signing in comes after there is something to keep, not before
       // the person has seen what this is.
       _Kind.signIn => SignInScreen(

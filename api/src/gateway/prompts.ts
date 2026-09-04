@@ -13,6 +13,7 @@ export type Purpose =
   | 'voice_tone'
   | 'facts'
   | 'consolidate'
+  | 'welcome'
 
 /**
  * Prompt text comes from the database, never from the binary.

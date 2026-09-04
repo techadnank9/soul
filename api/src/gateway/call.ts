@@ -121,6 +121,29 @@ const config: Record<Purpose, PurposeConfig> = {
    * Low reasoning because the failure here is not shallow thinking, it is
    * inventing somebody, and the prompt is what holds that.
    */
+  /**
+   * The line on the last screen of first run, written from the answers just
+   * given. It is asked for the moment the baseline ends, so the person is
+   * still recording an introduction while it is written and there is no wait
+   * to see. Small and fast for that reason, and warm enough to sound like it
+   * was listening.
+   */
+  welcome: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5-mini',
+      gemini: 'gemini-2.5-flash',
+      openrouter: 'openai/gpt-5-mini',
+    },
+    temperature: 0.4,
+    maxTokens: 2000,
+    timeoutMs: 30_000,
+    json: true,
+    // Minimal, because the whole call is a rewrite of five answers into two
+    // sentences and thinking about it longer only makes the screen later.
+    reasoning: 'minimal',
+  },
+
   people: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {

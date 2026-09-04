@@ -481,3 +481,27 @@ export const graphView = z.object({
   edges: z.array(graphEdge),
 })
 export type GraphView = z.infer<typeof graphView>
+
+/**
+ * The answers behind the last screen of first run. The questions live in the
+ * app, so they come with the answers rather than being held twice.
+ */
+export const welcomeAnswers = z.object({
+  name: z.string().trim().min(1).max(40).optional(),
+  answers: z
+    .array(
+      z.object({
+        question: z.string().trim().min(1).max(200),
+        answer: z.string().trim().min(1).max(120),
+      }),
+    )
+    .min(1)
+    .max(20),
+})
+export type WelcomeAnswers = z.infer<typeof welcomeAnswers>
+
+/** Two sentences, and the screen holds room for three lines of them. */
+export const welcomeResult = z.object({
+  line: z.string().trim().min(1).max(320),
+})
+
