@@ -4049,3 +4049,24 @@ The terms sit above the button as a sentence with two links rather than as a
 tick to give. Using the app is the agreement, per decision 201, so nothing
 here stands between somebody and their account.
 
+---
+
+### 220. Every build talks to the service unless told otherwise
+Sep 2026, Adnan
+
+Decision: the client points at the API on Render whatever the build mode.
+Working against a local API means saying so with the define. This narrows
+decision 199, which had a debug build default to localhost.
+
+Why: the simulator went quiet and looked like a broken app when nothing was
+running on this machine. Every call failed the same silent way, so the last
+screen of first run came up with an empty space where its line goes and
+nothing said why. The default that fails when a person forgets to start
+something is the wrong default.
+
+What it costs: a build run against a laptop needs one more flag, which is
+the person who is changing the API and knows they are.
+
+Reverses if: there is more than one service worth pointing at, in which case
+the define is the only way and there is no default worth having.
+

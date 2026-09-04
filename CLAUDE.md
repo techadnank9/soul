@@ -142,9 +142,10 @@ of data. No student has that on day one.
 ## How to run it
 
 Postgres and the API in one terminal, the app in another. README.md has the
-commands. The client reads `SOUL_API` and `SOUL_STUDENT` at build time, so a
-debug build points at a laptop and a release build cannot point anywhere by
-accident. The app is run with `flutter run --flavor soul ...`, because the
+commands. The client reads `SOUL_API` and `SOUL_STUDENT` at build time. Every build
+talks to the service on Render unless the define says otherwise, so a
+simulator never goes quiet because nothing is running here. Add
+`--dart-define=SOUL_API=http://localhost:8080` to work against a local API. The app is run with `flutter run --flavor soul ...`, because the
 Xcode scheme is named Soul and Flutter only finds it when told the flavor.
 The full command is in README.md.
 

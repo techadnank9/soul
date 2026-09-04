@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import '../data/session_store.dart';
 import 'models.dart';
@@ -13,17 +12,21 @@ import 'models.dart';
 class SoulApi {
   SoulApi({required this.baseUrl, required this.token});
 
-  /// Where the API is. Set at build time with SOUL_API when it needs to be
-  /// somewhere else. Without it, a debug build talks to the laptop and a
-  /// release build talks to the service on Render, so an archive made from
-  /// the Xcode window with no flags at all is a working build.
-  static const _release = 'https://soul-api-i6mr.onrender.com';
-  static const _laptop = 'http://localhost:8080';
+  /// Where the API is. Every build talks to the service unless told
+  /// otherwise, so a simulator does not go quiet because nothing is running
+  /// on this machine, and an archive from the Xcode window with no flags at
+  /// all is a working build.
+  ///
+  /// Point it somewhere else with the define, which is how the service is
+  /// worked on:
+  ///
+  ///   flutter run --flavor soul --dart-define=SOUL_API=http://localhost:8080
+  static const _service = 'https://soul-api-i6mr.onrender.com';
 
   factory SoulApi.fromEnvironment() => SoulApi(
         baseUrl: const String.fromEnvironment(
           'SOUL_API',
-          defaultValue: kReleaseMode ? _release : _laptop,
+          defaultValue: _service,
         ),
         token: const String.fromEnvironment(
           'SOUL_STUDENT',
