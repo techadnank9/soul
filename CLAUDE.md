@@ -155,12 +155,14 @@ second one is how you check the gate without editing code. They are created by
 First run is a welcome, a how it works screen, four profile questions, the
 ten baseline questions, a spoken introduction, a landing, then sign in and
 home. Every question has to be answered. The profile questions have a
-continue that is dim until there is an answer; each baseline question is a
-scene answered by a movement, in `baseline_scenes.dart`, that moves on by
-itself once something is chosen. The profile tab, fourth on the bar, shows
+continue that is dim until there is an answer: a name field, a wheel for the
+age band, three gender rows, and a world map for where, in `world_map.dart`,
+that stores one of the sixteen regions the server knows. Each baseline
+question is a scene answered by a movement, in `baseline_scenes.dart`, that
+moves on by itself once something is chosen. The profile tab, fourth on the bar, shows
 every held field and can empty any of them. The flow is one sequence in
 `app/lib/features/onboarding/first_run.dart`, built from the pieces in
-`onboarding_kit.dart`, and decisions 211 and 212 say where its shape came
+`onboarding_kit.dart`, and decisions 211 to 215 say where its shape came
 from.
 
 What the profile holds, and the argument about it, is decisions 056 and 061.

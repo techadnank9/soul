@@ -180,10 +180,13 @@ a corner, an answer sunk in a pond, a wall pushed over, that moves on by
 itself once something is chosen.
 
 The profile is a first name, an age band, a gender and a location. There is no
-surname and no birthdate. The where question offers the device before the list,
-and a student who shares their location has their exact coordinates stored; one
-who refuses picks a region and nothing else is asked. Either way the timezone is
-derived on the server and never sent by the client.
+surname and no birthdate. The age band is a wheel that starts on 18 to 24. The
+gender is one of three. The where question is a world map, continent then
+country, with the phone asked first: a student who shares their location has
+their exact coordinates stored, and one who taps a country has it stored as one
+of sixteen regions, with the three countries that span several regions asking
+which part. Either way the timezone is derived on the server and never sent by
+the client.
 
 A fourth tab shows everything held, changeable and emptiable, next to a plain
 statement of what is not held. Decisions 055 to 061 have the reasoning, and 061
