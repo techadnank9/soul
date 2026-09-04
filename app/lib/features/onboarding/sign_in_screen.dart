@@ -267,11 +267,12 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
+                        // Short enough to be read. What the providers are
+                        // given, and which they are, is the policy's job and
+                        // it is one tap below this line.
                         child: Text(
-                          'I agree to the Terms of Service and the Privacy '
-                          'Policy, and to what I write being sent to the '
-                          'providers named there so the app can answer.',
-                          style: SoulType.secondary.copyWith(fontSize: 13, height: 1.4),
+                          'I agree to the Terms of Service and the Privacy Policy.',
+                          style: SoulType.secondary.copyWith(fontSize: 14, height: 1.4),
                         ),
                       ),
                     ],
