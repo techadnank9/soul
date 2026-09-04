@@ -183,9 +183,9 @@ The profile is a first name, an age band, a gender and a location. There is no
 surname and no birthdate. The age band is a wheel that starts on 18 to 24. The
 gender is one of three. The where question is a world map, continent then
 country, with the phone asked first: a student who shares their location has
-their exact coordinates stored, and one who taps a country has it stored as one
-of sixteen regions, with the three countries that span several regions asking
-which part. Either way the timezone is derived on the server and never sent by
+their exact coordinates stored, and one who taps a country then picks a state
+and a city, with a search at each step. The country and state decide which of
+sixteen regions is stored, and the city, state and country are kept as words. Either way the timezone is derived on the server and never sent by
 the client.
 
 A fourth tab shows everything held, changeable and emptiable, next to a plain

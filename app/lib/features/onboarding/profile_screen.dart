@@ -3,6 +3,7 @@ import '../../data/device_location.dart';
 import '../../theme/soul_theme.dart';
 import 'onboarding_kit.dart';
 import 'profile_fields.dart';
+import 'location_picker.dart';
 import 'world_map.dart';
 
 /// What a user gave at first run. Every field is optional in the type,
@@ -388,11 +389,14 @@ class _ChoiceQuestion extends StatelessWidget {
 ///
 /// Nouvel's first onboarding, rebuilt: the whole world first, divided into
 /// continents; a tap zooms to a continent, a second tap picks the country.
-/// Under the map, a line to ask the phone, and a smaller one for somebody
-/// who would rather not say. The list of sixteen regions the server knows
-/// is unchanged. A tapped country stores as the region it belongs to, with
-/// the country's own name shown back, and the three countries that span
-/// several regions open a second pick for the zone.
+/// Then a card from the bottom with the country's states, then its cities,
+/// each with a search, and a city can be typed when the list does not have
+/// it. Under the map, a line to ask the phone, and a smaller one for
+/// somebody who would rather not say.
+///
+/// The list of sixteen regions the server knows is unchanged. The country
+/// and state decide which region is stored, and the city, state and country
+/// are held as words in the place field the phone's answer already used.
 ///
 /// The region is not chosen when the phone answers. The coordinates go to
 /// the server and the region and timezone are derived from them there, so a
@@ -420,18 +424,24 @@ class _WhereQuestion extends StatefulWidget {
 
 enum _Locating { idle, asking, refused, found }
 
+enum _Sheet { closed, state, city }
+
 class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObserver {
   _Locating _locating = _Locating.idle;
 
   /// Set when Settings was opened from here, so the phone is asked again
   /// the moment the app comes back, without another tap.
   bool _wentToSettings = false;
+
   Continent? _continent;
   CountryShape? _country;
   bool _skipped = false;
 
-  /// A country whose zones are being asked for, while the sheet is up.
-  CountryShape? _zoning;
+  /// The picker under the map, and what it has so far.
+  _Sheet _sheet = _Sheet.closed;
+  LocationCountry? _pickedCountry;
+  LocationState? _pickedState;
+  String? _city;
 
   bool get _located => widget.profile.latitude != null;
   bool get _answered => _located || widget.profile.region != null || _skipped;
@@ -440,6 +450,9 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Two megabytes of names take a moment to parse, so it starts now and
+    // is ready by the time a country is tapped.
+    LocationDataset.load();
     if (widget.askOnAppear) {
       widget.onAsked?.call();
       WidgetsBinding.instance.addPostFrameCallback((_) => _useMyLocation());
@@ -489,7 +502,8 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
       _locating = _Locating.found;
       _skipped = false;
       _country = null;
-      _zoning = null;
+      _sheet = _Sheet.closed;
+      _city = null;
     });
     widget.onChanged(Profile(
       displayName: widget.profile.displayName,
@@ -504,14 +518,18 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
     widget.onContinue();
   }
 
-  /// A picked region replaces the phone's answer, so the two are never
-  /// sent together as a disagreement.
-  void _store(String region) {
+  /// A picked place replaces the phone's answer, so the two are never sent
+  /// together as a disagreement. The place is words, and the field holds a
+  /// hundred and twenty of them at most.
+  void _store(String region, {String? place}) {
+    var words = place;
+    if (words != null && words.length > 120) words = words.substring(0, 120);
     widget.onChanged(Profile(
       displayName: widget.profile.displayName,
       ageBand: widget.profile.ageBand,
       gender: widget.profile.gender,
       region: region,
+      place: words,
     ));
   }
 
@@ -521,26 +539,70 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
     setState(() => _continent = continent);
   }
 
-  void _onCountryTap(CountryShape shape) {
-    final zones = zonesByCountry[shape.iso3];
+  Future<void> _onCountryTap(CountryShape shape) async {
+    final countries = await LocationDataset.load();
+    if (!mounted) return;
+    final found = LocationDataset.find(countries, shape.iso3);
     setState(() {
       _country = shape;
       _skipped = false;
-      _zoning = zones == null ? null : shape;
+      _pickedCountry = found;
+      _pickedState = null;
+      _city = null;
+      _sheet = found == null ? _Sheet.closed : _Sheet.state;
     });
-    if (zones == null) _store(regionByCountry[shape.iso3] ?? 'elsewhere');
+    // A country the dataset does not know still answers the question, as
+    // the region it belongs to and its own name.
+    if (found == null) _store(regionFor(shape.iso3, null), place: shape.name);
   }
 
-  void _pickZone(Choice zone) {
-    setState(() => _zoning = null);
-    _store(zone.key);
+  void _pickState(String name) {
+    final state = _pickedCountry?.states.where((s) => s.name == name).firstOrNull;
+    if (state == null) return;
+    setState(() {
+      _pickedState = state;
+      _sheet = _Sheet.city;
+    });
+  }
+
+  void _pickCity(String city) {
+    final country = _pickedCountry;
+    final state = _pickedState;
+    if (country == null || state == null) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _city = city;
+      _sheet = _Sheet.closed;
+    });
+    _store(
+      regionFor(country.iso3, state.name),
+      place: '$city, ${state.name}, ${country.name}',
+    );
+  }
+
+  void _sheetBack() {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      switch (_sheet) {
+        case _Sheet.city:
+          _pickedState = null;
+          _sheet = _Sheet.state;
+        case _Sheet.state:
+          _pickedCountry = null;
+          _country = null;
+          _sheet = _Sheet.closed;
+        case _Sheet.closed:
+          break;
+      }
+    });
   }
 
   void _preferNotToSay() {
     setState(() {
       _skipped = true;
       _country = null;
-      _zoning = null;
+      _city = null;
+      _sheet = _Sheet.closed;
     });
     _store('elsewhere');
     widget.onContinue();
@@ -549,15 +611,11 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
   String get _breadcrumb {
     if (_skipped) return 'Prefer not to say';
     if (_located) return widget.profile.place ?? 'Your location';
-    final country = _country;
-    final region = widget.profile.region;
-    if (country == null) return labelFor(regions, region) ?? ' ';
-    final zones = zonesByCountry[country.iso3];
-    if (zones != null && region != null) {
-      final zone = labelFor(zones, region);
-      return zone == null ? country.name : '${country.name}, ${zone.toLowerCase()}';
+    if (_city != null && _pickedState != null && _pickedCountry != null) {
+      return '$_city, ${_pickedState!.name}, ${_pickedCountry!.name}';
     }
-    return country.name;
+    if (_country != null && _pickedCountry == null) return _country!.name;
+    return widget.profile.place ?? labelFor(regions, widget.profile.region) ?? ' ';
   }
 
   String get _locationLabel => switch (_locating) {
@@ -568,6 +626,7 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
 
   @override
   Widget build(BuildContext context) {
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Stack(
       children: [
         QuestionScaffold(
@@ -642,7 +701,38 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
             ],
           ),
         ),
-        if (_zoning != null) _zoneSheet(_zoning!),
+        if (_sheet != _Sheet.closed)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12 + keyboard,
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey(_sheet),
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+              builder: (context, t, child) => Opacity(
+                opacity: t,
+                child: Transform.translate(offset: Offset(0, (1 - t) * 40), child: child),
+              ),
+              child: _sheet == _Sheet.state
+                  ? LocationPickerSheet(
+                      key: const ValueKey('state'),
+                      title: 'State or region',
+                      rows: [for (final s in _pickedCountry?.states ?? const <LocationState>[]) s.name]..sort(),
+                      onBack: _sheetBack,
+                      onSelect: _pickState,
+                    )
+                  : LocationPickerSheet(
+                      key: const ValueKey('city'),
+                      title: 'City',
+                      rows: [...?_pickedState?.cities]..sort(),
+                      allowsFreeText: true,
+                      onBack: _sheetBack,
+                      onSelect: _pickCity,
+                    ),
+            ),
+          ),
       ],
     );
   }
@@ -740,67 +830,5 @@ class _WhereQuestionState extends State<_WhereQuestion> with WidgetsBindingObser
         ],
       );
     });
-  }
-
-  /// The second pick, for a country that spans several regions. A card
-  /// from the bottom, the way the first flow's picker sheet came up.
-  Widget _zoneSheet(CountryShape country) {
-    final zones = zonesByCountry[country.iso3] ?? const <Choice>[];
-    return Positioned(
-      left: 12,
-      right: 12,
-      bottom: 12,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-        builder: (context, t, child) => Opacity(
-          opacity: t,
-          child: Transform.translate(offset: Offset(0, (1 - t) * 40), child: child),
-        ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          decoration: BoxDecoration(
-            color: SoulColors.s1,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: const [BoxShadow(color: SoulColors.shade, blurRadius: 24, offset: Offset(0, 8))],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => setState(() {
-                      _zoning = null;
-                      _country = null;
-                    }),
-                    child: const Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: Icon(Icons.chevron_left, size: 22, color: SoulColors.text3),
-                    ),
-                  ),
-                  Text(
-                    'Which part of ${country.name}?',
-                    style: SoulType.heading.copyWith(fontSize: 22),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              for (var i = 0; i < zones.length; i++) ...[
-                if (i > 0) const SizedBox(height: 8),
-                OptionRow(
-                  label: zones[i].label,
-                  selected: widget.profile.region == zones[i].key,
-                  onTap: () => _pickZone(zones[i]),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

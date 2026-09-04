@@ -156,8 +156,10 @@ First run is a welcome, a how it works screen, four profile questions, the
 ten baseline questions, a spoken introduction, a landing, then sign in and
 home. Every question has to be answered. The profile questions have a
 continue that is dim until there is an answer: a name field, a wheel for the
-age band, three gender rows, and a world map for where, in `world_map.dart`,
-that stores one of the sixteen regions the server knows. Each baseline
+age band, three gender rows, and for where a world map, then the country's
+states and cities to pick from, in `world_map.dart` and
+`location_picker.dart`, storing one of the sixteen regions the server knows
+and the place as words. Each baseline
 question is a scene answered by a movement, in `baseline_scenes.dart`, that
 moves on by itself once something is chosen. The profile tab, fourth on the bar, shows
 every held field and can empty any of them. The flow is one sequence in

@@ -69,9 +69,11 @@ main.dart → onboarding/first_run.dart, FirstRun
   ├─ 1. profile_screen.dart
   │     name, age band, gender, where, one question per screen, each with
   │     its own continue that is dim until there is an answer
-  │     the where question is a world map, continent then country, with
-  │     the phone asked first; a country stores as one of the sixteen
-  │     regions and three countries open a second pick for the zone
+  │     the where question is a world map, continent then country, then a
+  │     card with the country's states and the state's cities, each with a
+  │     search; the phone is asked first. The country and state decide which
+  │     of the sixteen regions is stored, and city, state and country are
+  │     held as words in place. location_picker.dart holds the names
   │        data/device_location.dart asks for permission, coarse failure and
   │        refusal both fall back to the map, which is always on screen
   │        world_map.dart holds the coastlines and the projection

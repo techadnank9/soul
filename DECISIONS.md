@@ -3906,16 +3906,26 @@ rings, in `app/assets/world_map.json`, read once from the bundle; the
 projection, the continent split and the fourteen point tap tolerance are
 in `world_map.dart`, ported from Nouvel's `WorldMapGeometry`.
 
-What the server stores is unchanged. A tapped country stores as the region
-it belongs to from `regions.ts`: the United Kingdom, Ireland, New Zealand,
-India, Singapore, the Emirates and South Africa each map to their own key,
-and every other country stores as elsewhere with the country's own name
-shown back on the screen. The three countries that span several of the
-list's regions, the United States, Canada and Australia, open a second
-pick for the zone, and the zone is what is stored. Nouvel stored a
-country, a state and a city from a bundled dataset; Soul has no columns
-for those and a schema change is a quiz, so the map answers Soul's
-question rather than Nouvel's.
+After the country, the card from the bottom: the country's states, then
+the state's cities, each with a search, and a city can be typed when the
+list does not have it. Adnan asked for this after seeing the zone pick, on
+4 September. The names are Nouvel's dataset, 250 countries, 5329 states
+and 154 thousand cities, in `app/assets/locations.json`, parsed once off
+the main thread. A country the dataset does not know, and there are a few
+small ones on the map it lacks, answers the question directly as its own
+name.
+
+What the server stores is unchanged. The country and the state decide the
+region from `regions.ts`: the United Kingdom, Ireland, New Zealand, India,
+Singapore, the Emirates and South Africa each map to their own key; a state
+of the United States, Canada or Australia maps to the zone most of it keeps,
+in `regionFor` in profile_fields.dart, which is rough at the edges the way
+the server's own nearest point match is; and every other country stores as
+elsewhere. The city, state and country are held as words in `place`, the
+text field the phone's answer already used for a place name, at most a
+hundred and twenty characters, so no column was added and no quiz was owed.
+Nouvel stored country, state and city as three fields; Soul holds one line
+of words and one region, and the profile tab shows both.
 
 Two things the first flow did that decision 211 had undone are back,
 because Adnan asked for it exactly. The phone's answer moves the question
@@ -3936,10 +3946,10 @@ Known gap: Singapore is smaller than the map's resolution and has no
 shape, so it cannot be tapped. The phone finds it, and the server derives
 the region from the coordinates.
 
-Rejected: bundling Nouvel's country, state and city dataset, since nothing
-in Soul reads a city and every field held is a field named in a district
-agreement. A search box, which Nouvel had hidden in favour of the zoom, for
-the same reason it hid it.
+Rejected: three new columns for country, state and city, since the place
+field already holds the same words and a schema change is a quiz. A search
+box over the map, which Nouvel had hidden in favour of the zoom, for the
+same reason it hid it; the search lives inside the picker instead.
 
 Reverses if: the district agreements want a finer place than a region, at
 which point the columns come first and the dataset after.

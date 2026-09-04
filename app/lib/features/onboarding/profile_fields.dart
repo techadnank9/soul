@@ -65,27 +65,8 @@ String? labelFor(List<Choice> among, String? key) {
 
 /// A country on the map, as the region it stores as. The map shows the
 /// whole world and the list has sixteen regions, so most countries store
-/// as elsewhere, with the country's own name shown back on the screen.
-///
-/// Three countries span several of the list's regions. Tapping one of them
-/// opens a second pick, the zones, and the zone is what is stored.
-const zonesByCountry = <String, List<Choice>>{
-  'USA': [
-    Choice('us_east', 'East'),
-    Choice('us_central', 'Central'),
-    Choice('us_mountain', 'Mountain'),
-    Choice('us_west', 'West'),
-  ],
-  'CAN': [
-    Choice('canada_east', 'East'),
-    Choice('canada_west', 'West'),
-  ],
-  'AUS': [
-    Choice('australia_east', 'East'),
-    Choice('australia_west', 'West'),
-  ],
-};
-
+/// as elsewhere, with the place the person picked shown back and held as
+/// words.
 const regionByCountry = <String, String>{
   'GBR': 'uk',
   'IRL': 'ireland',
@@ -95,3 +76,33 @@ const regionByCountry = <String, String>{
   'ARE': 'uae',
   'ZAF': 'south_africa',
 };
+
+/// Three countries span several of the list's regions, and which one is
+/// decided by the state. Rough, by the zone most of a state keeps: a state
+/// that straddles two lands with the larger part.
+const _usWest = {'Washington', 'Oregon', 'California', 'Nevada', 'Alaska', 'Hawaii'};
+const _usMountain = {'Idaho', 'Montana', 'Wyoming', 'Utah', 'Colorado', 'Arizona', 'New Mexico'};
+const _usCentral = {
+  'North Dakota', 'South Dakota', 'Nebraska', 'Kansas', 'Oklahoma', 'Texas',
+  'Minnesota', 'Iowa', 'Missouri', 'Arkansas', 'Louisiana', 'Wisconsin',
+  'Illinois', 'Mississippi', 'Alabama', 'Tennessee',
+};
+const _canadaWest = {'British Columbia', 'Alberta', 'Saskatchewan', 'Yukon', 'Northwest Territories'};
+const _australiaWest = {'Western Australia'};
+
+/// The region a country and state store as.
+String regionFor(String iso3, String? state) {
+  switch (iso3) {
+    case 'USA':
+      if (_usWest.contains(state)) return 'us_west';
+      if (_usMountain.contains(state)) return 'us_mountain';
+      if (_usCentral.contains(state)) return 'us_central';
+      return 'us_east';
+    case 'CAN':
+      return _canadaWest.contains(state) ? 'canada_west' : 'canada_east';
+    case 'AUS':
+      return _australiaWest.contains(state) ? 'australia_west' : 'australia_east';
+    default:
+      return regionByCountry[iso3] ?? 'elsewhere';
+  }
+}

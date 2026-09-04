@@ -49,6 +49,10 @@ flutter:
   # read once from the bundle and nothing in it phones anywhere.
   assets:
     - assets/world_map.json
+    # Every country, its states and their cities, for the picker under the
+    # map. Two megabytes of names, read once off the main thread, and
+    # nothing in it phones anywhere.
+    - assets/locations.json
   fonts:
     - family: InstrumentSerif
       fonts:
