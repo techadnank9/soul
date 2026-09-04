@@ -866,16 +866,28 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final still = _still(context);
-    // Bright above the middle, the app's own dusk below it.
-    final room = _p < 0.5
-        ? Color.lerp(const Color(0xFFFFF9F0), SoulColors.s2, _p * 2)!
-        : Color.lerp(SoulColors.s2, const Color(0xFF2A1F1A), (_p - 0.5) * 2)!;
-    final ink = _p < 0.5
-        ? SoulColors.text
-        : Color.lerp(SoulColors.text, const Color(0xFFF6EBDD), (_p - 0.5) * 2)!;
-    final inkSoft = _p < 0.5
-        ? SoulColors.text3
-        : Color.lerp(SoulColors.text3, const Color(0xFFB9A898), (_p - 0.5) * 2)!;
+
+    // Morning at the top, the app's own dusk at the very bottom.
+    //
+    // The room used to darken evenly, which put the third of four options in
+    // the middle of the fade: a grey the palette does not own, under text
+    // that was halfway to cream and readable on neither. It stays warm and
+    // light now until the last stretch, then falls away quickly, so every
+    // resting place is a colour this app would have chosen.
+    final sink = _p < 0.5 ? 0.0 : math.pow((_p - 0.5) * 2, 2.6).toDouble();
+    final room = Color.lerp(
+      Color.lerp(const Color(0xFFFFF9F0), SoulColors.s3, math.min(_p * 2, 1))!,
+      const Color(0xFF2A1F1A),
+      sink,
+    )!;
+
+    // Ink is chosen against the room rather than against the position, so it
+    // is always one of two readable colours and never the average of them.
+    // The change happens in time, through the animations below, not through
+    // a grey in between.
+    final dusk = room.computeLuminance() < 0.2;
+    final ink = dusk ? const Color(0xFFF6EBDD) : SoulColors.text;
+    final inkSoft = dusk ? const Color(0xFFB9A898) : SoulColors.text3;
     final shown = _committed ?? (_dragging ? _live : null);
 
     return Column(
@@ -930,27 +942,44 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
                       Positioned(
                         left: trackX,
                         top: top,
-                        child: Container(width: 1, height: bottom - top, color: inkSoft.withValues(alpha: 0.5)),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 1,
+                          height: bottom - top,
+                          color: inkSoft.withValues(alpha: 0.5),
+                        ),
                       ),
                       Positioned(
                         left: 0,
                         right: 0,
                         bottom: 4,
-                        child: Container(height: 1, color: inkSoft.withValues(alpha: 0.5)),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          height: 1,
+                          color: inkSoft.withValues(alpha: 0.5),
+                        ),
                       ),
                       Positioned(
                         left: trackX - 40,
                         top: top - 40,
                         width: 80,
-                        child: Text('light', textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: SoulType.sans, fontSize: 12, color: inkSoft)),
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 250),
+                          style: TextStyle(fontFamily: SoulType.sans, fontSize: 12, color: inkSoft),
+                          textAlign: TextAlign.center,
+                          child: const Text('light'),
+                        ),
                       ),
                       Positioned(
                         left: trackX - 40,
                         top: bottom + 26,
                         width: 80,
-                        child: Text('heavy', textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: SoulType.sans, fontSize: 12, color: inkSoft)),
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 250),
+                          style: TextStyle(fontFamily: SoulType.sans, fontSize: 12, color: inkSoft),
+                          textAlign: TextAlign.center,
+                          child: const Text('heavy'),
+                        ),
                       ),
                       for (var i = 0; i < 4; i++)
                         Positioned(
