@@ -566,10 +566,13 @@ class _EmailCodeScreenState extends State<EmailCodeScreen> {
           child: Icon(Icons.mail_outline, size: 30, color: SoulColors.clay),
         ),
         const SizedBox(height: 26),
-        Text(
-          'Enter the code sent to\n${widget.email}',
-          textAlign: TextAlign.center,
-          style: SoulType.heading.copyWith(fontSize: 24, height: 1.35),
+        SizedBox(
+          width: double.infinity,
+          child: Text(
+            'Enter the code sent to\n${widget.email}',
+            textAlign: TextAlign.center,
+            style: SoulType.heading.copyWith(fontSize: 24, height: 1.35),
+          ),
         ),
         const SizedBox(height: 26),
         _Field(
@@ -589,18 +592,24 @@ class _EmailCodeScreenState extends State<EmailCodeScreen> {
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _running ? null : _again,
-          child: Text(
-            'Send another code',
-            textAlign: TextAlign.center,
-            style: SoulType.secondary.copyWith(fontSize: 13, color: SoulColors.clay),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(
+              'Send another code',
+              textAlign: TextAlign.center,
+              style: SoulType.secondary.copyWith(fontSize: 13, color: SoulColors.clay),
+            ),
           ),
         ),
         if (_note != null) ...[
           const SizedBox(height: 10),
-          Text(
-            _note!,
-            textAlign: TextAlign.center,
-            style: SoulType.secondary.copyWith(fontSize: 13),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              _note!,
+              textAlign: TextAlign.center,
+              style: SoulType.secondary.copyWith(fontSize: 13),
+            ),
           ),
         ],
       ],
