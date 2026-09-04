@@ -4125,3 +4125,19 @@ The heading was centred inside its own width rather than on the screen,
 because the column lays its children out from the left and a text takes only
 the room it needs. It is given the full width now.
 
+---
+
+### 223. The profile has one edit control, not one per row
+Sep 2026, Adnan
+
+Decision: an Edit at the top right of the profile opens the whole card. While
+it is open a row is tappable and shows a chevron, and the line under the
+heading says so. Done closes it. The four pencils are gone.
+
+Why: the founder asked for it. Four pencils on a card that is read far more
+often than it is changed is four invitations to change something nobody came
+to change. Decision 217's reasoning for putting a pencil there in the first
+place was that a row which opens an editor on any touch makes reading the
+profile a minefield, and that still holds: the row only listens while the top
+of the screen says the card is being changed.
+

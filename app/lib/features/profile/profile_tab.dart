@@ -25,6 +25,9 @@ class ProfileTab extends StatefulWidget {
 }
 
 class _ProfileTabState extends State<ProfileTab> {
+  /// Whether the card is open for changes. Off every time the tab opens.
+  bool _editing = false;
+
   Map<String, dynamic>? _held;
   bool _failed = false;
 
@@ -141,9 +144,31 @@ class _ProfileTabState extends State<ProfileTab> {
     return Screen(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       body: [
-        const Text('Profile', style: SoulType.heading),
+        // One way in for the whole card. A pencil on every row put four of
+        // them on a screen that is read far more often than it is changed.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(child: Text('Profile', style: SoulType.heading)),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _editing = !_editing),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+                child: Text(
+                  _editing ? 'Done' : 'Edit',
+                  style: SoulType.secondary.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: SoulColors.clay,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
-        Label(_name ?? 'what the app holds'),
+        Label(_editing ? 'tap a line to change it' : (_name ?? 'what the app holds')),
         const SizedBox(height: 18),
         SoulCard(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -153,6 +178,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 label: 'Name',
                 value: _name,
                 onTap: () => _editName(context),
+                editing: _editing,
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
@@ -162,6 +188,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 label: 'Age',
                 value: labelFor(ageBands, _held?['ageBand'] as String?),
                 onTap: () => _pick(context, 'ageBand', 'How old are you?', ageBands),
+                editing: _editing,
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
@@ -171,6 +198,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 label: 'Gender',
                 value: labelFor(genders, _held?['gender'] as String?),
                 onTap: () => _pick(context, 'gender', 'What is your gender?', genders),
+                editing: _editing,
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
@@ -183,6 +211,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 value: _position,
                 note: _held?['timezone'] as String?,
                 onTap: () => _location(context),
+                editing: _editing,
               ),
             ],
           ),
@@ -342,6 +371,7 @@ class _Row extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    required this.editing,
     this.note,
   });
 
@@ -350,12 +380,18 @@ class _Row extends StatelessWidget {
   final String? note;
   final VoidCallback onTap;
 
+  /// Whether the card is being edited. A row that opened an editor on any
+  /// touch turned reading the profile into a minefield, so it only listens
+  /// while the top of the screen says it is being changed.
+  final bool editing;
+
   @override
   Widget build(BuildContext context) {
-    // The row reads. The pencil edits. A row that opened an editor on any
-    // touch turned reading the profile into a minefield.
-    return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: editing ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Row(
           children: [
             SizedBox(width: 78, child: Label(label)),
@@ -376,13 +412,14 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: onTap,
-              icon: const Icon(Icons.edit_outlined, size: 20, color: SoulColors.text3),
-              tooltip: 'Change',
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: editing ? 1 : 0,
+              child: const Icon(Icons.chevron_right, size: 20, color: SoulColors.text3),
             ),
           ],
         ),
+      ),
     );
   }
 }
