@@ -219,10 +219,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CustomPaint(painter: _WeekRing(slices)),
               ),
             ),
-            // The tagger runs after a reflection is already on screen, so a
-            // week can hold entries that have not been named yet. The ring
-            // stays as its empty track and no key is drawn under it, rather
-            // than the card losing its shape for a day.
+            // A week can hold entries with nothing to divide by: the tagger
+            // has not run on them yet, or it ran and found no feeling in
+            // them, which is the honest answer for a few words typed to see
+            // what happens. The ring keeps its shape either way and says so,
+            // rather than sitting there as a blank circle.
+            if (slices.isEmpty) ...[
+              const SizedBox(height: 14),
+              const Center(child: Label('nothing to divide yet')),
+            ],
             if (slices.isNotEmpty) ...[
               const SizedBox(height: 18),
               for (var i = 0; i < slices.length; i += 2) ...[
