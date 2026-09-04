@@ -52,9 +52,10 @@ class ReadyScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           // Room for three lines is held from the start, so nothing below
-          // moves when the line arrives.
-          SizedBox(
-            height: 84,
+          // moves when the line arrives, and it may take more if it needs
+          // them rather than being cut off.
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 84),
             child: FutureBuilder<String>(
               future: line,
               builder: (context, snapshot) {
@@ -73,6 +74,21 @@ class ReadyScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Ours, not the model's, so it is here whatever happened above it
+          // and says the same thing to everybody.
+          Settle(
+            delay: const Duration(milliseconds: 300),
+            child: Text(
+              'From here the app fills in as you go, one moment at a time.',
+              style: const TextStyle(
+                fontFamily: SoulType.serif,
+                fontSize: 19,
+                height: 1.4,
+                color: SoulColors.text2,
+              ),
             ),
           ),
           if (_chips.isNotEmpty) ...[

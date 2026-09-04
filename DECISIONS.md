@@ -4070,3 +4070,31 @@ the person who is changing the API and knows they are.
 Reverses if: there is more than one service worth pointing at, in which case
 the define is the only way and there is no default worth having.
 
+---
+
+### 221. The line thinks with the answers rather than reading them back
+Sep 2026, Adnan
+
+Decision: the line on the last screen says something about the kind of
+moment the app will be useful for, given what was answered. It does not
+quote the options and does not begin with You said. The sentence about what
+happens from here is ours, written into the screen, not the model's.
+
+Why: reading the options back produced sentences that broke in the middle,
+because an option is a fragment with a capital letter on it and it does not
+fit inside somebody else's sentence. It also said nothing the person did not
+just say themselves. The founder asked for something meaningful instead.
+
+What holds it inside the voice: it is still situations never traits, still
+no praise, no advice, no feeling named for them, nothing scored. It is
+written to them and never as if it were them, and the prompt names the
+metaphors it may not reach for, because the first draft of it wrote about
+knots beneath surfaces.
+
+The closing sentence is ours because it is the same for everybody and has to
+be there whatever the model did, including when the model did nothing.
+
+Reverses if: the observation reads as a claim about a person rather than
+about how a kind of decision goes, in which case it goes back to being one
+fixed sentence for everybody.
+
