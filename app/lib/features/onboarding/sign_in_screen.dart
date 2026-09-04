@@ -43,6 +43,12 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _running = false;
   bool _failed = false;
 
+  /// The terms, agreed before either way in is offered. The button is dim
+  /// until it is ticked, and pressing it anyway says which thing is missing
+  /// rather than doing nothing.
+  bool _agreed = false;
+  bool _tried = false;
+
   /// Email is not offered until Apple has been tried and did not work.
   /// One way in is less to read; the second appears at the moment it is
   /// the answer to something.
@@ -69,6 +75,10 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _sendCode() async {
+    if (!_agreed) {
+      setState(() => _tried = true);
+      return;
+    }
     final email = _email.text.trim();
     if (!email.contains('@')) {
       setState(() => _emailNote = 'That does not look like an email address.');
@@ -121,6 +131,10 @@ class _SignInScreenState extends State<SignInScreen> {
   /// of what arrives, and the server never learns who the Apple account
   /// belongs to.
   Future<void> _signIn() async {
+    if (!_agreed) {
+      setState(() => _tried = true);
+      return;
+    }
     setState(() {
       _running = true;
       _failed = false;
@@ -195,54 +209,97 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Icon(Icons.lock_outline, size: 30, color: SoulColors.clay),
         ),
         const SizedBox(height: 26),
-        Text(
-          'This space is yours.\nSign in to keep what you have said.',
-          textAlign: TextAlign.center,
-          style: SoulType.heading.copyWith(fontSize: 26, height: 1.35),
+        // Full width, because the column lays its children out from the left
+        // and a text that only takes the room it needs centres inside itself
+        // rather than on the screen.
+        SizedBox(
+          width: double.infinity,
+          child: Text(
+            'This space is yours.\nSign in to keep what you have said.',
+            textAlign: TextAlign.center,
+            style: SoulType.heading.copyWith(fontSize: 26, height: 1.35),
+          ),
         ),
       ],
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // The terms, reachable, and not a gate. Using the app is the
-          // agreement, per decision 201, so this says so rather than asking
-          // for a tick that would stand between somebody and their account.
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          // The tick comes before either way in. The box outlines in clay
+          // if the button is pressed without it, so the thing that is
+          // missing is the thing that moves.
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
             decoration: BoxDecoration(
               color: SoulColors.s2,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _tried && !_agreed ? SoulColors.clay : Colors.transparent,
+              ),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'By signing in you agree to the Terms of Service and the '
-                  'Privacy Policy, and to what you write being sent to the '
-                  'providers named there so the app can answer.',
-                  textAlign: TextAlign.center,
-                  style: SoulType.secondary.copyWith(fontSize: 13, height: 1.4),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() {
+                    _agreed = !_agreed;
+                    if (_agreed) _tried = false;
+                  }),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: _agreed ? SoulColors.clay : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _agreed ? SoulColors.clay : SoulColors.border2,
+                            width: 2,
+                          ),
+                        ),
+                        child: _agreed
+                            ? const Icon(Icons.check, size: 15, color: Colors.white)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'I agree to the Terms of Service and the Privacy '
+                          'Policy, and to what I write being sent to the '
+                          'providers named there so the app can answer.',
+                          style: SoulType.secondary.copyWith(fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _Link(
-                      'Terms of Service',
-                      onTap: () => openPolicy(context, 'Terms of Service', termsOfService),
-                    ),
-                    const SizedBox(width: 20),
-                    _Link(
-                      'Privacy Policy',
-                      onTap: () => openPolicy(context, 'Privacy Policy', privacyPolicy),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 34),
+                  child: Row(
+                    children: [
+                      _Link(
+                        'Terms of Service',
+                        onTap: () => openPolicy(context, 'Terms of Service', termsOfService),
+                      ),
+                      const SizedBox(width: 20),
+                      _Link(
+                        'Privacy Policy',
+                        onTap: () => openPolicy(context, 'Privacy Policy', privacyPolicy),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 14),
           _AppleButton(
-            enabled: true,
+            enabled: _agreed,
             running: _running,
             onPressed: _signIn,
           ),
@@ -257,7 +314,7 @@ class _SignInScreenState extends State<SignInScreen> {
           if (_emailOffered) ...[
           const SizedBox(height: 14),
           _EmailSignIn(
-            enabled: !_running,
+            enabled: _agreed && !_running,
             running: _emailRunning,
             note: _emailNote,
             email: _email,

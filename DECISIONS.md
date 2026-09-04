@@ -4098,3 +4098,30 @@ Reverses if: the observation reads as a claim about a person rather than
 about how a kind of decision goes, in which case it goes back to being one
 fixed sentence for everybody.
 
+---
+
+### 222. The terms are ticked before signing in, and the way out belongs to one path only
+Sep 2026, Adnan
+
+Decision: the sign in screen carries an agreement tick again, and the Apple
+button and the email path are both dim until it is given. Pressing the
+button without it outlines the box rather than doing nothing. The close
+button is gone from the end of first run and stays only on the screen
+reached from the intro.
+
+Why: the founder asked for all three. Decision 219 had said the terms would
+sit there as a sentence rather than a tick, because using the app is already
+the agreement per decision 201. That reasoning stands for the account, which
+is made and consented on first launch, and this tick does not change it: it
+is an explicit agreement to the terms at the moment an identity is attached,
+and the server does not read it. What it changes is that somebody has said
+so.
+
+The close button was on both paths. At the end of first run there is nothing
+behind that screen to close back to, so it was a way out of a room with no
+other door. On the path from the intro there is, and it keeps it.
+
+The heading was centred inside its own width rather than on the screen,
+because the column lays its children out from the left and a text takes only
+the room it needs. It is given the full width now.
+

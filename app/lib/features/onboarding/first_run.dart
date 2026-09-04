@@ -274,8 +274,11 @@ class _FirstRunState extends State<FirstRun> {
       _Kind.ready => ReadyScreen(profile: _profile, line: _welcome, onContinue: _next),
       // Last. Signing in comes after there is something to keep, not before
       // the person has seen what this is.
+      // No way out at the end of first run. There is nothing behind this
+      // screen to close back to, and the way past it is to sign in or to
+      // take the skip. The close button belongs to the other way in, from
+      // the first screen, where there is something to go back to.
       _Kind.signIn => SignInScreen(
-          onBack: _previous,
           onSignedIn: _toHome,
           onSkip: _toHome,
         ),
