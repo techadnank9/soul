@@ -3730,3 +3730,216 @@ the screen can count what it is given.
 Reverses if: the map tab needs a fact to reach a person it merely mentions
 inside the object, in which case the whole word test from buildContext is
 the right tool and it goes here, not in the extractor.
+
+---
+
+### 211. First run is one sequence, in the shape of Nouvel's onboarding
+Sep 2026, Claude, on Adnan's instruction
+
+Decision: first run is one widget, `FirstRun` in
+`app/lib/features/onboarding/first_run.dart`, that walks nineteen screens in
+a line and owns what they share: a capsule per question along the top, a
+back chevron, and a slide from each step to the next that reverses for back.
+Each screen is only its own question, built from `onboarding_kit.dart`: an
+uppercase eyebrow saying which part of first run this is, the question in
+the serif, a quieter helper line, the options in a scroll, and one pinned
+continue that is dim until there is an answer. The shape, the reveal on the
+how it works screen, the option rows that fill with the accent and fade the
+others, the chips for one word answers and the landing before sign in are
+taken from the v2 onboarding in the Nouvel repository, which Adnan asked to
+be used here. The colours, the type and every word are Soul's.
+
+Two screens are new. How it works reveals the four things that happen every
+time, one a second, and carries the what this is not inset that used to sit
+on the intro, so the welcome says what reflection is and the next screen
+says what the app does with it. A tap shows all of it at once and reduce
+motion renders it complete, because a timed reveal that cannot be hurried
+reads slower than the reader. The landing after the introduction hands back
+what was given as it was given, a name, a band, a place, and says nothing is
+scored. It has no back, since the introduction has already been sent.
+
+Every question now has a continue rather than moving on the moment an option
+is tapped. Two reasons. A mis tap is one tap to fix instead of a back and a
+retap, and the dim continue is the visible form of the rule that every
+question is answered: there is no skip, and a button that does nothing until
+something is chosen says so without a word. The where question no longer
+moves on by itself when the phone answers either; the place lands as a
+chosen row and the person continues, because a fix can take ten seconds and
+a screen that leaves under a finger is worse than one more tap. A picked
+region replaces the phone's coordinates on the client, so the two are never
+sent together.
+
+Found on the way: FLOW.md said at the top of flow 0 that every question can
+be skipped and at the bottom that every question is mandatory on the
+founder's call, and pointed at decision 063, which is about sessions.
+CLAUDE.md and README.md said skippable. The code has had no skip on any list
+question since the founder's call, so the documents now say mandatory and
+this entry is what they point at. If the call was the other way, the fix is
+one line: the continue reads Skip when nothing is chosen and stays live.
+
+Also on the way: `baseline_answering.dart` and `baseline_more.dart` are now
+dead. The ten answering controls in them had been unused since the baseline
+went to plain rows, and `ListChoices`, the last thing read from them, is
+replaced by `OptionRow`. They are left in place for a separate decision.
+
+Rejected: an animation package for the step transition. It is one controller
+and a stack of two, and every package is a name in a district data
+agreement. Auto advancing on tap, kept from before: see above. A progress bar
+over the narrative screens: they are not work to get through and a bar over
+them would say they were.
+
+Reverses if: the founder wants the questions skippable again, or fourteen
+extra taps prove to be what stops a student finishing first run, in which
+case single choice questions go back to advancing on the tap and the
+continue stays only on the name and the where.
+
+---
+
+### 212. The baseline is answered by movement, in the shape of Nouvel's first onboarding
+Sep 2026, Claude, on Adnan's instruction
+
+Decision: each of the ten baseline questions is a scene in
+`app/lib/features/onboarding/baseline_scenes.dart`, no two alike, and there
+is no continue on any of them. A scene responds under the finger, settles
+once chosen, reports the option index, and the next question follows on its
+own. The mechanics are the ones Nouvel's first onboarding used before it
+went to rows on 25 August 2026, which Adnan asked for after seeing the rows
+from decision 211: a light dragged to a corner, answers drifting on a dark
+pond that sink with a ripple, four low walls one of which is pushed over, a
+ball on a seesaw, an orb on a vertical track that dims the room as it drops,
+a deck of cards swiped to pass or to choose, a sun dragged up that warms the
+sky, endings drifting near a blank sentence, an ember slid along a line, and
+four seeds one of which grows and opens. The questions, the options and the
+answers array are unchanged. Every scene is handed the answer already given
+so coming back shows it settled, and each one settles the same way under
+reduce motion, without the drift and the bob.
+
+The mapping is by the `Answering` value each question already carried, so
+the pairing of question to control is the one the set was written with and
+no question was moved. The one scale question takes the sun, since up is
+more. The sentence question takes the blank. The single word question takes
+the seeds, in the four colours, so the set ends lighter than it ran.
+
+Why no continue here when the profile questions have one: a button after a
+movement makes it a form again, and Nouvel's first flow had none. The
+profile questions keep theirs because a name is typed and a region is one
+of sixteen, and neither is a movement. A tap that lands during the slide
+from the last question is ignored for the length of the slide, so a finger
+still moving cannot answer the next one by accident.
+
+This reverses "First run speaks one language" from 3 September, which took
+the ten earlier controls out for rows. It does not restore them:
+`baseline_answering.dart` and `baseline_more.dart` are still dead and still
+left for a separate decision. The scenes here are drawn from Nouvel's
+mechanics, not those.
+
+Rejected: keeping a continue under each scene, for the reason above. One
+mechanic reused across several questions, because ten of the same movement
+reads as a gimmick where ten different ones read as attention. Haptics from
+a package: the standard `HapticFeedback` is enough for a click on each stop
+and an impact on a commit.
+
+Reverses if: real students answer these slower or less often than the rows,
+which the `baseline` post timestamps against the `account_created` event
+will show, or the founder wants the rows back.
+
+---
+
+### 213. The age band is a wheel, and the wheel starts on an adult
+Sep 2026, Claude, on Adnan's instruction
+
+Decision: the age question is a wheel on `ListWheelScrollView` with fixed
+extent physics, the engine behind the system date and time wheel, laid
+flatter than the system default because that cylinder shrinks and thins the
+outer rows until a six row wheel cannot be read end to end. It is in the
+serif with a clay outline as the selection band, since the band is drawn
+over the rows and a filled one hid the very value it marked. It replaces the
+six rows from decision 211, as Nouvel's first onboarding had it, and it sits
+in the middle of the space rather than under the question. The wheel starts
+on 18 to 24 when nothing has been chosen, Adnan's call, and the value
+recorded from the first frame is read off the wheel itself, so what the
+wheel shows is what continue sends. The name step also lost its helper line
+the same day, on Adnan's instruction.
+
+Why the wheel: six short ordered bands are what a wheel is for, and the
+system engine brings inertia and snap that a hand built wheel does not. Why
+it starts on an adult: a wheel always shows a value, and the one it shows to
+somebody who scrolls past without reading must not be a minor's band, since
+that would record a child from a thumb that never stopped. Nouvel reasoned
+the same way for the same control.
+
+Rejected: starting the wheel on the first band, for the reason above. A
+wheel with no value until turned, because the engine has no such state and
+faking one with a blank row reads as a broken picker.
+
+Reverses if: real students turn out to leave it on 18 to 24 more often than
+the rows were left unanswered, which the profile rows against the age bands
+in `app_events` will show.
+
+---
+
+### 214. Three gender options, not four
+Sep 2026, Adnan
+
+Decision: the gender question offers Male, Female and Rather not say. The
+nonbinary option is removed from the client list in `profile_fields.dart`.
+The database enum is untouched, so any row that already holds nonbinary
+keeps it; the profile tab shows such a row with no label, because the
+lookup finds no match, and the person can set it to one of the three.
+
+Why: the founder's call, given on seeing the screen on 4 September 2026.
+
+Reverses if: the founder wants it back, which is one line in the list and
+nothing in the database.
+
+---
+
+### 215. The where question is a world map, and the sixteen regions are what it stores
+Sep 2026, Claude, on Adnan's instruction
+
+Decision: the where question is Nouvel's first region step, rebuilt. The
+whole world first, divided into continents; a tap on any country zooms to
+its continent, a second tap picks the country. Under the map, a line that
+asks the phone, and a smaller one for somebody who would rather not say.
+The coastlines are Natural Earth's 177 countries as longitude latitude
+rings, in `app/assets/world_map.json`, read once from the bundle; the
+projection, the continent split and the fourteen point tap tolerance are
+in `world_map.dart`, ported from Nouvel's `WorldMapGeometry`.
+
+What the server stores is unchanged. A tapped country stores as the region
+it belongs to from `regions.ts`: the United Kingdom, Ireland, New Zealand,
+India, Singapore, the Emirates and South Africa each map to their own key,
+and every other country stores as elsewhere with the country's own name
+shown back on the screen. The three countries that span several of the
+list's regions, the United States, Canada and Australia, open a second
+pick for the zone, and the zone is what is stored. Nouvel stored a
+country, a state and a city from a bundled dataset; Soul has no columns
+for those and a schema change is a quiz, so the map answers Soul's
+question rather than Nouvel's.
+
+Two things the first flow did that decision 211 had undone are back,
+because Adnan asked for it exactly. The phone's answer moves the question
+on by itself, and prefer not to say moves on too. Prefer not to say stores
+elsewhere, which is the list's own catch all and carries no timezone, so
+the scheduler treats it as it treats any unknown zone; nothing is invented
+about where the person is.
+
+Once the phone has said no, the line under the map opens the phone's own
+settings for this app, or the phone wide location switch when that is what
+is off, and the phone is asked again the moment the app comes back. Adnan's
+call on 4 September: a line that says turn it on in Settings and does not
+go there is a dead end. `openLocationSettings` in device_location.dart is
+the door, through the geolocator package already in use, so no new
+dependency.
+
+Known gap: Singapore is smaller than the map's resolution and has no
+shape, so it cannot be tapped. The phone finds it, and the server derives
+the region from the coordinates.
+
+Rejected: bundling Nouvel's country, state and city dataset, since nothing
+in Soul reads a city and every field held is a field named in a district
+agreement. A search box, which Nouvel had hidden in favour of the zoom, for
+the same reason it hid it.
+
+Reverses if: the district agreements want a finer place than a region, at
+which point the columns come first and the dataset after.

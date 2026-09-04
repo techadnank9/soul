@@ -152,10 +152,16 @@ Two test students exist: `student_with_consent` and `student_no_consent`. The
 second one is how you check the gate without editing code. They are created by
 `npm run seed`, so a reset does not lose them.
 
-First run is an intro, four profile questions, the ten baseline questions, then
-home. Every question in it can be skipped, and a student who skips all of them
-still gets the whole product. The profile tab, fourth on the bar, shows every
-held field and can empty any of them.
+First run is a welcome, a how it works screen, four profile questions, the
+ten baseline questions, a spoken introduction, a landing, then sign in and
+home. Every question has to be answered. The profile questions have a
+continue that is dim until there is an answer; each baseline question is a
+scene answered by a movement, in `baseline_scenes.dart`, that moves on by
+itself once something is chosen. The profile tab, fourth on the bar, shows
+every held field and can empty any of them. The flow is one sequence in
+`app/lib/features/onboarding/first_run.dart`, built from the pieces in
+`onboarding_kit.dart`, and decisions 211 and 212 say where its shape came
+from.
 
 What the profile holds, and the argument about it, is decisions 056 and 061.
 The second one covers exact coordinates, which the client asks the device for

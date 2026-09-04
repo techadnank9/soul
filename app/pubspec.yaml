@@ -44,6 +44,11 @@ dev_dependencies:
 # dependency added here is also a sub processor named in a district agreement.
 flutter:
   uses-material-design: true
+  # The world's coastlines, 177 countries as lon lat rings from Natural
+  # Earth, for the map on the where question. Data, not a package: it is
+  # read once from the bundle and nothing in it phones anywhere.
+  assets:
+    - assets/world_map.json
   fonts:
     - family: InstrumentSerif
       fonts:

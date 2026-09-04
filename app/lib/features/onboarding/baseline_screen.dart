@@ -1,213 +1,145 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import 'baseline.dart';
-import 'baseline_answering.dart';
+import 'baseline_scenes.dart';
 
-/// The baseline set, asked one question at a time.
+/// One question of the baseline set, answered by a movement.
 ///
-/// Four colour tiles rather than four stacked rows. A tile presses in when it
-/// is chosen, holds for a beat so the choice is felt, then the next question
-/// slides in. The bar along the top fills as the set is answered.
+/// Ten questions across five sections, asked once at first run. The purpose
+/// is pattern awareness and readiness, not diagnosis and not treatment.
+/// Nothing here is scored, nothing is shown back as a result, and no answer
+/// produces a label for the user.
 ///
-/// The pleasure here is in the interaction. Nothing on this screen praises the
-/// user, congratulates them, or tells them what an answer means, because
-/// none of that is ours to say and the clinical guidance is direct about it.
-class BaselineScreen extends StatefulWidget {
-  const BaselineScreen({
+/// Each question has its own scene, from baseline_scenes.dart, and no two
+/// are alike: a light dragged to a corner, an answer sunk in a pond, a wall
+/// pushed over. There is no continue. A scene settles once the person has
+/// chosen and the next question follows on its own, the way Nouvel's first
+/// onboarding did it, because a button after a movement is a form again.
+///
+/// The section mark is the eyebrow, a dot in the section's colour and its
+/// name, so moving from one part of the set to another is seen without
+/// being announced. Nothing on this screen praises the user, congratulates
+/// them, or tells them what an answer means.
+class BaselineQuestionView extends StatefulWidget {
+  const BaselineQuestionView({
     super.key,
-    required this.onFinished,
-    this.onBack,
+    required this.index,
+    required this.answer,
+    required this.onChanged,
+    required this.onContinue,
   });
 
-  /// Answers, indexed by question, with null for anything skipped.
-  final ValueChanged<List<int?>> onFinished;
+  final int index;
 
-  /// The screen before this one. The chevron on the first question goes
-  /// there, so nothing in first run is a door that only opens one way.
-  final VoidCallback? onBack;
+  /// The chosen option, as an index into the question's options, or null.
+  final int? answer;
+  final ValueChanged<int?> onChanged;
+  final VoidCallback onContinue;
 
   @override
-  State<BaselineScreen> createState() => _BaselineScreenState();
+  State<BaselineQuestionView> createState() => _BaselineQuestionViewState();
 }
 
-class _BaselineScreenState extends State<BaselineScreen> {
-  final _answers = List<int?>.filled(baseline.length, null);
+class _BaselineQuestionViewState extends State<BaselineQuestionView> {
+  /// Closed for the length of the slide in, so a finger still moving from
+  /// the last question cannot answer this one by accident.
+  bool _canAnswer = false;
+  bool _advancing = false;
 
-  int _index = 0;
-  int? _pressed;
-  bool _leaving = false;
-
-  BaselineQuestion get _question => baseline[_index];
-
-  /// How to answer this one, when the control is not obvious on sight.
-
-  Future<void> _choose(int option) async {
-    if (_leaving) return;
-    setState(() => _pressed = option);
-    _answers[_index] = option;
-
-    // Long enough that choosing feels like it landed, short enough that ten
-    // questions do not feel like a queue.
-    await Future<void>.delayed(const Duration(milliseconds: 260));
-    if (!mounted) return;
-
-    setState(() => _leaving = true);
-    await Future<void>.delayed(const Duration(milliseconds: 140));
-    if (!mounted) return;
-
-    if (_index == baseline.length - 1) {
-      widget.onFinished(_answers);
-      return;
-    }
-    setState(() {
-      _index++;
-      _pressed = null;
-      _leaving = false;
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(milliseconds: 420), () {
+      if (mounted) setState(() => _canAnswer = true);
     });
   }
 
-  void _back() {
-    if (_index == 0) {
-      widget.onBack?.call();
-      return;
-    }
-    setState(() {
-      _index--;
-      _pressed = _answers[_index];
-      _leaving = false;
+  void _select(int option) {
+    if (_advancing) return;
+    _advancing = true;
+    widget.onChanged(option);
+    // The scene has already settled by the time it reports. A short hold
+    // so the settled state is seen, then on.
+    Future<void>.delayed(const Duration(milliseconds: 350), () {
+      if (mounted) widget.onContinue();
     });
+  }
+
+  Widget _scene(BaselineQuestion question) {
+    final options = question.options;
+    final answer = widget.answer;
+    return switch (question.style) {
+      Answering.orb => FieldScene(options: options, answer: answer, onSelect: _select),
+      Answering.list => PondScene(options: options, answer: answer, onSelect: _select),
+      Answering.constellation => StonesScene(options: options, answer: answer, onSelect: _select),
+      Answering.stack => BeamScene(options: options, answer: answer, onSelect: _select),
+      Answering.ripples => WeightScene(options: options, answer: answer, onSelect: _select),
+      Answering.deck => DeckScene(options: options, answer: answer, onSelect: _select),
+      Answering.scale => SunriseScene(options: options, answer: answer, onSelect: _select, ends: question.ends),
+      Answering.blank => SentenceScene(
+          options: options,
+          answer: answer,
+          onSelect: _select,
+          lead: question.lead ?? question.text,
+        ),
+      Answering.dial => WarmthScene(options: options, answer: answer, onSelect: _select),
+      Answering.words => BloomScene(options: options, answer: answer, onSelect: _select, colours: baselineColours),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final showSection = _index == 0 ||
-        baseline[_index - 1].section != _question.section;
+    final question = baseline[widget.index];
+    final (icon, colour) = sectionMarks[question.section] ?? (Icons.circle, SoulColors.clay);
 
-    return Scaffold(
-      backgroundColor: SoulColors.bg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 12, 22, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 18, 24, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 34,
-                    child: _index == 0 && widget.onBack == null
-                        ? null
-                        : IconButton(
-                            onPressed: _back,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: const Icon(Icons.chevron_left,
-                                size: 24, color: SoulColors.text3),
-                          ),
-                  ),
-                  Expanded(child: _Progress(done: _index, of: baseline.length)),
-                  const SizedBox(width: 12),
-                  Text('${_index + 1} of ${baseline.length}',
-                      style: SoulType.muted),
-                ],
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(color: colour, shape: BoxShape.circle),
+                child: Icon(icon, size: 12, color: Colors.white),
               ),
-              const SizedBox(height: 28),
-              AnimatedOpacity(
-                opacity: 1,
-                duration: Duration.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _SectionMark(section: _question.section, show: showSection),
-                    const SizedBox(height: 14),
-                    Text(
-                      _question.text,
-                      style: SoulType.heading.copyWith(fontSize: 28, height: 1.15),
-                    ),
-                    if (_question.lead != null) ...[
-                      const SizedBox(height: 10),
-                      Text(_question.lead!, style: SoulType.secondary),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              Expanded(
-                child: AnimatedOpacity(
-                  opacity: 1,
-                  duration: Duration.zero,
-                  child: KeyedSubtree(
-                    key: ValueKey(_index),
-                    child: ListChoices(
-                      options: _question.options,
-                      chosen: _pressed,
-                      onChoose: _choose,
-                    ),
-                  ),
+              const SizedBox(width: 8),
+              Text(
+                question.section.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: SoulType.sans,
+                  fontSize: 11,
+                  letterSpacing: 1.4,
+                  fontWeight: FontWeight.w500,
+                  color: SoulColors.clayDark,
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The bar along the top. One segment per question, filling as they are
-/// answered, so ten questions look finite rather than endless.
-class _Progress extends StatelessWidget {
-  const _Progress({required this.done, required this.of});
-  final int done;
-  final int of;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < of; i++) ...[
-          if (i > 0) const SizedBox(width: 3),
-          Expanded(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 240),
-              height: 4,
-              decoration: BoxDecoration(
-                color: i <= done ? SoulColors.clay : SoulColors.s3,
-                borderRadius: BorderRadius.circular(2),
-              ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              question.text,
+              textAlign: TextAlign.center,
+              style: SoulType.heading.copyWith(fontSize: 26, height: 1.2),
+            ),
+          ),
+          const SizedBox(height: 22),
+          IgnorePointer(
+            ignoring: !_canAnswer || _advancing,
+            child: _scene(question),
+          ),
+          const Spacer(),
+          Center(
+            child: Text(
+              '${widget.index + 1} of ${baseline.length}',
+              style: SoulType.muted.copyWith(fontSize: 12),
             ),
           ),
         ],
-      ],
-    );
-  }
-}
-
-
-/// The section a question belongs to, as a mark and a name.
-///
-/// It fades rather than disappearing between questions in the same section, so
-/// moving from one part of the set to another is felt without being announced.
-class _SectionMark extends StatelessWidget {
-  const _SectionMark({required this.section, required this.show});
-
-  final String section;
-  final bool show;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: show ? 1 : 0.5,
-      duration: const Duration(milliseconds: 300),
-      child: Text(
-        section.toUpperCase(),
-        style: const TextStyle(
-          fontFamily: SoulType.sans,
-          fontSize: 11,
-          letterSpacing: 1.4,
-          fontWeight: FontWeight.w500,
-          color: SoulColors.text3,
-        ),
       ),
     );
   }

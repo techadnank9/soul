@@ -11,10 +11,7 @@ import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
-import 'features/onboarding/baseline.dart';
-import 'features/onboarding/baseline_screen.dart';
-import 'features/onboarding/intro_screen.dart';
-import 'features/onboarding/profile_screen.dart';
+import 'features/onboarding/first_run.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
@@ -80,10 +77,9 @@ Widget? _requestedScreen() {
   // are reached by walking the loop, because the only way to open one directly
   // would be to hand it a reflection nobody wrote.
   return switch (name) {
-    'intro' => IntroScreen(onContinue: nothing, onSkip: nothing),
-    'profile' => ProfileScreen(onFinished: (_) {}),
+    'intro' || 'how' || 'profile' || 'baseline' || 'ready' =>
+      _firstRun(startAt: name),
     'sign_in' => SignInScreen(onSignedIn: nothing, onSkip: nothing),
-    'baseline' => BaselineScreen(onFinished: (_) {}),
     'capture' => CaptureScreen(onSubmitted: (_, {spoken = false, toneId}) {}),
     'home' => const Home(),
     'day' => DayScreen(api: api, date: todayOnDevice(), onBack: nothing),
@@ -102,7 +98,7 @@ class SoulApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
       home: _requestedScreen() ?? const _Launch(),
-      routes: {'/start': (_) => const FirstRun()},
+      routes: {'/start': (_) => _firstRun()},
     );
   }
 }
@@ -179,176 +175,36 @@ class _LaunchState extends State<_Launch> {
         return switch (snapshot.data) {
           _Start.home => const Home(),
           _Start.signIn => const SignInAgain(),
-          _ => const FirstRun(),
+          _ => _firstRun(),
         };
       },
     );
   }
 }
 
-/// Screens 1 to 3, once.
-class FirstRun extends StatefulWidget {
-  const FirstRun({super.key});
-
-  @override
-  State<FirstRun> createState() => _FirstRunState();
-}
-
-class _FirstRunState extends State<FirstRun> {
-  final _api = SoulApi.fromEnvironment();
-  int _step = 0;
-  Profile _profile = const Profile();
-
-  /// The account this phone writes into, asked for before anything is asked
-  /// of the person. Held as a future so the intro's continue can wait on it,
-  /// which is the only wait in first run and is almost always already over.
-  /// A phone that is offline gets no account and the posts that follow fail
-  /// quietly, which is what they did before too.
-  late final Future<void> _account = _ensureAccount();
-
-  Future<void> _ensureAccount() async {
-    if (await sessionToken() != null) return;
-    try {
-      await storeSessionToken(await _api.deviceSession());
-      _api.event('account_created');
-    } catch (_) {
-      // Nothing to tell them yet. Sign in at the end makes another attempt.
-    }
-  }
-
-
-  void _next() => setState(() => _step++);
-
-  Future<void> _skipToDemo(BuildContext context) async {
-    try {
-      final token = await _api.demoSession();
-      await storeSessionToken(token);
-      await markFirstRunDone();
-      _api.event('demo_skipped');
-      if (!context.mounted) return;
-      Navigator.of(context).pushReplacement(
+/// First run, wired to home.
+///
+/// The flow itself lives in features/onboarding/first_run.dart and knows
+/// nothing about where it goes when it is over. That is decided here, next
+/// to Home, which is the only place that needs to know both.
+Widget _firstRun({String? startAt}) {
+  return Builder(
+    builder: (context) => FirstRun(
+      startAt: startAt,
+      onFinished: (name) => Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => Home(name: name)),
+      ),
+      // Straight to a home with a week in it. The server makes a fresh
+      // account and fills it, so the skip works on any phone and nobody
+      // shares an account.
+      onDemo: () => Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const Home(name: 'Sam')),
-      );
-    } catch (error) {
-      _api.event('demo_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      });
-    }
-  }
-  void _previous() => setState(() => _step = _step > 0 ? _step - 1 : 0);
-
-  /// First run ends on home, empty, with whatever name was given. A user
-  /// who has just arrived has no week behind them, so the day one version is
-  /// the true one and the populated version is only ever reached by living
-  /// with the app.
-  /// The introduction is stored, not reflected on, and it always lands on
-  /// home.
-  ///
-  /// Every later entry earns a line back. This one does not: it is how the
-  /// app learns who it is talking to, and a user who has just answered
-  /// fifteen questions should arrive somewhere rather than be handed one more
-  /// screen.
-  ///
-  /// Nothing is shown for a flagged introduction either, on the founder's
-  /// call. See decision 063. The classifier still runs, blocking, on the
-  /// server, and the safety_flags row is still written with the risk level and
-  /// the categories, so the record exists for whoever reads it when the
-  /// escalation path is built. What is missing is the screen: a user who
-  /// says something serious here sees home, the same as everyone else.
-  void _submitIntroduction(BuildContext context, String text,
-      {required bool spoken, String? toneId}) {
-    _api.submit(text: text, spoken: spoken, toneId: toneId).then(
-      (result) => _api.event('introduction_stored', {
-        'state': result.runtimeType.toString(),
-        'spoken': spoken,
-      }),
-      onError: (Object error) => _api.event('introduction_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      }),
-    );
-    setState(() => _step++);
-  }
-
-  Future<void> _toHome(BuildContext context) async {
-    await markFirstRunDone();
-    if (!context.mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Home(name: _profile.displayName)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // What this says, and does not say, is the scope framing the clinical
-    // guidance asks for. The consent screen is still absent: consent is
-    // recorded by the district at rostering, so nothing here gates on it, and
-    // this screen makes no promise about confidentiality it cannot keep until
-    // the escalation policy is written. See decisions 048 and 055.
-    return switch (_step) {
-      0 => IntroScreen(
-          onContinue: () async {
-            await _account;
-            _next();
-          },
-          // Straight to a home with a week in it. The server makes a fresh
-          // account and fills it, so the skip works on any phone and nobody
-          // shares an account.
-          onSkip: () => _skipToDemo(context),
-          onSignIn: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const SignInAgain()),
-          ),
-        ),
-
-      // Four questions, every one of them skippable. Sent in the background,
-      // because a user should never wait on this, and a profile where
-      // everything was skipped is never sent at all.
-      1 => ProfileScreen(
-          onBack: _previous,
-          onFinished: (profile) {
-            setState(() => _profile = profile);
-            if (!profile.isEmpty) _api.profile(profile.toJson()).ignore();
-            _next();
-          },
-        ),
-
-      // Nothing is scored and nothing is shown back. The answers are a
-      // baseline for later, not a result for now.
-      2 => BaselineScreen(
-          onBack: _previous,
-          onFinished: (answers) {
-            _api.baseline(baselineVersion, answers).ignore();
-            _next();
-          },
-        ),
-
-      // The first real pass through the loop, at the end of first run.
-      // Step 3.
-      //
-      // Everything before this was answered by tapping. This is the first
-      // time a user says something in their own words, and it goes the
-      // whole way: consent gate, safety classifier, then a generated line
-      // that names something only they said. It is also the only honest way
-      // to show what the product is, because describing the loop is not the
-      // same as feeling it.
-      3 => CaptureScreen(
-          onBack: _previous,
-          opener: 'last one',
-          prompt: 'Tell us about yourself.',
-          note: 'Speak or type. What you are like, what you spend your time '
-              'on, what is on your mind lately.',
-          onSubmitted: (text, {required spoken, toneId}) =>
-              _submitIntroduction(context, text, spoken: spoken, toneId: toneId),
-        ),
-
-      // Last. Signing in comes after there is something to keep, not before
-      // the user has seen what this is.
-      _ => SignInScreen(
-          onBack: _previous,
-          onSignedIn: () => _toHome(context),
-          onSkip: () => _toHome(context),
-        ),
-    };
-  }
+      ),
+      onSignInAgain: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SignInAgain()),
+      ),
+    ),
+  );
 }
 
 /// Screen 4 and everything reached from it.

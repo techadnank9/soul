@@ -169,9 +169,15 @@ npm run worker -w @soul/api # the queue: tagging, cue cards, sweeps, check backs
 
 ## First run
 
-An intro that says what the app does and what it is not, four profile
-questions, the ten baseline questions, then home, empty. Every question can be
-skipped and none of them gates anything.
+A welcome, a screen that reveals the four things that happen every time and
+what the app is not, four profile questions, the ten baseline questions, a
+spoken introduction, a landing that hands back what was given, then sign in
+and home, empty. One sequence with a progress bar over the questions, a back
+chevron and a slide between steps. Every question has to be answered: the
+profile questions have a continue that is dim until there is an answer, and
+each baseline question is a scene answered by a movement, a light dragged to
+a corner, an answer sunk in a pond, a wall pushed over, that moves on by
+itself once something is chosen.
 
 The profile is a first name, an age band, a gender and a location. There is no
 surname and no birthdate. The where question offers the device before the list,
@@ -262,8 +268,9 @@ be created by an assistant.
    to twenty minutes and it appears under the app's TestFlight tab, where
    internal testers are added. Nothing is submitted for review by this.
 
-5. **On the device.** First run is the intro, the profile questions, the ten
-   baseline questions, the spoken introduction, then sign in. The simulator
+5. **On the device.** First run is the welcome, how it works, the profile
+   questions, the ten baseline questions, the spoken introduction, the
+   landing, then sign in. The simulator
    has no microphone, so this is the first time the voice path, the transcript
    confirm step, and the tone judgement can be seen for real. Every model call
    is written to the `generations` table with its latency, which is how to

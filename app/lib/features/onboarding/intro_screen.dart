@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import 'onboarding_kit.dart';
 
-/// The first screen a user ever sees.
+/// The first screen a person ever sees.
 ///
-/// It says what the app does and what it does not do, and then gets out of the
-/// way. No sign up, no account, no promise about how anyone will feel. The
-/// clinical guidance is direct that scope is set at the start rather than
-/// discovered later, and the two lines about what this is not are the part
-/// that does that work.
+/// It says what the app is for and then gets out of the way. No sign up, no
+/// account, no promise about how anyone will feel. What the app does and
+/// what it is not come on the next screen, once the idea has landed: a
+/// person who does not know what this is for cannot want it.
+///
+/// It settles into place in parts rather than snapping on, because the
+/// first thing the app does should be to arrive rather than appear.
 class IntroScreen extends StatelessWidget {
   const IntroScreen({super.key, required this.onContinue, this.onSkip, this.onSignIn});
 
@@ -23,78 +26,106 @@ class IntroScreen extends StatelessWidget {
   final VoidCallback? onSkip;
 
   /// For somebody who has been here before, on another phone or after a log
-  /// out. Straight to sign in, no questions.
+  /// out. Straight to sign in, no questions. Without this the only sign in
+  /// in first run is on the last screen, fifteen questions away.
   final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context) {
-    return Screen(
-      padding: const EdgeInsets.fromLTRB(22, 40, 22, 26),
-      body: [
-        const _Mark(),
-        const SizedBox(height: 34),
-        // The heading asks the question the two paragraphs under it answer,
-        // in the same shape they are written in: not that, this. Thirty
-        // seconds is gone from here on purpose. It reappears on the capture
-        // screen, where it is a fact about what you are about to do rather
-        // than a claim on a screen that has not asked for anything yet.
-        Text(
-          'A bridge between\njournaling and therapy.',
-          style: SoulType.heading.copyWith(height: 1.15),
-        ),
-        const SizedBox(height: 26),
-        // The founder's words, kept as written. They say what reflection is
-        // before the app says what it does, which is the right order: a
-        // user who does not know what this is for cannot want it.
-        Text(
-          'Reflection is not thinking harder about something. It is saying it '
-          'out loud and hearing what was actually in there.',
-          style: SoulType.lead,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Most of it never gets said. It just sits, shaping what you do next '
-          'without you noticing.',
-          style: SoulType.lead,
-        ),
-        const SizedBox(height: 16),
-        // One line on the mechanic, after the idea rather than before it.
-        Text(
-          'So you say it here. One line comes back holding what you said, and '
-          'days later the app asks how it went.',
-          style: SoulType.lead,
-        ),
-        const SizedBox(height: 26),
-        const Inset(
-          label: 'what this is not',
-          body: 'It does not score you, tell you what you feel, or replace '
-              'anyone you would talk to. Nothing you say here is graded.',
-        ),
-      ],
-      footer: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(26, 12, 26, 34),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SoulButton(
-            'Continue',
-            kind: SoulButtonKind.filled,
-            onPressed: onContinue,
+          Settle(
+            child: Row(
+              children: [
+                const _Mark(),
+                const Spacer(),
+                if (onSignIn != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onSignIn,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                      child: Text('Sign in', style: SoulType.secondary),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          if (onSignIn != null) ...[
-            const SizedBox(height: 4),
-            SoulButton(
-              'Already have an account? Sign in',
-              kind: SoulButtonKind.ghost,
-              onPressed: onSignIn,
+          const Spacer(),
+          // The heading asks the question the lines under it answer, in the
+          // same shape they are written in: not that, this. Thirty seconds
+          // is not here on purpose. It reappears on the capture screen, where
+          // it is a fact about what you are about to do rather than a claim
+          // on a screen that has not asked for anything yet.
+          Settle(
+            delay: const Duration(milliseconds: 80),
+            child: Text(
+              'A bridge between journaling and therapy.',
+              style: SoulType.heading.copyWith(fontSize: 38, height: 1.1),
             ),
-          ],
-          if (onSkip != null) ...[
-            const SizedBox(height: 4),
-            SoulButton(
-              'Skip to demo home, development only',
-              kind: SoulButtonKind.ghost,
-              onPressed: onSkip,
+          ),
+          const SizedBox(height: 22),
+          // The founder's words, kept as written. They say what reflection is
+          // before the app says what it does, which is the right order.
+          Settle(
+            delay: const Duration(milliseconds: 220),
+            child: Text(
+              'Reflection is not thinking harder about something. It is saying '
+              'it out loud and hearing what was actually in there.',
+              style: const TextStyle(
+                fontFamily: SoulType.serif,
+                fontSize: 21,
+                height: 1.4,
+                color: SoulColors.text,
+              ),
             ),
-          ],
+          ),
+          const Spacer(),
+          Settle(
+            delay: const Duration(milliseconds: 380),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Text(
+                'Most of it never gets said. It just sits, shaping what you do '
+                'next without you noticing.',
+                style: SoulType.secondary.copyWith(fontSize: 14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 26),
+          Settle(
+            delay: const Duration(milliseconds: 520),
+            child: Row(
+              children: [
+                if (onSkip != null)
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: 180,
+                        child: SoulButton(
+                          'Demo home, dev only',
+                          kind: SoulButtonKind.ghost,
+                          alignLeft: true,
+                          onPressed: onSkip,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                PrimaryCta(
+                  'Begin',
+                  arrow: true,
+                  expand: false,
+                  onPressed: onContinue,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -48,6 +48,21 @@ Future<DeviceLocation?> currentLocation() async {
   }
 }
 
+/// Opens the phone's own settings for this app, where location can be
+/// turned back on. When location is off for the whole phone it opens that
+/// switch instead. Nothing is read or written; it is a door.
+Future<void> openLocationSettings() async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openLocationSettings();
+    } else {
+      await Geolocator.openAppSettings();
+    }
+  } catch (_) {
+    // The door did not open. The map is still on the screen.
+  }
+}
+
 /// The place those coordinates are, as a person would say it, from the
 /// phone's own geocoder: neighbourhood, city, state. Null when the phone
 /// cannot say, which is what an offline phone answers.

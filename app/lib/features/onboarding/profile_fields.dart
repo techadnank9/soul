@@ -26,10 +26,12 @@ const ageBands = <Choice>[
   Choice('50_plus', '50 or over'),
 ];
 
+/// Three, on the founder's call of 4 September 2026. The database enum still
+/// carries nonbinary, so a row that already holds it keeps it; the profile
+/// tab shows such a row's label as nothing, since labelFor finds no match.
 const genders = <Choice>[
   Choice('male', 'Male'),
   Choice('female', 'Female'),
-  Choice('nonbinary', 'Nonbinary'),
   Choice('not_said', 'Rather not say'),
 ];
 
@@ -60,3 +62,36 @@ String? labelFor(List<Choice> among, String? key) {
   }
   return null;
 }
+
+/// A country on the map, as the region it stores as. The map shows the
+/// whole world and the list has sixteen regions, so most countries store
+/// as elsewhere, with the country's own name shown back on the screen.
+///
+/// Three countries span several of the list's regions. Tapping one of them
+/// opens a second pick, the zones, and the zone is what is stored.
+const zonesByCountry = <String, List<Choice>>{
+  'USA': [
+    Choice('us_east', 'East'),
+    Choice('us_central', 'Central'),
+    Choice('us_mountain', 'Mountain'),
+    Choice('us_west', 'West'),
+  ],
+  'CAN': [
+    Choice('canada_east', 'East'),
+    Choice('canada_west', 'West'),
+  ],
+  'AUS': [
+    Choice('australia_east', 'East'),
+    Choice('australia_west', 'West'),
+  ],
+};
+
+const regionByCountry = <String, String>{
+  'GBR': 'uk',
+  'IRL': 'ireland',
+  'NZL': 'new_zealand',
+  'IND': 'india',
+  'SGP': 'singapore',
+  'ARE': 'uae',
+  'ZAF': 'south_africa',
+};

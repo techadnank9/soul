@@ -40,9 +40,10 @@ no secret configured it refuses everybody.
 
 ## Flow 0: first run
 
-Once, on a device that has never been used. Nothing here blocks anything: every
-question can be skipped and a student who skips all of them still gets the
-whole product.
+Once, on a device that has never been used. Nineteen screens in one sequence,
+walked with a progress bar over the fourteen questions, a back chevron and a
+slide between steps. `first_run.dart` owns that chrome and holds the answers;
+each screen is only its own question.
 
 Before any of it, the phone gets an account. `FirstRun` asks
 `POST /auth/device` the moment it opens, `auth/accounts.ts` makes a row in the
@@ -55,17 +56,25 @@ says or writes ever waits on a checkbox. `POST /consent` and the
 consent later.
 
 ```
-main.dart / FirstRun
+main.dart → onboarding/first_run.dart, FirstRun
   └─ POST /auth/device → auth/accounts.ts, a session before a single question
-  └─ 0. intro_screen.dart
-  │     what the app does, and three lines on what it is not
+  └─ 0. intro_screen.dart, the welcome
+  │     what reflection is, a sign in for somebody who has been here before
   │     no account, no sign up, no consent screen (decisions 048 and 055)
   │
+  ├─ 0b. how_it_works_screen.dart
+  │     the four things that happen every time, revealed one a second, and
+  │     what the app is not. A tap shows all of it at once
+  │
   ├─ 1. profile_screen.dart
-  │     name, age band, gender, where, one question at a time
-  │     the where question offers the device before the list
+  │     name, age band, gender, where, one question per screen, each with
+  │     its own continue that is dim until there is an answer
+  │     the where question is a world map, continent then country, with
+  │     the phone asked first; a country stores as one of the sixteen
+  │     regions and three countries open a second pick for the zone
   │        data/device_location.dart asks for permission, coarse failure and
-  │        refusal both fall back to the picker, which is always on screen
+  │        refusal both fall back to the map, which is always on screen
+  │        world_map.dart holds the coastlines and the projection
   │     POST /profile  → services/profile/save.ts   ← background, nobody waits
   │        writes only the fields that arrived, and null empties a field
   │        coordinates decide the region, so a measured location always wins
@@ -76,7 +85,10 @@ main.dart / FirstRun
   │        writes an audit_log row naming the fields, never the values
   │
   ├─ 2. baseline_screen.dart
-  │     the ten questions, unchanged
+  │     the ten questions, unchanged, one per screen, each answered by a
+  │     movement from baseline_scenes.dart: a light dragged to a corner, an
+  │     answer sunk in a pond, a wall pushed over, a sun raised. No
+  │     continue: a scene settles once chosen and the next follows
   │     POST /baseline  → routes/consent.ts         ← background, nobody waits
   │
   ├─ 3. capture_screen.dart, the introduction
@@ -85,6 +97,10 @@ main.dart / FirstRun
   │     the line it generates is never shown. This entry is how the app
   │     learns who it is talking to, not a moment to reflect on, and a
   │     flagged one shows nothing either. See decision 063
+  │
+  ├─ 3b. ready_screen.dart
+  │     what was given, handed back as it was given, and nothing scored
+  │     no back from here: the introduction has already been sent
   │
   ├─ 4. sign_in_screen.dart
   │     the terms, the privacy policy, an agreement that gates the button
@@ -96,7 +112,10 @@ main.dart / FirstRun
 
 Every question in first run is mandatory. The skips were removed on the
 founder's call, so the name field, the four profile questions and all ten
-baseline questions have to be answered to reach home. See decision 063.
+baseline questions have to be answered to reach home. The continue on the
+profile questions is dim until there is an answer, and a baseline scene moves
+on only once something has been chosen. See decisions 211 and 212 for the
+screens and the contradiction this paragraph used to sit under.
 
 The profile tab is the same endpoint from the other direction. It reads
 `GET /profile`, shows every field held, and writes one field at a time. A field
