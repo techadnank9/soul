@@ -30,7 +30,6 @@ class BaselineQuestion {
     required this.options,
     required this.style,
     this.lead,
-    this.ends,
   });
 
   final String section;
@@ -42,8 +41,6 @@ class BaselineQuestion {
   /// The blank is written as an underscore run.
   final String? lead;
 
-  /// For a scale, the words at either end.
-  final (String, String)? ends;
 }
 
 /// Each section carries a mark and a colour, so a user can see they have
@@ -130,7 +127,6 @@ const baseline = <BaselineQuestion>[
     text: 'I have faced similar decisions before',
     options: ['Strongly agree', 'Somewhat agree', 'Not sure', 'Disagree'],
     style: Answering.scale,
-    ends: ('Not at all', 'Every time'),
   ),
   BaselineQuestion(
     section: 'Patterns and repetition',

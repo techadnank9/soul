@@ -75,7 +75,7 @@ class _BaselineQuestionViewState extends State<BaselineQuestionView> {
       Answering.stack => BeamScene(options: options, answer: answer, onSelect: _select),
       Answering.ripples => WeightScene(options: options, answer: answer, onSelect: _select),
       Answering.deck => DeckScene(options: options, answer: answer, onSelect: _select),
-      Answering.scale => SunriseScene(options: options, answer: answer, onSelect: _select, ends: question.ends),
+      Answering.scale => SunriseScene(options: options, answer: answer, onSelect: _select),
       Answering.blank => SentenceScene(
           options: options,
           answer: answer,

@@ -1044,7 +1044,7 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
 }
 
 // ---------------------------------------------------------------------------
-// 6. The cards. A deck of four. Swipe left to pass, right to choose.
+// 6. The cards. Four dealt on the table, face up. Tap the one that is you.
 // ---------------------------------------------------------------------------
 
 class DeckScene extends Scene {
@@ -1060,49 +1060,25 @@ class DeckScene extends Scene {
 }
 
 class _DeckSceneState extends State<DeckScene> {
-  /// Card order, top first. Passing moves the top card to the back.
-  late List<int> _order = List.generate(widget.options.length, (i) => i);
-  Offset _drag = Offset.zero;
-  bool _dragging = false;
+  /// How each card sits on the table. A hand is never square, so each is
+  /// turned a little and dropped a little off the line of the one beside it.
+  static const _lie = [-0.030, 0.024, 0.020, -0.026];
+  static const _drop = [0.0, 7.0, 5.0, 12.0];
+
   int? _committed;
-  int? _flying;
-  bool _flyRight = true;
 
   @override
   void initState() {
     super.initState();
     _committed = widget.answer;
-    if (_committed != null) {
-      _order = [_committed!, ...List.generate(widget.options.length, (i) => i).where((i) => i != _committed)];
-    }
   }
 
   void _choose(int i) {
+    if (_committed != null) return;
     HapticFeedback.mediumImpact();
-    setState(() {
-      _committed = i;
-      _dragging = false;
-      _drag = Offset.zero;
-    });
+    setState(() => _committed = i);
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       if (mounted) widget.onSelect(i);
-    });
-  }
-
-  void _pass(int i) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _flying = i;
-      _flyRight = false;
-      _dragging = false;
-    });
-    Future<void>.delayed(const Duration(milliseconds: 320), () {
-      if (!mounted) return;
-      setState(() {
-        _order = [..._order.where((o) => o != i), i];
-        _flying = null;
-        _drag = Offset.zero;
-      });
     });
   }
 
@@ -1111,97 +1087,78 @@ class _DeckSceneState extends State<DeckScene> {
     return Column(
       children: [
         SizedBox(
-          height: 250,
+          height: 300,
           child: LayoutBuilder(builder: (context, box) {
-            final w = box.maxWidth;
+            const gap = 12.0;
+            final cardW = (box.maxWidth - gap) / 2;
+            final cardH = (box.maxHeight - gap - 12) / 2;
             return Stack(
-              alignment: Alignment.center,
               children: [
-                for (var depth = _order.length - 1; depth >= 0; depth--) _card(_order[depth], depth, w),
+                for (var i = 0; i < widget.options.length; i++)
+                  Positioned(
+                    left: (i % 2) * (cardW + gap),
+                    top: (i ~/ 2) * (cardH + gap) + _drop[i % _drop.length],
+                    width: cardW,
+                    height: cardH,
+                    child: _card(i),
+                  ),
               ],
             );
           }),
         ),
-        const SizedBox(height: 8),
         SceneHint(
-          _committed == null ? 'Swipe right if it is you, left if it is not' : widget.options[_committed!],
+          _committed == null ? 'Pick the one that sounds like you' : widget.options[_committed!],
           chosen: _committed != null,
         ),
       ],
     );
   }
 
-  Widget _card(int i, int depth, double w) {
-    final top = depth == 0;
+  Widget _card(int i) {
     final chosen = _committed == i;
-    final flying = _flying == i;
-    final live = top && _dragging ? _drag : Offset.zero;
-    final x = flying ? (_flyRight ? w * 1.4 : -w * 1.4) : live.dx;
-    final angle = flying ? (_flyRight ? 0.35 : -0.35) : live.dx / 400;
-    final quick = top && _dragging && !flying;
+    final passed = _committed != null && !chosen;
 
-    return AnimatedPositioned(
-      duration: quick ? Duration.zero : const Duration(milliseconds: 320),
-      curve: Curves.easeOut,
-      left: 16 + x,
-      right: 16 - x,
-      top: 12 + depth * 10.0,
-      bottom: 12 - depth * 10.0,
-      child: AnimatedScale(
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 320),
+      opacity: passed ? 0.3 : 1,
+      child: AnimatedRotation(
         duration: const Duration(milliseconds: 320),
-        scale: 1 - depth * 0.04,
-        child: AnimatedRotation(
-          duration: quick ? Duration.zero : const Duration(milliseconds: 320),
-          turns: angle / (2 * math.pi),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 320),
-            opacity: (_committed != null && !chosen) ? 0.25 : (depth > 2 ? 0 : 1),
-            child: GestureDetector(
-              onTap: top && _committed == null ? () => _choose(i) : null,
-              onPanStart: top && _committed == null ? (_) => setState(() => _dragging = true) : null,
-              onPanUpdate: top && _committed == null
-                  ? (d) => setState(() => _drag += Offset(d.delta.dx, 0))
-                  : null,
-              onPanEnd: top && _committed == null
-                  ? (_) {
-                      if (_drag.dx > 90) {
-                        _flyRight = true;
-                        _choose(i);
-                      } else if (_drag.dx < -90) {
-                        _pass(i);
-                      } else {
-                        setState(() {
-                          _dragging = false;
-                          _drag = Offset.zero;
-                        });
-                      }
-                    }
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: chosen ? SoulColors.clay : SoulColors.s1,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: chosen ? SoulColors.clay : SoulColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: chosen ? SoulColors.clay.withValues(alpha: 0.35) : SoulColors.shade,
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    widget.options[i],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: SoulType.serif,
-                      fontSize: 24,
-                      height: 1.25,
-                      color: chosen ? Colors.white : SoulColors.text,
-                    ),
+        curve: Curves.easeOut,
+        // The chosen card straightens as it is picked up. The rest keep
+        // lying where they fell.
+        turns: (chosen ? 0.0 : _lie[i % _lie.length]) / (2 * math.pi),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          scale: chosen ? 1.05 : (passed ? 0.96 : 1),
+          child: GestureDetector(
+            onTap: () => _choose(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 320),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: chosen ? SoulColors.clay : SoulColors.s1,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: chosen ? SoulColors.clay : SoulColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: chosen ? SoulColors.clay.withValues(alpha: 0.32) : SoulColors.shade,
+                    blurRadius: chosen ? 22 : 12,
+                    offset: Offset(0, chosen ? 10 : 5),
                   ),
+                ],
+              ),
+              child: Center(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 320),
+                  style: TextStyle(
+                    fontFamily: SoulType.serif,
+                    fontSize: 19,
+                    height: 1.2,
+                    color: chosen ? Colors.white : SoulColors.text,
+                  ),
+                  textAlign: TextAlign.center,
+                  child: Text(widget.options[i]),
                 ),
               ),
             ),
@@ -1222,11 +1179,7 @@ class SunriseScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
-    this.ends,
   });
-
-  /// The words at the bottom and the top of the sky.
-  final (String, String)? ends;
 
   @override
   State<SunriseScene> createState() => _SunriseSceneState();
@@ -1265,24 +1218,14 @@ class _SunriseSceneState extends State<SunriseScene> {
   Widget build(BuildContext context) {
     final sky = Color.lerp(const Color(0xFF2B2230), const Color(0xFFFFE2B8), _p)!;
     final shown = _committed ?? (_dragging ? _live : null);
+    // The sky used to carry two words down its left edge for its ends. They
+    // named a different scale from the one the options run on, so the eye
+    // read one thing and chose from another. The options below say where
+    // each height lands, which is the only naming this needs.
     return Column(
       children: [
         Row(
           children: [
-            if (widget.ends != null)
-              SizedBox(
-                width: 64,
-                height: 150,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(widget.ends!.$2, textAlign: TextAlign.right, style: SoulType.muted.copyWith(fontSize: 11)),
-                    Text(widget.ends!.$1, textAlign: TextAlign.right, style: SoulType.muted.copyWith(fontSize: 11)),
-                  ],
-                ),
-              ),
-            if (widget.ends != null) const SizedBox(width: 12),
             Expanded(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
@@ -1340,7 +1283,22 @@ class _SunriseSceneState extends State<SunriseScene> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        // Quiet, and only until the sun has been moved. Nothing on the sky
+        // says it can be dragged, and a person who does not try will tap a
+        // row and never find out it was theirs to move.
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: shown == null ? 1 : 0,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 6),
+            child: Text(
+              'Drag the sun, or pick a line',
+              textAlign: TextAlign.center,
+              style: SoulType.muted.copyWith(fontSize: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
         for (var i = 0; i < _count; i++) ...[
           if (i > 0) const SizedBox(height: 8),
           GestureDetector(

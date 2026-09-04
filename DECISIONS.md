@@ -3953,3 +3953,53 @@ same reason it hid it; the search lives inside the picker instead.
 
 Reverses if: the district agreements want a finer place than a region, at
 which point the columns come first and the dataset after.
+
+---
+
+### 216. The cards are dealt face up, not swiped away
+Sep 2026, Adnan
+
+Decision: the deck question shows all four options at once, four cards lying
+on a table, and a tap picks one. Swiping is gone.
+
+Why: the founder said the cards made no sense, and the interaction was
+answering a different question from the one asked. The question picks one of
+four. The deck showed one card at a time and asked swipe right if it is you,
+left if it is not, so a person judged the first card with nothing to compare
+it against, and rejecting a card only moved it to the back of the pile. Four
+rejections returned to the first card. There was no state in which the deck
+ended without a choice, and no point at which all four had been seen
+together.
+
+Dealing them face up keeps the cards, which are the reason this question does
+not look like the other nine, and makes the choice a comparison. The chosen
+card straightens and lifts, the other three stay lying where they fell and
+fade back.
+
+Reverses if: a question arrives that really is a yes or no on each of several
+things, which is what the swipe was built for and is not what any of the ten
+ask.
+
+---
+
+### 217. The sky has no words down its edge, and it says it can be dragged
+Sep 2026, Adnan
+
+Decision: the sunrise question loses the two words that ran down the left of
+the sky, and gains one quiet line under it that says the sun can be dragged.
+The `ends` field is gone from the question shape with them, since nothing
+else used it.
+
+Why: the words named a scale the options do not run on. The sky read every
+time at the top and not at all at the bottom while the four options read
+strongly agree down to disagree, so the eye was given one scale and the hand
+chose from another. The options already say what each height means.
+
+And nothing on the sky said it could be touched. A person who does not try
+will tap a row and never learn the sun was theirs to move, so one muted line
+says so and fades the moment anything is chosen.
+
+Reverses if: a question needs poles that the options do not already name, in
+which case they come back as part of that question rather than as a field
+every question carries.
+
