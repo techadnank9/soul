@@ -4229,3 +4229,26 @@ corner. With the profile gone there are four, and four do.
 The profile is read now and then and changed rarely, which is not what a
 place in the bar is for. It keeps everything it had and gains a way back.
 
+---
+
+### 228. The week is the seven days ending today, and a day opens where it was tapped
+Sep 2026, Adnan
+
+Decision: the week is now the seven days up to and including today rather
+than Monday to Sunday of the calendar week. Today is the last column. A day
+tapped anywhere opens on top of that screen and back returns to it.
+
+Why: a calendar week puts days that have not happened at the end of every
+row, so from Monday to Thursday most of the strip was greyed out and the
+week looked half empty. Seven days ending today is seven days whatever day
+it is, and nothing in it is waiting to happen. The count above the ring and
+the themes in it move with it, so the strip and the ring describe the same
+stretch of time.
+
+The day used to open by switching to the Days tab and pushing from inside
+it, so tapping a day on home and pressing back landed on Days rather than on
+home. It is pushed from wherever it was asked for now.
+
+Reverses if: somebody needs the calendar week specifically, which no screen
+asks for.
+

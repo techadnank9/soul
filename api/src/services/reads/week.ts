@@ -24,14 +24,14 @@ type ThemeRow = { name: string; count: number }
 export async function week(session: Session): Promise<WeekView> {
   return asStudent(session, async (tx) => {
     const zone = await studentZone(tx, session)
-    const monday = await weekStart(tx, zone)
+    const first = await weekStart(tx, zone)
 
     const days = await tx<DayRow[]>`
       select
         to_char(d, 'YYYY-MM-DD') as "date",
         (array['M', 'T', 'W', 'T', 'F', 'S', 'S'])[extract(isodow from d)::int] as "weekday",
         count(e.id)::int as "count"
-      from generate_series(${monday}::date, ${monday}::date + 6, interval '1 day') as d
+      from generate_series(${first}::date, ${first}::date + 6, interval '1 day') as d
       left join entries e
         on e.student_id = ${session.studentId}
        and (e.created_at at time zone ${zone})::date = d::date
@@ -52,7 +52,7 @@ export async function week(session: Session): Promise<WeekView> {
         and t.feeling is not null
         and t.confidence >= ${MIN_TAG_CONFIDENCE}
         and (e.created_at at time zone ${zone})::date
-            between ${monday}::date and ${monday}::date + 6
+            between ${first}::date and ${first}::date + 6
       group by t.feeling
       order by "count" desc, t.feeling
       limit ${THEMES_SHOWN}`
@@ -117,12 +117,20 @@ export async function week(session: Session): Promise<WeekView> {
   })
 }
 
-/** Monday of the student's current week, as their own calendar reads it. */
+/**
+ * Six days before today, in the student's own calendar, so the week runs up
+ * to today and ends there.
+ *
+ * It used to be the Monday of the calendar week, which put days that have
+ * not happened at the end of every row and left the week looking half
+ * empty until Friday. A week that ends today has seven days in it whatever
+ * day it is, and nothing in it is waiting to happen.
+ */
 async function weekStart(tx: TransactionSql, zone: string): Promise<string> {
-  const rows = await tx<{ monday: string }[]>`
-    select to_char(date_trunc('week', now() at time zone ${zone}), 'YYYY-MM-DD') as "monday"`
+  const rows = await tx<{ first: string }[]>`
+    select to_char((now() at time zone ${zone})::date - 6, 'YYYY-MM-DD') as "first"`
 
   const row = rows[0]
   if (!row) throw new Error('week start returned no row')
-  return row.monday
+  return row.first
 }

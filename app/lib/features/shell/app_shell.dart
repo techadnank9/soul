@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../people/people_screen.dart';
 import '../profile/profile_tab.dart';
+import '../day/day_screen.dart';
 import '../day/days_screen.dart';
 import '../home/home_screen.dart';
 import '../patterns/patterns_screen.dart';
@@ -47,13 +48,24 @@ class _AppShellState extends State<AppShell> {
   int _tab = 0;
 
   /// Which day the Days tab should open, when the user picked one from the
-  /// week strip. Null means the list decides, and it opens the newest.
-  String? _day;
 
-  void _openDay(String date) => setState(() {
-        _day = date;
-        _tab = 1;
-      });
+  /// The day opens on top of wherever it was asked for, so back goes back
+  /// there. It used to switch to the Days tab and open from inside it, which
+  /// meant tapping a day on home and pressing back landed on a different
+  /// screen from the one that was left.
+  Future<void> _openDay(String date) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => DayScreen(
+          api: _api,
+          date: date,
+          onBack: () => Navigator.of(page).pop(),
+        ),
+      ),
+    );
+    // An entry written from that page changes the week behind it.
+    if (mounted) setState(() {});
+  }
 
   /// The profile is a screen of its own now rather than a fifth tab. It is
   /// read now and then and changed rarely, which is not what a place in the
@@ -86,7 +98,7 @@ class _AppShellState extends State<AppShell> {
             onOpenDay: _openDay,
             onOpenPatterns: () => setState(() => _tab = 2),
           ),
-          DaysScreen(api: _api, revision: widget.revision, openOn: _day),
+          DaysScreen(api: _api, revision: widget.revision),
           PatternsScreen(api: _api, revision: widget.revision),
           PeopleScreen(api: _api, revision: widget.revision),
         ],
