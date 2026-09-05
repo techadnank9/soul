@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { weatherWhere } from '../services/weather/now.js'
+import { reading } from '../services/weather/reading.js'
 import type { Session } from '../session.js'
 
 /**
@@ -15,4 +16,13 @@ export const weather = new Hono<Vars>()
 
 weather.get('/weather', async (c) => {
   return c.json(await weatherWhere(c.get('session')))
+})
+
+/**
+ * A reading of the sky, for development builds only. A release build reads
+ * the weather from Apple on the device and never asks for this. See the
+ * service for why it exists at all.
+ */
+weather.get('/weather/reading', async (c) => {
+  return c.json(await reading(c.get('session')))
 })

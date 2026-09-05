@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show kDebugMode, listEquals;
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../data/device_location.dart';
@@ -106,11 +106,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final where = await widget.api.weatherWhere();
     if (where == null || where.answeredToday) return;
 
-    final sky = await weatherAt(
+    var sky = await weatherAt(
       latitude: where.latitude,
       longitude: where.longitude,
       fahrenheit: where.fahrenheit,
     );
+
+    // Apple declines on a simulator, which is where most of this is looked
+    // at. In a debug build the service reads it instead so the card is
+    // there to look at. A release build never asks.
+    if (sky == null && kDebugMode) {
+      final reading = await widget.api.weatherReading();
+      final condition = reading?['condition'] as String?;
+      final celsius = (reading?['celsius'] as num?)?.toDouble();
+      if (condition != null && celsius != null) {
+        sky = readingToWeather(
+          condition: condition,
+          celsius: celsius,
+          daylight: reading?['daylight'] as bool? ?? true,
+          fahrenheit: where.fahrenheit,
+        );
+      }
+    }
     if (!mounted || sky == null) return;
 
     final place = await placeName(where.latitude, where.longitude);

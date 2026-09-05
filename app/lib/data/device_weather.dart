@@ -36,6 +36,22 @@ class DeviceWeather {
 
 const _channel = MethodChannel('soul/weather');
 
+/// Turns a reading into words. Apple's condition names on a device, and the
+/// same vocabulary from the service in a development build.
+DeviceWeather readingToWeather({
+  required String condition,
+  required double celsius,
+  required bool daylight,
+  required bool fahrenheit,
+}) {
+  final sky = _skyFor(condition, night: !daylight);
+  return DeviceWeather(
+    words: sky.$1,
+    question: sky.$2,
+    degrees: (fahrenheit ? celsius * 9 / 5 + 32 : celsius).round(),
+  );
+}
+
 /// Null on anything at all: no entitlement yet, no network, an older phone,
 /// or Apple saying no. Home reads null as no card.
 Future<DeviceWeather?> weatherAt({
@@ -55,11 +71,11 @@ Future<DeviceWeather?> weatherAt({
     final daylight = answer['daylight'] as bool? ?? true;
     if (condition == null || celsius == null) return null;
 
-    final sky = _skyFor(condition, night: !daylight);
-    return DeviceWeather(
-      words: sky.$1,
-      question: sky.$2,
-      degrees: (fahrenheit ? celsius * 9 / 5 + 32 : celsius).round(),
+    return readingToWeather(
+      condition: condition,
+      celsius: celsius,
+      daylight: daylight,
+      fahrenheit: fahrenheit,
     );
   } catch (_) {
     return null;

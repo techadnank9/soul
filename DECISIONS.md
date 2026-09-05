@@ -4399,3 +4399,34 @@ Reverses if: the entitlement cannot be had, in which case the same shape
 works with any provider by putting the fetch back on the server, and the
 card and its answered day do not change at all.
 
+---
+
+### 234. A development build reads the sky from the service, because Apple declines on a simulator
+Sep 2026, Claude
+
+Decision: when WeatherKit returns nothing and the build is a debug build,
+the app asks the service for the same reading, which comes from Open Meteo.
+A release build never asks. Its weather comes from Apple on the device and
+its position never leaves the phone.
+
+Why: WeatherKit needs a provisioning profile carrying its entitlement.
+Xcode signs a simulator build to run locally whatever it is told, so the
+entitlement is not there, Apple's auth service refuses to mint a token, and
+the request fails with WDSJWTAuthenticatorServiceListener error two. That is
+Apple's own log line, not a guess. The capability is enabled on the
+identifier and it makes no difference on a simulator.
+
+Almost all of this app is looked at on a simulator, so without a fallback
+the card is missing every time it is tested and looks broken every time.
+
+The licence holds. Open Meteo's free tier is non commercial and this is
+somebody developing the app, which is what a development build is. Decision
+233 stands for everybody who is not.
+
+One vocabulary. The service returns a condition in the same words Apple
+uses, so the app has one mapping from a condition to a sentence rather than
+two that drift.
+
+Reverses if: signing a simulator build with the entitlement becomes
+possible, at which point the fallback and the route go.
+

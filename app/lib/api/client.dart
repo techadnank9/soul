@@ -366,6 +366,20 @@ class SoulApi {
     await _post('/baseline', {'setVersion': setVersion, 'answers': chosen});
   }
 
+  /// A reading of the sky from the service, for development builds only.
+  ///
+  /// WeatherKit needs a provisioning profile carrying its entitlement, and a
+  /// simulator build is signed to run locally whatever is asked of it, so on
+  /// a simulator Apple declines. A release build never calls this: its
+  /// weather comes from Apple and its position never leaves the phone.
+  Future<Map<String, dynamic>?> weatherReading() async {
+    try {
+      return await _get('/weather/reading');
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Where to ask about the weather, and whether today has been answered.
   /// The weather itself is read on the device. Null when there is nothing
   /// to say, which home treats as no card rather than as a failure.
