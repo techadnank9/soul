@@ -1,25 +1,18 @@
 import { Hono } from 'hono'
-import { weatherNow } from '../services/weather/now.js'
+import { weatherWhere } from '../services/weather/now.js'
 import type { Session } from '../session.js'
 
 /**
- * What the sky is doing where they are, and a question that follows from it.
+ * Where to ask about the weather, and whether today has been answered.
  *
- * Home asks for this on its own rather than as part of the week, so a slow
- * or unreachable weather service costs the card and nothing else. Null when
- * there is no position, no region, or nothing came back, and the card is
- * simply not there.
+ * The weather is read on the phone through WeatherKit, so nothing here
+ * leaves the building. Null when there is no position and no region, and
+ * home reads that as no card.
  */
 type Vars = { Variables: { session: Session } }
 
 export const weather = new Hono<Vars>()
 
 weather.get('/weather', async (c) => {
-  const session = c.get('session')
-  const now = await weatherNow(session)
-  console.log(
-    `weather: user ${session.studentId.slice(0, 8)} ` +
-      (now ? `"${now.line}"` : 'nothing to say'),
-  )
-  return c.json(now)
+  return c.json(await weatherWhere(c.get('session')))
 })

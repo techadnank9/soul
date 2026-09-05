@@ -5,6 +5,7 @@ import { storeEntry, markProcessed } from '../../entries/store.js'
 import { beatOne } from '../../generate/beatOne.js'
 import { enqueue } from '../../jobs/enqueue.js'
 import { linkTone, loadTone } from '../tone/store.js'
+import { weatherAnswered } from '../weather/now.js'
 import type { Session } from '../../session.js'
 import type { SubmitEntry, SubmitResult } from '../../contracts.js'
 
@@ -30,6 +31,11 @@ export async function submit(
   const consented = await checkConsent(session, 'third_party_processing')
 
   const entryId = await storeEntry(session, input)
+
+  // The card on home asked something today and this is the answer, so it
+  // stands down until tomorrow. Written before consent is checked, because
+  // it is about a card on a screen and not about anything leaving.
+  if (input.fromWeather) await weatherAnswered(session)
 
   // The tone was judged on the transcribe path, before this entry existed.
   // Linked here, scoped to the student, and only ever for a spoken entry. A

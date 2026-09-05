@@ -630,19 +630,36 @@ class PersonView {
       );
 }
 
-/// What the sky is doing where they are, and a question that follows from
-/// it. Absent when there is no position, no region, or nothing came back.
-class WeatherNow {
-  const WeatherNow({required this.line, required this.question});
-  final String line;
-  final String question;
+/// Where to ask about the weather, and whether the card has been answered
+/// today. The weather itself is read on the device, so this is the only
+/// part the server has an answer for.
+class WeatherWhere {
+  const WeatherWhere({
+    required this.latitude,
+    required this.longitude,
+    required this.fahrenheit,
+    required this.answeredToday,
+  });
 
-  static WeatherNow? fromJson(Map<String, dynamic>? json) {
+  final double latitude;
+  final double longitude;
+  final bool fahrenheit;
+
+  /// Something was said to the card today, so home shows none until
+  /// tomorrow. Tapping it is not answering it.
+  final bool answeredToday;
+
+  static WeatherWhere? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
-    final line = json['line'] as String?;
-    final question = json['question'] as String?;
-    if (line == null || question == null) return null;
-    return WeatherNow(line: line, question: question);
+    final latitude = (json['latitude'] as num?)?.toDouble();
+    final longitude = (json['longitude'] as num?)?.toDouble();
+    if (latitude == null || longitude == null) return null;
+    return WeatherWhere(
+      latitude: latitude,
+      longitude: longitude,
+      fahrenheit: json['fahrenheit'] as bool? ?? false,
+      answeredToday: json['answeredToday'] as bool? ?? false,
+    );
   }
 }
 

@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
+import '../../data/device_location.dart';
+import '../../data/device_weather.dart';
 import '../../api/models.dart';
 import '../day/day_screen.dart';
 import '../../theme/soul_theme.dart';
@@ -69,7 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Asked for on its own rather than as part of the week, so a slow or
   /// unreachable weather service costs this card and nothing else on the
   /// screen. Null is the ordinary answer when no position was ever shared.
-  WeatherNow? _weather;
+  DeviceWeather? _weather;
+
+  /// The place the phone named for their position, for the line on the card.
+  String? _place;
 
   @override
   void initState() {
@@ -91,11 +96,29 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Null is an ordinary answer and means no card. Nothing is shown when it
-  /// fails, and nothing is said about it.
+  /// Where to look comes from the service, and the weather itself from
+  /// Apple on this device, so the position never leaves the phone.
+  ///
+  /// Null anywhere along the way means no card, which is an ordinary answer
+  /// and is not shown as a failure. A card answered today is not shown
+  /// again until tomorrow, and tapping one is not answering it.
   Future<void> _sky() async {
-    final sky = await widget.api.weather();
-    if (mounted && sky != null) setState(() => _weather = sky);
+    final where = await widget.api.weatherWhere();
+    if (where == null || where.answeredToday) return;
+
+    final sky = await weatherAt(
+      latitude: where.latitude,
+      longitude: where.longitude,
+      fahrenheit: where.fahrenheit,
+    );
+    if (!mounted || sky == null) return;
+
+    final place = await placeName(where.latitude, where.longitude);
+    if (!mounted) return;
+    setState(() {
+      _weather = sky;
+      _place = place?.split(',').first.trim();
+    });
   }
 
   Future<void> _load() async {
@@ -286,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           onTap: () => widget.onCapture(
             prompt: _weather!.question,
-            note: _weather!.line,
+            note: _weather!.lineIn(_place),
           ),
           child: Row(
             children: [
@@ -294,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Label(_weather!.line),
+                    Label(_weather!.lineIn(_place)),
                     const SizedBox(height: 6),
                     Text(
                       _weather!.question,
@@ -303,6 +326,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 18,
                         height: 1.35,
                         color: SoulColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Apple asks for this wherever their weather is shown.
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => launchWeatherAttribution(),
+                      child: Text(
+                        'Weather',
+                        style: SoulType.muted.copyWith(fontSize: 11),
                       ),
                     ),
                   ],

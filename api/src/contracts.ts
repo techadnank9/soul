@@ -20,6 +20,13 @@ export const submitEntry = z.object({
    * linked, so a guessed id links nothing.
    */
   toneId: z.string().uuid().optional(),
+
+  /**
+   * Written from the weather card on home. The card stays on the screen
+   * every day until something is said to it, so the server has to know
+   * when something was.
+   */
+  fromWeather: z.boolean().optional(),
 })
 export type SubmitEntry = z.infer<typeof submitEntry>
 

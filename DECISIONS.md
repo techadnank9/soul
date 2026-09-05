@@ -4357,3 +4357,45 @@ already stored.
 Reverses if: it reads as small talk rather than as a way in, which is a
 thing to watch for in task 7 rather than to argue about now.
 
+---
+
+### 233. The weather comes from Apple, on the phone, and the card stands until it is answered
+Sep 2026, Adnan
+
+Decision: WeatherKit, read on the device, replaces Open Meteo read on the
+server. The service is asked only where to look and whether today has been
+answered. The card is on home every day until something is said to it, and
+tapping it is not saying something.
+
+Why not Open Meteo: its free tier is non commercial in its own terms, which
+is fine for testing and not fine for a product people pay for. The paid tier
+would have been the smallest change and it buys nothing the alternative does
+not already give.
+
+Why WeatherKit: the Apple Developer Program membership already covers five
+hundred thousand calls a month, it is licensed for a commercial product, and
+it runs on the device. That last part is the real reason. The position never
+leaves the phone and no third party is told where anybody is, which for an
+app whose promise is that little leaves is a change of kind rather than of
+vendor. Our own service now knows less than it did.
+
+What it costs: iOS sixteen rather than fifteen, which affects nobody
+testing. An identifier and a capability in the developer account, which only
+a person can set up. An Android build later would need Apple's REST version
+with a signed token, and there is no Android build.
+
+Apple asks for attribution wherever their weather is shown, so the card
+carries the word Weather and a tap opens their legal page. The link is
+opened through the channel that was already there rather than by adding a
+package for it.
+
+Standing until answered: the card asked something today and stays until
+something is said back. The day it was answered is kept on the person rather
+than on the phone, so it holds across a reinstall and cannot be lost by
+closing the app. It is their own calendar day, so a card answered at eleven
+at night is not new again at midnight.
+
+Reverses if: the entitlement cannot be had, in which case the same shape
+works with any provider by putting the fetch back on the server, and the
+card and its answered day do not change at all.
+

@@ -1,0 +1,1 @@
+ALTER TABLE "students" ADD COLUMN "weather_answered_on" date;

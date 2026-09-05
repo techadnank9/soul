@@ -61,6 +61,7 @@ runs before either, blocking, on every entry.
 | Schema | Drizzle |
 | Jobs | Durable, Postgres backed |
 | Memory | A temporal graph in the same Postgres: facts with validity windows, nightly consolidation, an embedding per entry and per fact, and a graph endpoint. docs/memory.md |
+| Weather | Apple WeatherKit, read on the device, so no position leaves the phone. Covered by the Developer Program membership |
 | Errors | Sentry, app and service, on only when a DSN is set |
 | Models | OpenAI primary, Gemini second, OpenRouter fallback. gpt-5 for beat one, the Mirror and the tagger, gpt-5-mini for safety |
 | Observability | Prompt and model version stored on every generated row |

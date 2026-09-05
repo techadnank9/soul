@@ -240,6 +240,7 @@ class _HomeState extends State<Home> {
     String text, {
     required bool spoken,
     String? toneId,
+    bool fromWeather = false,
   }) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -247,6 +248,7 @@ class _HomeState extends State<Home> {
           transcript: text,
           spoken: spoken,
           toneId: toneId,
+          fromWeather: fromWeather,
           onFinished: () {
             Navigator.of(session).popUntil((route) => route.isFirst);
             setState(() => _entries++);
@@ -260,6 +262,9 @@ class _HomeState extends State<Home> {
   /// the weather card on home hands over. Without them it is the ordinary
   /// open question.
   void _openCapture(BuildContext context, {String? prompt, String? note}) {
+    // A prompt means the weather card asked this, and the entry says so, so
+    // the card stands down for the day once something has been said to it.
+    final fromWeather = prompt != null;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (capture) => CaptureScreen(
@@ -267,8 +272,13 @@ class _HomeState extends State<Home> {
           prompt: prompt ?? 'What just happened?',
           note: note ?? 'Thirty seconds is plenty.',
           onClose: () => Navigator.of(capture).pop(),
-          onSubmitted: (text, {required spoken, toneId}) =>
-              _openSession(capture, text, spoken: spoken, toneId: toneId),
+          onSubmitted: (text, {required spoken, toneId}) => _openSession(
+            capture,
+            text,
+            spoken: spoken,
+            toneId: toneId,
+            fromWeather: fromWeather,
+          ),
         ),
       ),
     );
@@ -287,6 +297,7 @@ class Session extends StatefulWidget {
     required this.onFinished,
     this.spoken = false,
     this.toneId,
+    this.fromWeather = false,
   });
 
   final String transcript;
@@ -296,6 +307,10 @@ class Session extends StatefulWidget {
   /// transcript. Sent with the entry, or discarded with the transcript. Null
   /// for a typed entry and for a recording nothing managed to listen to.
   final String? toneId;
+
+  /// Written from the weather card on home, which stands down for the day
+  /// once this lands.
+  final bool fromWeather;
 
   /// Whether any of this came from the mic. The words were on the screen as
   /// they were said and could be fixed there, so there is nothing to confirm
@@ -335,6 +350,7 @@ class _SessionState extends State<Session> {
         text: widget.transcript,
         spoken: widget.spoken,
         toneId: widget.toneId,
+        fromWeather: widget.fromWeather,
       );
       _api.event('entry_${result.runtimeType.toString().toLowerCase()}', {
         'spoken': widget.spoken,

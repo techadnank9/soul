@@ -494,16 +494,19 @@ GET /reflection → services/reads/reflection.ts one theme, and the entries
 GET /people     → services/people/read.ts      who they write about
 GET /people/:id → services/people/read.ts      one person, and where they
                                                come up
-GET /weather    → services/weather/now.ts      what the sky is doing where
-                                               they are, and one question
-                                               that follows from it. Open
-                                               Meteo, no key, coordinates
-                                               rounded to two places and
-                                               nothing that says who they
-                                               are. Held twenty minutes per
-                                               person. Null when there is no
-                                               position and no region, which
-                                               home reads as no card
+GET /weather    → services/weather/now.ts      where to look, and whether
+                                               today has been answered. The
+                                               weather itself is read on the
+                                               phone through WeatherKit, so
+                                               no position leaves it and no
+                                               third party is told where
+                                               anybody is. Null when there
+                                               is no position and no region,
+                                               which home reads as no card.
+                                               Answering the card writes the
+                                               day on the person, so it
+                                               stands until then and stands
+                                               down after. Decision 233
 GET /graph      → routes/graph.ts              the person as nodes and edges:
                                                open facts, people, patterns,
                                                decisions and outcomes. The

@@ -7,9 +7,9 @@ import {
   integer,
   smallint,
   jsonb,
+  date,
   boolean,
   timestamp,
-  date,
   real,
   doublePrecision,
   index,
@@ -191,6 +191,13 @@ export const students = pgTable(
      * shown beside real themes.
      */
     openingThemes: jsonb('opening_themes'),
+
+    /**
+     * The day the weather card was last answered, in their own calendar.
+     * The card is on home every day until something is said to it, and
+     * gone for the rest of that day once something is.
+     */
+    weatherAnsweredOn: date('weather_answered_on'),
 
     /**
      * Exact coordinates, when the student shared their location.

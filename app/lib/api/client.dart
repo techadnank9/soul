@@ -307,6 +307,7 @@ class SoulApi {
     required bool spoken,
     int? durationMs,
     String? toneId,
+    bool fromWeather = false,
   }) async {
     final json = await _post('/entries', {
       'text': text,
@@ -315,6 +316,7 @@ class SoulApi {
       'durationMs': ?durationMs,
       'localHour': DateTime.now().hour,
       'toneId': ?toneId,
+      if (fromWeather) 'fromWeather': true,
     });
     return SubmitResult.fromJson(json);
   }
@@ -364,11 +366,12 @@ class SoulApi {
     await _post('/baseline', {'setVersion': setVersion, 'answers': chosen});
   }
 
-  /// What the sky is doing where they are. Null when there is nothing to
-  /// say, which home treats as no card rather than as a failure.
-  Future<WeatherNow?> weather() async {
+  /// Where to ask about the weather, and whether today has been answered.
+  /// The weather itself is read on the device. Null when there is nothing
+  /// to say, which home treats as no card rather than as a failure.
+  Future<WeatherWhere?> weatherWhere() async {
     try {
-      return WeatherNow.fromJson(await _get('/weather'));
+      return WeatherWhere.fromJson(await _get('/weather'));
     } catch (_) {
       return null;
     }

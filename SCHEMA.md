@@ -74,6 +74,10 @@ there clears the columns. See decisions 056, 057, 060 and 061.
 `place` is the neighbourhood, city and state the coordinates resolved to on
 the phone, shown back instead of the numbers.
 
+`weather_answered_on` is the day the weather card on home was last answered,
+in their own calendar. The card is there every day until something is said
+to it, and tapping it is not saying something.
+
 `opening` and `opening_themes` are written once, at the end of first run,
 from the baseline answers. The line is shown on the last screen of first run
 and on home until there is a week of their own. The themes are three or four
