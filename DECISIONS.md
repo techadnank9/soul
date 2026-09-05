@@ -4497,3 +4497,29 @@ card.
 Coarse accuracy rather than precise. What the sky is doing does not need a
 street, and coarse is quicker and easier on the battery.
 
+---
+
+### 237. The sky is the opening, the hour belongs in the question
+Sep 2026, Adnan
+
+Decision: the opening on the weather card names the sky and nothing else.
+The part of the day belongs in the question, where somebody would say it,
+and it comes from the hour on the phone rather than from the server.
+
+Why: the card said Clear late afternoon, what has today been like for you
+here. Two things were wrong with it. The hour had been folded into the
+opening, and clear late afternoon is not a thing anybody says. And it said
+here with no place to point at, because the phone had no place name and the
+model reached for one anyway.
+
+The prompt now says the opening names the sky only, that the question may
+say this morning or this afternoon or tonight and that is where the hour
+belongs, and that where they are is said only when a place name is given and
+then by name. Both faults are in it as worked examples, because a rule
+without the sentence it was written for is a rule that comes back.
+
+The hour comes from the phone. It was the server's own clock in UTC, so
+somebody in California was told they were in the evening at lunchtime, and
+one of the labels was late afternoon, which is how it got into the sentence
+in the first place.
+

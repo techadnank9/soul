@@ -384,6 +384,7 @@ class SoulApi {
         'fahrenheit': fahrenheit,
         'daylight': daylight,
         'place': ?place,
+        'hour': DateTime.now().hour,
       });
       return json['question'] as String?;
     } catch (_) {

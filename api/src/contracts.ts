@@ -548,6 +548,10 @@ export const weatherAsk = z.object({
   fahrenheit: z.boolean(),
   daylight: z.boolean(),
   place: z.string().trim().max(80).optional(),
+
+  /// The hour on the phone, so the part of the day is theirs rather than
+  /// the server's idea of it.
+  hour: z.number().int().min(0).max(23),
 })
 export type WeatherAsk = z.infer<typeof weatherAsk>
 

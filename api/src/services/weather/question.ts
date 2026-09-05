@@ -50,14 +50,18 @@ export async function weatherQuestionFor(
 }
 
 /**
- * Morning, afternoon, evening or night, from the phone's own idea of
- * daylight and nothing else. It is the one thing that makes the same sky
- * read differently at eight and at ten.
+ * Morning, afternoon, evening or night, from the hour on the phone. It is
+ * the one thing that makes the same sky read differently at eight and at
+ * ten, and it is theirs rather than the server's idea of the time.
+ *
+ * The words are the ones somebody says. Late afternoon was one of these
+ * once and the model put it in the sentence, which is not a thing anybody
+ * says about a sky.
  */
 function part(ask: WeatherAsk): string {
-  const hour = new Date().getUTCHours()
-  if (!ask.daylight) return 'after dark'
-  if (hour < 11) return 'morning'
-  if (hour < 16) return 'afternoon'
-  return 'late afternoon'
+  if (ask.hour < 5) return 'night'
+  if (ask.hour < 12) return 'morning'
+  if (ask.hour < 17) return 'afternoon'
+  if (ask.hour < 22) return 'evening'
+  return 'night'
 }
