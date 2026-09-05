@@ -24,6 +24,7 @@ class DaysScreen extends StatefulWidget {
     required this.api,
     this.revision = 0,
     this.openOn,
+    this.onCapture,
   });
 
   final SoulApi api;
@@ -34,6 +35,9 @@ class DaysScreen extends StatefulWidget {
   /// A day the user picked somewhere else, on the week strip on home. It
   /// opens straight away rather than waiting to be found in the list.
   final String? openOn;
+
+  /// Adds something to today, from a day that is today.
+  final VoidCallback? onCapture;
 
   @override
   State<DaysScreen> createState() => _DaysScreenState();
@@ -86,6 +90,7 @@ class _DaysScreenState extends State<DaysScreen> {
           api: widget.api,
           date: date,
           onBack: () => Navigator.of(page).pop(),
+          onCapture: widget.onCapture,
         ),
       ),
     );

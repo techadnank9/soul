@@ -13,6 +13,8 @@ class DeviceWeather {
     required this.words,
     required this.question,
     required this.degrees,
+    required this.condition,
+    required this.daylight,
   });
 
   /// What the sky is doing, in the words somebody would use looking out of a
@@ -26,11 +28,16 @@ class DeviceWeather {
 
   final int degrees;
 
-  /// The line above the question on the card. The place is added by the
-  /// caller, which is the only thing that knows it.
-  String lineIn(String? place) {
+  /// What the sky is doing, as Apple named it, for the service to write a
+  /// question from.
+  final String condition;
+  final bool daylight;
+
+  /// The plain question, used when the written one does not arrive. It says
+  /// the weather and asks, in the same shape the written one does.
+  String plainIn(String? place) {
     final where = place == null || place.isEmpty ? '' : ' in $place';
-    return '$words$where, $degrees degrees.';
+    return '$words$where, $degrees degrees. $question';
   }
 }
 
@@ -49,6 +56,8 @@ DeviceWeather readingToWeather({
     words: sky.$1,
     question: sky.$2,
     degrees: (fahrenheit ? celsius * 9 / 5 + 32 : celsius).round(),
+    condition: condition,
+    daylight: daylight,
   );
 }
 

@@ -60,6 +60,7 @@ class _AppShellState extends State<AppShell> {
           api: _api,
           date: date,
           onBack: () => Navigator.of(page).pop(),
+          onCapture: () => widget.onCapture(),
         ),
       ),
     );
@@ -98,7 +99,11 @@ class _AppShellState extends State<AppShell> {
             onOpenDay: _openDay,
             onOpenPatterns: () => setState(() => _tab = 2),
           ),
-          DaysScreen(api: _api, revision: widget.revision),
+          DaysScreen(
+            api: _api,
+            revision: widget.revision,
+            onCapture: () => widget.onCapture(),
+          ),
           PatternsScreen(api: _api, revision: widget.revision),
           PeopleScreen(api: _api, revision: widget.revision),
         ],

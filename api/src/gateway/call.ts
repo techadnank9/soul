@@ -128,6 +128,26 @@ const config: Record<Purpose, PurposeConfig> = {
    * to see. Small and fast for that reason, and warm enough to sound like it
    * was listening.
    */
+  /**
+   * The one question on the card at the top of home. Small, fast and warm.
+   * It is asked once per person per sky per part of the day, so it costs
+   * about as much as a handful of calls a day and never sits on the path of
+   * anything a person is waiting for.
+   */
+  weather_question: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5-mini',
+      gemini: 'gemini-2.5-flash',
+      openrouter: 'openai/gpt-5-mini',
+    },
+    temperature: 0.8,
+    maxTokens: 1200,
+    timeoutMs: 20_000,
+    json: true,
+    reasoning: 'minimal',
+  },
+
   welcome: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {

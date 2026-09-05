@@ -4430,3 +4430,39 @@ two that drift.
 Reverses if: signing a simulator build with the entitlement becomes
 possible, at which point the fallback and the route go.
 
+---
+
+### 235. One written question on the card, and a strip that goes back
+Sep 2026, Adnan
+
+Decision: the card at the top of home is one sentence, written by a model
+from what the phone found, that says the sky and asks about their day in the
+same breath. It was three lines: the weather, a fixed question, and Apple's
+attribution. The attribution moved to the foot of the screen, where Apple's
+requirement is met just as well and it is not a line on a card.
+
+The question is asked once per person, per sky, per part of the day, and
+held for three hours, so it is a handful of calls a day rather than one per
+open. Nothing waits on it. The card appears when it lands, and the app has a
+plain question of its own if it never does.
+
+The prompt is told the weather is the way in and not the subject, to use one
+detail rather than all of them, and that naming the sky, the temperature,
+the place and the hour in one sentence is a forecast rather than a question.
+The first draft did exactly that and asked how the day was unfolding for
+every sky, so unfolding is named and banned.
+
+The strip runs back six weeks and opens on today. Far enough that a day from
+last month is a scroll rather than a search, short enough that the row is
+not a year long, and a Today button appears the moment it is scrolled off so
+there is always one tap back.
+
+A date with nothing on it opens capture rather than a page that says nothing
+is there. Tapping an empty day was a dead end and it is now the shortest way
+to write something.
+
+A day that is today carries a floating button to add to it. A day that has
+already been does not, because an entry written now belongs to now, and
+putting it on last Tuesday would be the app writing something nobody said
+then.
+

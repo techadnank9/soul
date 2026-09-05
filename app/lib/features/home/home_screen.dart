@@ -71,17 +71,73 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Asked for on its own rather than as part of the week, so a slow or
   /// unreachable weather service costs this card and nothing else on the
   /// screen. Null is the ordinary answer when no position was ever shared.
-  DeviceWeather? _weather;
+  /// The one line on the card. Written by the service from what the phone
+  /// found, and the app's own plain question when that does not arrive.
+  String? _ask;
 
-  /// The place the phone named for their position, for the line on the card.
-  String? _place;
+  /// Which days have something on them, across the whole strip rather than
+  /// the seven the week returns. Empty until it lands, which only means no
+  /// marks for a moment.
+  Set<String> _written = {};
+
+  /// How far back the strip goes. Six weeks is further than anybody scrolls
+  /// to look at a day and short enough that the row is not a year long.
+  static const _stripDays = 42;
+
+  final _strip = ScrollController();
+
+  /// Whether the strip has been scrolled off today, which is when there is
+  /// anything to go back to.
+  bool _scrolled = false;
 
   @override
   void initState() {
     super.initState();
     _load();
     _sky();
+    _marks();
+    // The strip is built oldest first and opened at the end, so today is
+    // where it starts and the past is behind it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_strip.hasClients) _strip.jumpTo(_strip.position.maxScrollExtent);
+    });
+    _strip.addListener(() {
+      if (!_strip.hasClients) return;
+      final away = _strip.position.maxScrollExtent - _strip.offset > 40;
+      if (away != _scrolled) setState(() => _scrolled = away);
+    });
   }
+
+  @override
+  void dispose() {
+    _strip.dispose();
+    super.dispose();
+  }
+
+  /// Every day this person has written on, for the marks under the dates.
+  Future<void> _marks() async {
+    try {
+      final days = await widget.api.days();
+      if (mounted) setState(() => _written = {for (final d in days) d.date});
+    } catch (_) {
+      // No marks this time. The dates are still there and still open.
+    }
+  }
+
+  /// The dates in the strip, oldest first, ending today.
+  List<DateTime> get _dates {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return [
+      for (var back = _stripDays - 1; back >= 0; back--)
+        today.subtract(Duration(days: back)),
+    ];
+  }
+
+  static String _iso(DateTime day) =>
+      '${day.year.toString().padLeft(4, '0')}-'
+      '${day.month.toString().padLeft(2, '0')}-'
+      '${day.day.toString().padLeft(2, '0')}';
 
   @override
   void didUpdateWidget(covariant HomeScreen old) {
@@ -92,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // found nothing is not the last word for the life of the app. It
       // failed once against a service that was still deploying and the
       // card stayed missing until the app was closed and opened.
-      if (_weather == null) _sky();
+      if (_ask == null) _sky();
     }
   }
 
@@ -128,14 +184,24 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
-    if (!mounted || sky == null) return;
+    final found = sky;
+    if (!mounted || found == null) return;
 
-    final place = await placeName(where.latitude, where.longitude);
+    final place = (await placeName(where.latitude, where.longitude))
+        ?.split(',')
+        .first
+        .trim();
     if (!mounted) return;
-    setState(() {
-      _weather = sky;
-      _place = place?.split(',').first.trim();
-    });
+
+    final written = await widget.api.weatherQuestion(
+      condition: found.condition,
+      degrees: found.degrees,
+      fahrenheit: where.fahrenheit,
+      daylight: found.daylight,
+      place: place,
+    );
+    if (!mounted) return;
+    setState(() => _ask = written ?? found.plainIn(place));
   }
 
   Future<void> _load() async {
@@ -300,62 +366,86 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       const SizedBox(height: 16),
-      // The week across the top, the way a calendar reads, so which day it
-      // is and which days were written on are both answered before the
-      // first card. It used to sit halfway down as a card of its own.
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          for (final day in week.days)
-            _DayColumn(
-              date: day.date,
-              written: day.count > 0,
-              today: day.date == today,
-              onTap: () => widget.onOpenDay(day.date),
+      // The strip runs back six weeks and opens on today, so a day from
+      // last month is a scroll rather than a search. Today sits at the
+      // right hand end, where the row starts.
+      SizedBox(
+        height: 64,
+        child: Stack(
+          children: [
+            ListView(
+              controller: _strip,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 4),
+              children: [
+                for (final day in _dates)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _DayColumn(
+                      date: _iso(day),
+                      written: _written.contains(_iso(day)),
+                      today: _iso(day) == today,
+                      onTap: _written.contains(_iso(day))
+                          ? () => widget.onOpenDay(_iso(day))
+                          : () => widget.onCapture(),
+                    ),
+                  ),
+              ],
             ),
-        ],
+            // The way back, only while there is anywhere to come back from.
+            if (_scrolled)
+              Positioned(
+                right: 0,
+                top: 8,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _strip.animateTo(
+                    _strip.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOut,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: SoulColors.clay,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(color: SoulColors.shade, blurRadius: 10),
+                      ],
+                    ),
+                    child: const Text(
+                      'Today',
+                      style: TextStyle(
+                        fontFamily: SoulType.sans,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
-      // What the sky is doing, and one question that follows from it. It is
-      // the shortest way into the app: tapping it opens capture with the
-      // question already at the top.
-      if (_weather != null) ...[
+      if (_ask != null) ...[
         const SizedBox(height: 16),
         SoulCard(
           background: SoulColors.clayLight,
           borderColor: const Color(0x33EA5F17),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          onTap: () => widget.onCapture(
-            prompt: _weather!.question,
-            note: _weather!.lineIn(_place),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          onTap: () => widget.onCapture(prompt: _ask),
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Label(_weather!.lineIn(_place)),
-                    const SizedBox(height: 6),
-                    Text(
-                      _weather!.question,
-                      style: const TextStyle(
-                        fontFamily: SoulType.serif,
-                        fontSize: 18,
-                        height: 1.35,
-                        color: SoulColors.text,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Apple asks for this wherever their weather is shown.
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => launchWeatherAttribution(),
-                      child: Text(
-                        'Weather',
-                        style: SoulType.muted.copyWith(fontSize: 11),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  _ask!,
+                  style: const TextStyle(
+                    fontFamily: SoulType.serif,
+                    fontSize: 18,
+                    height: 1.35,
+                    color: SoulColors.text,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -498,6 +588,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      if (_ask != null) ...[
+        const SizedBox(height: 16),
+        // Apple asks for this wherever their weather is shown. Once, at the
+        // foot, rather than as a line on the card.
+        Center(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: launchWeatherAttribution,
+            child: Text('Weather', style: SoulType.muted.copyWith(fontSize: 11)),
+          ),
+        ),
+      ],
       const SizedBox(height: 60),
     ];
   }

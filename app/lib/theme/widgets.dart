@@ -251,11 +251,18 @@ class Screen extends StatelessWidget {
     super.key,
     required this.body,
     this.footer,
+    this.floating,
     this.padding = const EdgeInsets.fromLTRB(22, 26, 22, 26),
   });
 
   final List<Widget> body;
   final Widget? footer;
+
+  /// Sits over the bottom right of the screen, above whatever is scrolling
+  /// under it. For the one action a screen is for, when that action is not
+  /// the reason the screen was opened.
+  final Widget? floating;
+
   final EdgeInsets padding;
 
   @override
@@ -265,6 +272,7 @@ class Screen extends StatelessWidget {
     return Scaffold(
       backgroundColor: SoulColors.bg,
       resizeToAvoidBottomInset: false,
+      floatingActionButton: floating,
       body: SafeArea(
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -281,7 +289,8 @@ class Screen extends StatelessWidget {
                   padding: padding.copyWith(
                     bottom: padding.bottom +
                         bottomInset +
-                        (footer != null ? _footerRoom : 0),
+                        (footer != null ? _footerRoom : 0) +
+                        (floating != null ? 80 : 0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

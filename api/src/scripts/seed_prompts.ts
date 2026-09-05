@@ -27,6 +27,7 @@ const purposes = [
   'voice_tone',
   'facts',
   'welcome',
+  'weather_question',
   'consolidate',
 ] as const
 

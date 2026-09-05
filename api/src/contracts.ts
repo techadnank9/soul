@@ -538,3 +538,20 @@ export const welcomeResult = z.object({
     .max(4),
 })
 
+/**
+ * The card at the top of home. The phone says what the sky is doing and the
+ * service answers with one question that uses it.
+ */
+export const weatherAsk = z.object({
+  condition: z.string().trim().min(1).max(40),
+  degrees: z.number().int().min(-100).max(150),
+  fahrenheit: z.boolean(),
+  daylight: z.boolean(),
+  place: z.string().trim().max(80).optional(),
+})
+export type WeatherAsk = z.infer<typeof weatherAsk>
+
+export const weatherQuestion = z.object({
+  question: z.string().trim().min(1).max(140),
+})
+

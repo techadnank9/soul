@@ -32,6 +32,7 @@ class DayScreen extends StatefulWidget {
     required this.api,
     required this.date,
     required this.onBack,
+    this.onCapture,
     this.revision = 0,
   });
 
@@ -41,6 +42,11 @@ class DayScreen extends StatefulWidget {
   final String date;
 
   final VoidCallback onBack;
+
+  /// Adds something else to today. Absent on a day that has already been,
+  /// because an entry written now belongs to now and putting it on last
+  /// Tuesday would be the app writing something nobody said then.
+  final VoidCallback? onCapture;
 
   /// Changes when an entry lands. The entry belongs to a day, and if that day
   /// is the one on screen it should be on it.
@@ -95,7 +101,30 @@ class _DayScreenState extends State<DayScreen> {
     final day = _day;
     final colours = day == null ? const <Color>[] : _colours(day.entries);
 
+    final today = todayOnDevice() == widget.date;
+
     return Screen(
+      floating: widget.onCapture != null && today
+          ? GestureDetector(
+              onTap: widget.onCapture,
+              child: Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  color: SoulColors.clay,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x4DEA5F17),
+                      blurRadius: 16,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              ),
+            )
+          : null,
       body: [
         _Header(date: widget.date, onBack: widget.onBack),
         if (_failed) ...[

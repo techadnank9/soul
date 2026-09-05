@@ -129,6 +129,7 @@ class SoulApi {
     '/auth/apple',
     '/events',
     '/speech/token',
+    '/weather/question',
     '/profile',
     '/baseline',
     '/consent',
@@ -364,6 +365,30 @@ class SoulApi {
     ];
     if (chosen.isEmpty) return;
     await _post('/baseline', {'setVersion': setVersion, 'answers': chosen});
+  }
+
+  /// One question for the card, written from what the phone found. Null
+  /// when it could not be written, and the app falls back to a plain
+  /// question of its own rather than showing nothing.
+  Future<String?> weatherQuestion({
+    required String condition,
+    required int degrees,
+    required bool fahrenheit,
+    required bool daylight,
+    String? place,
+  }) async {
+    try {
+      final json = await _post('/weather/question', {
+        'condition': condition,
+        'degrees': degrees,
+        'fahrenheit': fahrenheit,
+        'daylight': daylight,
+        'place': ?place,
+      });
+      return json['question'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// A reading of the sky from the service, for development builds only.
