@@ -75,15 +75,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _load();
-    widget.api.weather().then((w) {
-      if (mounted) setState(() => _weather = w);
-    });
+    _sky();
   }
 
   @override
   void didUpdateWidget(covariant HomeScreen old) {
     super.didUpdateWidget(old);
-    if (widget.revision != old.revision) _load();
+    if (widget.revision != old.revision) {
+      _load();
+      // Asked for again whenever the week is, so a first attempt that
+      // found nothing is not the last word for the life of the app. It
+      // failed once against a service that was still deploying and the
+      // card stayed missing until the app was closed and opened.
+      if (_weather == null) _sky();
+    }
+  }
+
+  /// Null is an ordinary answer and means no card. Nothing is shown when it
+  /// fails, and nothing is said about it.
+  Future<void> _sky() async {
+    final sky = await widget.api.weather();
+    if (mounted && sky != null) setState(() => _weather = sky);
   }
 
   Future<void> _load() async {
