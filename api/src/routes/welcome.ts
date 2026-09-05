@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import * as contracts from '../contracts.js'
+import { eq } from 'drizzle-orm'
+import { db, students } from '../db.js'
 import { welcomeLine } from '../services/welcome/line.js'
 import type { Session } from '../session.js'
 
@@ -21,7 +23,10 @@ welcome.post('/welcome', async (c) => {
 
   const startedAt = Date.now()
   try {
-    const line = await welcomeLine(c.get('session'), parsed.data)
+    const session = c.get('session')
+    const line = await welcomeLine(session, parsed.data)
+    // Kept, because home shows it until there is a week of their own.
+    await db.update(students).set({ opening: line }).where(eq(students.id, session.studentId))
     console.log(`welcome: ${line.split(/\s+/).length} words, ${Date.now() - startedAt}ms`)
     return c.json({ line })
   } catch (error) {

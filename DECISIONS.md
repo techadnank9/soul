@@ -4141,3 +4141,26 @@ place was that a row which opens an editor on any touch makes reading the
 profile a minefield, and that still holds: the row only listens while the top
 of the screen says the card is being changed.
 
+---
+
+### 224. The week holds what the baseline said until it has something of its own
+Sep 2026, Adnan
+
+Decision: the line written from the fifteen baseline answers is kept on the
+student and shown inside the week card while there is nothing to divide.
+Their own week replaces it the moment a tag names something, and it is never
+shown alongside real themes.
+
+Why: home on day one was a blank ring, an empty row of days and a link to a
+patterns screen with nothing on it. Somebody had just answered fifteen
+questions and the first screen after them knew nothing. The answers are the
+one thing the app does know about a person who has only just arrived, so the
+week says that until it can say something better.
+
+It is not a result and it does not accumulate. It is the same sentence they
+read at the end of first run, kept rather than thrown away, and it goes as
+soon as their own entries can fill the ring.
+
+Reverses if: the ring learns to divide by something an untagged week already
+has, in which case there is no empty state left to fill.
+

@@ -82,10 +82,18 @@ export async function week(session: Session): Promise<WeekView> {
       order by d.horizon
       limit 1`
 
+    // Only while there is nothing to divide. Their own week replaces it the
+    // moment it has something in it.
+    const opening = themes.length === 0
+      ? (await tx<{ opening: string | null }[]>`
+          select opening from students where id = ${session.studentId}`)[0]?.opening ?? null
+      : null
+
     return {
       // The count of the seven days, not a query of its own, so the number
       // above the ring can never disagree with the ring.
       moments: days.reduce((total, day) => total + day.count, 0),
+      opening,
       themes,
       days,
       holding: holding[0] ?? null,

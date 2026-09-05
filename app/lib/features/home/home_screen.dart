@@ -222,10 +222,25 @@ class _HomeScreenState extends State<HomeScreen> {
             // A week can hold entries with nothing to divide by: the tagger
             // has not run on them yet, or it ran and found no feeling in
             // them, which is the honest answer for a few words typed to see
-            // what happens. The ring keeps its shape either way and says so,
-            // rather than sitting there as a blank circle.
+            // what happens. Rather than a blank circle, the card holds what
+            // the baseline said, which is the one thing the app does know
+            // about somebody who has only just arrived. Their own week
+            // replaces it as soon as it has something in it.
             if (slices.isEmpty) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
+              if (week.opening != null) ...[
+                Text(
+                  week.opening!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: SoulType.serif,
+                    fontSize: 17,
+                    height: 1.4,
+                    color: SoulColors.text,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               const Center(child: Label('nothing to divide yet')),
             ],
             if (slices.isNotEmpty) ...[

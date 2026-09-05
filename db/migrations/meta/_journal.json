@@ -148,6 +148,13 @@
       "when": 1788559206355,
       "tag": "0020_welcome",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788571294969,
+      "tag": "0021_opening",
+      "breakpoints": true
     }
   ]
 }

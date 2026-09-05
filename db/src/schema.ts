@@ -175,6 +175,16 @@ export const students = pgTable(
     place: text('place'),
 
     /**
+     * The line written from the baseline answers at the end of first run.
+     *
+     * Kept because home has nothing of its own to show until somebody has
+     * written a few times, and a week ring with nothing in it says less than
+     * the thing they just answered fifteen questions to be told. It is
+     * replaced by their own entries, never added to.
+     */
+    opening: text('opening'),
+
+    /**
      * Exact coordinates, when the student shared their location.
      *
      * This is precise location data about a child and it is the most sensitive

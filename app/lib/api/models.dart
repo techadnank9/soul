@@ -120,6 +120,7 @@ class WeekView {
     required this.moments,
     required this.themes,
     required this.days,
+    this.opening,
     this.holding,
   });
 
@@ -130,6 +131,11 @@ class WeekView {
   /// which is the ordinary state of a week that has only just started.
   final List<WeekTheme> themes;
 
+  /// The line written from the baseline answers at the end of first run.
+  /// Present only while the week has nothing of its own to divide, so home
+  /// says something on day one and their own week replaces it after.
+  final String? opening;
+
   /// Exactly seven, Monday first.
   final List<WeekDay> days;
 
@@ -138,6 +144,7 @@ class WeekView {
   final Holding? holding;
 
   static WeekView fromJson(Map<String, dynamic> json) => WeekView(
+        opening: json['opening'] as String?,
         moments: json['moments'] as int,
         themes: [
           for (final theme in json['themes'] as List)

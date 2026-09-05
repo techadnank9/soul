@@ -153,6 +153,13 @@ export const dayDate = z.iso.date()
  */
 export const weekView = z.object({
   moments: z.number().int().min(0),
+
+  /**
+   * The line written from the baseline answers, shown while the week has
+   * nothing of its own to divide. Null once there is.
+   */
+  opening: z.string().nullable(),
+
   themes: z
     .array(z.object({ name: z.string(), count: z.number().int() }))
     .max(4),
