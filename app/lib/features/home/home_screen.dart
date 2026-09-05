@@ -249,6 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
               date: day.date,
               written: day.count > 0,
               today: day.date == today,
+              // A day that has not happened cannot be opened. There is
+              // nothing in it and nothing can be put in it.
+              future: day.date.compareTo(today) > 0,
               onTap: () => widget.onOpenDay(day.date),
             ),
         ],
@@ -441,6 +444,7 @@ class _DayColumn extends StatelessWidget {
     required this.date,
     required this.written,
     required this.today,
+    required this.future,
     required this.onTap,
   });
 
@@ -454,6 +458,12 @@ class _DayColumn extends StatelessWidget {
   final bool written;
 
   final bool today;
+
+  /// Later this week. It is drawn so the week reads as a week, and it does
+  /// not open, because nothing has happened in it yet and nothing can be
+  /// said about a day that has not come.
+  final bool future;
+
   final VoidCallback onTap;
 
   static const _letters = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -463,9 +473,11 @@ class _DayColumn extends StatelessWidget {
     final day = DateTime.parse(date);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: future ? null : onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: Opacity(
+        opacity: future ? 0.4 : 1,
+        child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
         decoration: BoxDecoration(
           color: today ? SoulColors.s1 : Colors.transparent,
@@ -505,6 +517,7 @@ class _DayColumn extends StatelessWidget {
                   : null,
             ),
           ],
+        ),
         ),
       ),
     );
