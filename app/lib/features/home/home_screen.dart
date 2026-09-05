@@ -75,6 +75,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// found, and the app's own plain question when that does not arrive.
   String? _ask;
 
+  /// What to call them in the greeting.
+  ///
+  /// It arrives with the screen only on the launch that finished first run,
+  /// so on every launch after that it was missing and the greeting had no
+  /// name in it. It is read from the profile when it is not handed over.
+  String? _name;
+
   /// Which days have something on them, across the whole strip rather than
   /// the seven the week returns. Empty until it lands, which only means no
   /// marks for a moment.
@@ -98,9 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _name = widget.name;
     _load();
     _sky();
     _marks();
+    if (_name == null) _whoTheyAre();
     _strip.addListener(() {
       if (!_strip.hasClients) return;
       final away = _strip.offset > 40;
@@ -112,6 +121,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _strip.dispose();
     super.dispose();
+  }
+
+  /// The name they gave, when the screen was not handed it.
+  Future<void> _whoTheyAre() async {
+    try {
+      final held = await widget.api.profileHeld();
+      final name = held['displayName'] as String?;
+      if (mounted && name != null && name.isNotEmpty) {
+        setState(() => _name = name);
+      }
+    } catch (_) {
+      // The greeting says good afternoon on its own perfectly well.
+    }
   }
 
   /// Every day this person has written on, for the marks under the dates.
@@ -292,9 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _dayOne() => [
         const SizedBox(height: 40),
         Text(
-          widget.name == null
-              ? 'Nothing here yet'
-              : 'Nothing here yet, ${widget.name}',
+          _name == null ? 'Nothing here yet' : 'Nothing here yet, $_name',
           style: SoulType.heading,
         ),
         const SizedBox(height: 14),
@@ -357,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_greeting(widget.name), style: SoulType.heading),
+                Text(_greeting(_name), style: SoulType.heading),
                 const SizedBox(height: 6),
                 Label(_today()),
               ],
@@ -463,7 +483,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SoulCard(
           background: SoulColors.clayLight,
           borderColor: const Color(0x33EA5F17),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
           onTap: () => widget.onCapture(prompt: _ask),
           child: Row(
             children: [
@@ -480,8 +500,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     softWrap: false,
                     style: const TextStyle(
                       fontFamily: SoulType.serif,
-                      fontSize: 18,
-                      height: 1.35,
+                      fontSize: 22,
+                      height: 1.3,
                       color: SoulColors.text,
                     ),
                   ),
@@ -489,13 +509,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 12),
               Container(
-                width: 34,
-                height: 34,
+                width: 38,
+                height: 38,
                 decoration: const BoxDecoration(
                   color: SoulColors.clay,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mic_none, size: 18, color: Colors.white),
+                child: const Icon(Icons.mic_none, size: 20, color: Colors.white),
               ),
             ],
           ),
