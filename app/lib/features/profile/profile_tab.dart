@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../data/device_location.dart';
+import '../../data/device_weather.dart';
 import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
@@ -243,6 +244,20 @@ class _ProfileTabState extends State<ProfileTab> {
         SoulButton(
           'Log out',
           onPressed: () => _logOut(context),
+        ),
+        const SizedBox(height: 22),
+        // Apple asks for this wherever their weather is shown. It is one
+        // line on a card at the top of home, so the attribution lives here
+        // rather than under it.
+        Center(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: launchWeatherAttribution,
+            child: Text(
+              'Weather from Apple',
+              style: SoulType.muted.copyWith(fontSize: 12),
+            ),
+          ),
         ),
         const SizedBox(height: 90),
       ],

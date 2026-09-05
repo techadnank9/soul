@@ -90,6 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// anything to go back to.
   bool _scrolled = false;
 
+  /// The strip is inside the branch that waits for the week, so it does not
+  /// exist on the first frame. This puts it on today the first frame it
+  /// does exist, whatever a restored offset says.
+  bool _stripPlaced = false;
+
   @override
   void initState() {
     super.initState();
@@ -370,7 +375,20 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 78,
         child: Stack(
           children: [
-            ListView(
+            NotificationListener<ScrollMetricsNotification>(
+              onNotification: (_) {
+                if (!_stripPlaced && _strip.hasClients) {
+                  _stripPlaced = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_strip.hasClients && _strip.offset != 0) {
+                      _strip.jumpTo(0);
+                      if (mounted) setState(() => _scrolled = false);
+                    }
+                  });
+                }
+                return false;
+              },
+              child: ListView(
               controller: _strip,
               scrollDirection: Axis.horizontal,
               reverse: true,
@@ -378,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 for (final day in _dates)
                   Padding(
-                    padding: const EdgeInsets.only(right: 4),
+                    padding: const EdgeInsets.only(right: 10),
                     child: _DayColumn(
                       date: _iso(day),
                       written: _written.contains(_iso(day)),
@@ -389,6 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
               ],
+            ),
             ),
             // The way back, only while there is anywhere to come back from.
             if (_scrolled)
@@ -586,18 +605,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      if (_ask != null) ...[
-        const SizedBox(height: 16),
-        // Apple asks for this wherever their weather is shown. Once, at the
-        // foot, rather than as a line on the card.
-        Center(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: launchWeatherAttribution,
-            child: Text('Weather', style: SoulType.muted.copyWith(fontSize: 11)),
-          ),
-        ),
-      ],
       const SizedBox(height: 60),
     ];
   }
@@ -685,7 +692,7 @@ class _DayColumn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
         decoration: BoxDecoration(
           color: today ? SoulColors.s1 : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
