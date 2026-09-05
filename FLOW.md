@@ -92,6 +92,10 @@ main.dart → onboarding/first_run.dart, FirstRun
   │     movement from baseline_scenes.dart: a light dragged to a corner, an
   │     answer sunk in a pond, a wall pushed over, a sun raised. No
   │     continue: a scene settles once chosen and the next follows
+  │     a question seen a second time carries two buttons instead, because
+  │     a settled scene takes no further movement: continue with what is
+  │     there, or change it, which rebuilds the scene under a new key with
+  │     nothing settled in it. Decision 230
   │     POST /baseline  → routes/consent.ts         ← background, nobody waits
   │
   ├─ 3. capture_screen.dart, the introduction

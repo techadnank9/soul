@@ -4275,3 +4275,31 @@ answered, because the pile moving is the point of tapping it. If the server
 never heard, the card is back the next time the day is read, which is the
 right failure: the question was never settled.
 
+---
+
+### 230. A baseline question seen a second time can be answered again
+Sep 2026, Adnan
+
+Decision: a baseline question that already has an answer shows two controls
+under its scene. Continue moves on with the answer that is there. Change my
+answer takes it back and hands the scene a clean slate, after which it is
+answered by movement and moves on by itself as it always did. A question
+being answered for the first time still has no button under it.
+
+Why: a scene closes itself once it has settled, so going back to a question
+gave a screen that would not take another movement and had nothing else on
+it. There was no way to change the answer and no way forward. The person was
+stuck on a screen with no visible reason why.
+
+How it is done: the scenes are untouched. Taking the answer back sets it to
+null and changes the key the scene is built under, so the scene is built
+again with nothing settled in it rather than being asked to unlock itself.
+Ten scenes each holding their own idea of settled is ten places to get that
+wrong.
+
+The button only appears for a question answered before this visit, so the
+first pass through the baseline is still ten movements and no buttons.
+
+Reverses if: the scenes learn to reopen themselves, which would be better
+and is more work than this was worth today.
+

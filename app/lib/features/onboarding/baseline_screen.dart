@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
+import '../../theme/widgets.dart';
 import 'baseline.dart';
 import 'baseline_scenes.dart';
 
@@ -12,9 +13,16 @@ import 'baseline_scenes.dart';
 ///
 /// Each question has its own scene, from baseline_scenes.dart, and no two
 /// are alike: a light dragged to a corner, an answer sunk in a pond, a wall
-/// pushed over. There is no continue. A scene settles once the person has
-/// chosen and the next question follows on its own, the way Nouvel's first
-/// onboarding did it, because a button after a movement is a form again.
+/// pushed over. There is no continue on a question being answered for the
+/// first time. A scene settles once the person has chosen and the next
+/// question follows on its own, the way Nouvel's first onboarding did it,
+/// because a button after a movement is a form again.
+///
+/// A question being seen a second time is different. Its scene is settled
+/// and does not take another movement, so coming back to one left nothing
+/// to do and no way on. There are two controls under it in that case: one
+/// to move on with the answer that is there, and one to take it back, which
+/// hands the scene a clean slate and lets it be answered again.
 ///
 /// The section mark is the eyebrow, a dot in the section's colour and its
 /// name, so moving from one part of the set to another is seen without
@@ -46,6 +54,14 @@ class _BaselineQuestionViewState extends State<BaselineQuestionView> {
   bool _canAnswer = false;
   bool _advancing = false;
 
+  /// Whether the answer was taken back on this visit. It only changes the
+  /// key, so the scene is built again with nothing settled in it.
+  bool _cleared = false;
+
+  /// Answered before this visit, which is the only case that needs a way
+  /// forward that is not a movement.
+  late final bool _returning = widget.answer != null;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +79,14 @@ class _BaselineQuestionViewState extends State<BaselineQuestionView> {
     Future<void>.delayed(const Duration(milliseconds: 350), () {
       if (mounted) widget.onContinue();
     });
+  }
+
+  /// Takes the answer back and hands the scene a fresh state to be answered
+  /// in. The key below changes with it, which is what makes the scene forget
+  /// what it had settled on.
+  void _change() {
+    widget.onChanged(null);
+    setState(() => _cleared = true);
   }
 
   Widget _scene(BaselineQuestion question) {
@@ -130,9 +154,29 @@ class _BaselineQuestionViewState extends State<BaselineQuestionView> {
           const SizedBox(height: 22),
           IgnorePointer(
             ignoring: !_canAnswer || _advancing,
-            child: _scene(question),
+            child: KeyedSubtree(
+              key: ValueKey('${widget.index}:$_cleared'),
+              child: _scene(question),
+            ),
           ),
           const Spacer(),
+          // Only on a question that was already answered before this visit.
+          // A first answer moves on by itself and a button under it would
+          // make the movement into a form.
+          if (_returning && !_cleared) ...[
+            SoulButton(
+              'Continue',
+              kind: SoulButtonKind.filled,
+              onPressed: _advancing ? null : widget.onContinue,
+            ),
+            const SizedBox(height: 4),
+            SoulButton(
+              'Change my answer',
+              kind: SoulButtonKind.ghost,
+              onPressed: _advancing ? null : _change,
+            ),
+            const SizedBox(height: 10),
+          ],
           Center(
             child: Text(
               '${widget.index + 1} of ${baseline.length}',
