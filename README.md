@@ -52,8 +52,9 @@ runs before either, blocking, on every entry.
 
 | Layer | Choice |
 | --- | --- |
-| App | Flutter, iOS and Android. One runtime dependency, `record`, for the microphone |
-| Transcription | ElevenLabs Scribe, audio deleted immediately, never stored |
+| App | Flutter, iOS and Android. Every build talks to the service unless `SOUL_API` says otherwise |
+| Transcription | ElevenLabs Scribe over a live connection, words appearing as they are said, audio deleted immediately and never stored |
+| Sign in | Apple, or a six digit code by email through Resend. A phone gets an account on first launch either way |
 | Tone | The same recording heard once by an OpenAI audio model, judged for emotion and intent, stored as words and numbers, never as audio |
 | API | TypeScript and Node |
 | Database | Postgres 17 with pgvector, row level security. Supabase in production, local Postgres in development |
@@ -76,7 +77,9 @@ runs before either, blocking, on every entry.
 6. Crisis wording, safety thresholds and prompt text live in the database, not
    in the app binary, so they can be changed without a store release.
 7. No third party analytics or crash SDKs in the student app.
-8. Audio is never persisted. The transcript is the record.
+8. Audio is never persisted. The words are the record, and they land in the
+   typing box as they are said so nothing is submitted that was not on the
+   screen first.
 
 ## Documents
 
@@ -122,10 +125,10 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | 8 Mirror and decision | Built. |
 | 9 Tagging | Built. The fifty entry hand check has not been done. |
 | 10 Check backs | Job runner built. Not yet exercised across a redeploy. |
-| 11 Home with empty states | Done, day one version first. First run now ends here. |
+| 11 Home with empty states | Done, day one version first. The greeting and the date, the seven days ending today, and a ring filled from the baseline answers until there is a week of their own. |
 | Profile tab | Fourth destination. Reads and writes every held field. |
 | 12 Pattern candidates | Query built. Not yet seen with real tags behind it. |
-| 13 Day view | Built on the student's own entries. Days list, then one day. |
+| 13 Day view | Built on the student's own entries. Days list, then one day. Cards come as a pile, one at a time, and can be put off with maybe later. |
 | Cue cards | A yes or no question about something they said is coming up, with a box. |
 | Reflections | Good and bad patterns, one line each, opening on the entries behind them. |
 | People | Everyone they write about, with a profile the model writes. |
@@ -216,17 +219,19 @@ npm run db:reset -- --yes           # every row, gone. Refuses anything remote
 npm run seed
 ```
 
-The client, pointed at that API:
+The client. Every build talks to the service on Render unless told
+otherwise, so the define is how it is pointed at the API above:
 
 ```
 cd app
 flutter run --flavor soul \
-            --dart-define=SOUL_API=http://localhost:8080 \
-            --dart-define=SOUL_STUDENT=student_with_consent
+            --dart-define=SOUL_API=http://localhost:8080
+```
 
 The flavor is the Xcode scheme, which is named Soul like everything else in
 the project. Flutter only finds a scheme by that name when told the flavor.
-```
+Without the define the app talks to Render, which is decision 220 and the
+reason a simulator no longer goes quiet when nothing is running here.
 
 Without provider keys the safety classifier cannot answer, so every entry
 returns the help screen. That is the designed behaviour, not a failure.

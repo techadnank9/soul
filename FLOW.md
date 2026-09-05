@@ -10,25 +10,26 @@ change the path, change this file in the same commit.
 
 ## Entry points
 
-There are only eleven ways anything starts running.
+There are only twelve ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
 | Student taps the mic, then taps stop | Human | `app/lib/features/capture/capture_screen.dart` |
-| Student taps send on the transcript | Human | `app/lib/features/capture/confirm_transcript.dart` |
+| Student taps send on what is in the box | Human | `app/lib/features/capture/capture_screen.dart` |
 | Student finishes the profile | Human | `app/lib/features/onboarding/profile_screen.dart` |
 | Student edits their profile | Human | `app/lib/features/profile/profile_tab.dart` |
 | Student answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
 | Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
-| Student opens a day | Human | `app/lib/features/day/days_screen.dart` |
+| Student opens a day | Human | `app/lib/features/shell/app_shell.dart`, from home or the Days list |
+| Student answers or puts off a card | Human | `app/lib/features/day/cue_card.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
 | Nightly consolidation | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
 | A scheduler drains the queue | Time | `api/src/routes/jobs.ts`, calling the same `tick()` |
 
-Everything else in the system is called by one of these eleven.
+Everything else in the system is called by one of these twelve.
 
-The eleventh is the same work as the eighth, ninth and tenth, reached
+The last is the same work as the three time driven ones above it, reached
 differently.
 `npm run worker` runs `tick()` in a loop forever, which suits a host that stays
 up. `POST /jobs/drain` runs the same `tick()` a bounded number of times when
@@ -101,16 +102,46 @@ main.dart → onboarding/first_run.dart, FirstRun
   │     flagged one shows nothing either. See decision 063
   │
   ├─ 3b. ready_screen.dart
-  │     what was given, handed back as it was given, and nothing scored
+  │     what was given, handed back as chips, and nothing scored
+  │     a line written from the answers, asked for when the baseline ended
+  │        POST /welcome → services/welcome/line.ts, gateway purpose welcome
+  │        it says what kind of moment this is useful for. It does not quote
+  │        the answers back and it never says what kind of person they are
+  │        the model also names three or four themes, which are stored and
+  │        fill the week ring until their own entries can
+  │        the sentence about what happens from here is ours, in the screen,
+  │        so it is there whatever the model did. Decision 221
+  │     a spoken introduction stands between the ask and this screen, so the
+  │     line is already back by the time it is read. It is allowed to fail:
+  │     room is held for it and the rest of the screen shows either way
   │     no back from here: the introduction has already been sent
   │
   ├─ 4. sign_in_screen.dart
-  │     the terms, the privacy policy, an agreement that gates the button
-  │     a development skip that is labelled as one
+  │     the lock, one line, and the button. Nothing gates it: using the app
+  │     is the agreement, per decision 201, and the terms sit under the
+  │     button as words with two links rather than as a tick
+  │     Sign in with Apple → POST /auth/apple
+  │        the bearer is the phone's own session, which is the account the
+  │        Apple account attaches to. On a later phone the Apple account
+  │        decides which account this is, whatever the bearer said
+  │     email appears only once Apple has failed. Decision 226
+  │        POST /auth/email/start sends a six digit code through Resend
+  │        the code is asked for on a screen of its own, EmailCodeScreen
+  │        POST /auth/email/verify trades it for a session
+  │     a development skip that is labelled as one, which makes a session
+  │     first if the phone has none
   │
   └─ 5. home
-        the week ring, and on a new account nothing in it yet
+        the greeting, the seven days ending today, and a ring filled from
+        the answers until there is a week of their own
 ```
+
+The skip on the welcome screen is its own path. `POST /auth/demo` makes a
+fresh account, fills it with a week from `services/demo/seed.ts`, and hands
+back a session, so whoever presses it lands on a home with something in it.
+Every press makes its own account. It used to sign in as the seeded test
+student through a path the server refuses anywhere real, which is why every
+screen behind it failed.
 
 Every question in first run is mandatory. The skips were removed on the
 founder's call, so the name field, the four profile questions and all ten
@@ -153,7 +184,8 @@ capture_screen.dart
   │     Nobody waits: send can go before it lands and the entry has no tone
   └─ send is the same button as for typing. No confirm screen: the words were
      on the screen as they were said and could be fixed there
-  └─ POST /transcribe still exists for a whole file, and nothing calls it
+  └─ POST /transcribe still exists for a whole file, and nothing calls it.
+     DELETE /transcribe/:toneId does too, from when there was a discard step
   └─ writes to local queue (survives connection loss)
   └─ POST /entries, carrying toneId for a spoken entry
        │
@@ -394,6 +426,30 @@ Reading the service logs during a session shows the whole path: account made,
 consent recorded, recording sent and how it ended, entry submitted and in
 which state. The server logs the outcome of every transcribe and entry too.
 
+## Cue cards, and putting one off
+
+A day shows one unanswered card at a time. The edges of the ones behind it
+show that there are more, and a line says how many. Answering brings the next
+forward, and the answered ones stay listed underneath so a student can see
+what they were asked and what they said.
+
+```
+day_screen.dart
+  ├─ POST /cards/:id/answer  → services/cards/answer.ts
+  │     yes writes a decisions row and books the check back, the same row the
+  │     Mirror path writes. No writes neither and is recorded as what it is
+  └─ POST /cards/:id/later   → services/cards/defer.ts
+        sets deferred_until to tomorrow and writes nothing about the
+        question. The day read skips a card whose time has not come, so it
+        comes back on its own. Later is about the moment, not the question,
+        so no opinion is recorded and no decision is booked. Decision 229
+        the card leaves the pile before the server answers, because the pile
+        moving is the point of tapping it. A request that never lands means
+        the card is back next time, which is the right failure
+```
+
+---
+
 ## Consent, and where it lives
 
 Consent is recorded by the district at rostering and read by
@@ -416,6 +472,16 @@ which is why a student on their first day was shown somebody else's week.
 ```
 GET /week       → services/reads/week.ts        the ring, the count, seven days,
                                                and what they are still holding
+                                               the seven days end today rather
+                                               than running Monday to Sunday,
+                                               so nothing in the row is waiting
+                                               to happen. Decision 228
+                                               with no themes of their own it
+                                               returns the ones the baseline
+                                               answers named, and says so with
+                                               themesFromAnswers, so the ring
+                                               is full on day one and the key
+                                               under it carries no counts
 GET /days       → services/reads/days.ts       every day with something in it
 GET /day/:date  → services/reads/day.ts        one day, and its cue cards
 GET /patterns   → services/reads/patterns.ts   good, bad, and still forming
@@ -573,18 +639,20 @@ improves.
 9. Audio is never persisted. It is deleted the moment a transcript returns.
    What is kept about a recording is a `voice_tones` row: a fixed vocabulary
    word for emotion and one for intent, one sentence, and numbers measured
-   from word timings. The row goes when the transcript is discarded and
-   cascades when the entry is deleted.
-10. No entry is submitted without the student having seen the transcript. A
-    typed entry has nothing to confirm and skips the step; a spoken one never
-    does.
-11. A transcript never lands in the typing field. It goes to the confirm step,
-    send or discard, because it is the permanent record and the text the safety
-    classifier reads.
-12. Consent is recorded by the district at rostering, or by the person
-    themselves on the sign in screen for an account they made, and it is read
-    by the gate. Until it is recorded nothing leaves. What was written before
-    it is released through the classifier afterwards, never around it.
+   from word timings. A row with no entry on it is swept by the next
+   recording, and one with an entry cascades when the entry is deleted.
+10. Nothing is submitted that was not on the screen first. Spoken words land
+    in the typing box as they are said, so they are read as they arrive and
+    can be corrected by hand before send. This replaced the confirm step,
+    which showed a transcript after the fact. Decision 203.
+11. Send is the same button whatever put the words there. A spoken entry and
+    a typed one are the same entry by the time they are sent, and the only
+    difference recorded is `input_mode` and whether a tone row was linked.
+12. Consent is recorded by the district at rostering, or when an account is
+    created for somebody who made it themselves, and it is read by the gate.
+    Using the app is the agreement, per decision 201. Until it is recorded
+    nothing leaves, and what was written before it is released through the
+    classifier afterwards, never around it.
 13. A card is only ever about something the student named themselves, and a
     person only ever exists because they named them. Neither is invented, and
     an empty answer is the common one.

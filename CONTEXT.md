@@ -292,16 +292,20 @@ Reassurance we have no grounds for.
 
 ## On transcription
 
-The student speaks, the audio is transcribed by a provider, and the audio is
-deleted immediately. It is never stored.
+The student speaks, the words come back as they are speaking, and the audio
+is deleted immediately. It is never stored.
 
-There is no edit step, so the transcript is the permanent record and the text a
-safety classifier reads. That is why the student sees it and chooses send or
-discard before anything is submitted.
+The words land in the same box they would have typed in, so they read them as
+they arrive and can correct one by hand before sending. That replaced the
+confirm step, which showed a transcript after the fact and offered send or
+discard with no way to fix a wrong word. What is sent is still the permanent
+record and still the text a safety classifier reads, and it is still never
+sent without having been on the screen. Decision 203.
 
 Recognition on children's voices is materially worse than on adults, worse again
 in noisy rooms, and worst for students from non English speaking homes. Typing is
-an equal path on the same screen for that reason, not a fallback.
+an equal path on the same screen for that reason, not a fallback, and the same
+box serving both is what makes correcting a misheard word cost nothing.
 
 ## The compliance shape, briefly
 

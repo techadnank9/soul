@@ -30,8 +30,9 @@ changes, not word errors.
 
 This matters more than it sounds. Published research puts word error rates for
 child speech far above adult speech, and worse again in classrooms, and worst for
-students from non English speaking homes. There is no edit step in this product,
-so the transcript is the permanent record and the input to the safety classifier.
+students from non English speaking homes. What is sent is the permanent record
+and the input to the safety classifier, which is why it is on the screen and
+correctable before it goes.
 
 Done when: text entry feels right on both platforms, and you have a measured
 meaning change rate for both providers on real student audio.
@@ -82,9 +83,10 @@ persist it, never let it reach a backup.
 Behind a single `transcribe()` function with the provider in config, the same
 pattern as the model gateway, so switching provider is a config change.
 
-Then the confirm step: show the student the transcript with send or discard. Not
-an edit field. Given the error rates on child speech, an unreviewed permanent
-record is not defensible.
+The words land in the typing box as they are said, so nothing is submitted
+that was not on the screen first and a misheard word can be fixed by hand.
+This started as a confirm step with send or discard and no way to correct
+anything. Decision 203 replaced it.
 
 Typing is an equal path on the same screen, not a fallback, because the students
 recognised worst are disproportionately those from non English speaking homes.

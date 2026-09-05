@@ -74,6 +74,12 @@ there clears the columns. See decisions 056, 057, 060 and 061.
 `place` is the neighbourhood, city and state the coordinates resolved to on
 the phone, shown back instead of the numbers.
 
+`opening` and `opening_themes` are written once, at the end of first run,
+from the baseline answers. The line is shown on the last screen of first run
+and on home until there is a week of their own. The themes are three or four
+`{ name, weight }` pairs that fill the week ring until the tagger has named
+something from their own entries, and are never shown beside real themes.
+
 `email` is present once a user has signed in with one, lowercased, unique.
 The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random
@@ -281,7 +287,8 @@ rights and will ask who viewed what.
 ## cue_cards
 `id`, `entry_id`, `student_id`, `school_id`, `district_id`, `about`,
 `question`, `options`, `answered_yes`, `chosen_index`, `detail`, `decision_id`,
-`prompt_version`, `model_version`, `answered_at`, `created_at`
+`prompt_version`, `model_version`, `answered_at`, `deferred_until`,
+`created_at`
 
 A question about something the student said is coming up, answerable yes or no,
 with a box under it. Written by a background job after tagging, never on the
@@ -290,6 +297,11 @@ request path, and only from entries the classifier cleared.
 `options` is dead weight kept for the rows written before the card became a
 yes or no question. Nothing writes it now. `answered_yes` is null until they
 answer, which makes unanswered, yes and no three states rather than two.
+
+`deferred_until` is set by maybe later and is a statement about the moment
+rather than the question, so nothing is recorded about what they think of it.
+A day skips a card whose time has not come, and the card returns on its own
+after. Decision 229.
 
 A yes writes a `decisions` row and books the check back. A no writes neither.
 

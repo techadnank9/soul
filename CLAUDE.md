@@ -137,7 +137,10 @@ as nodes and edges. Do not move any of it to a hosted memory service and do
 not paraphrase a fact into a trait anywhere it is rendered.
 
 **Empty states get built before populated ones.** Every mockup shows a full week
-of data. No student has that on day one.
+of data. No student has that on day one. Home is the test of this: on day one
+the ring is filled from the baseline answers and says so, the strip is the
+seven days ending today so nothing in it is greyed out, and the line under
+the greeting is the one written at the end of first run.
 
 ## How to run it
 
@@ -162,7 +165,9 @@ states and cities to pick from, in `world_map.dart` and
 `location_picker.dart`, storing one of the sixteen regions the server knows
 and the place as words. Each baseline
 question is a scene answered by a movement, in `baseline_scenes.dart`, that
-moves on by itself once something is chosen. The profile tab, fourth on the bar, shows
+moves on by itself once something is chosen. First run ends on a landing
+that carries a line written from the answers, and then sign in. The profile
+is reached from the top right of home rather than from the bar, and shows
 every held field and can empty any of them. The flow is one sequence in
 `app/lib/features/onboarding/first_run.dart`, built from the pieces in
 `onboarding_kit.dart`, and decisions 211 to 215 say where its shape came
