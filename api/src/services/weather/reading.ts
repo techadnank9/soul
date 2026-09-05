@@ -23,8 +23,13 @@ export type Reading = {
   daylight: boolean
 }
 
-export async function reading(session: Session): Promise<Reading | null> {
-  const where = await weatherWhere(session)
+export async function reading(
+  session: Session,
+  at?: { latitude: number; longitude: number },
+): Promise<Reading | null> {
+  // Where the phone says it is, when it said, so a development build reads
+  // the same sky a release build would. What the service holds otherwise.
+  const where = at ?? (await weatherWhere(session))
   if (!where) return null
 
   const url = new URL('https://api.open-meteo.com/v1/forecast')

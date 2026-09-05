@@ -397,9 +397,15 @@ class SoulApi {
   /// simulator build is signed to run locally whatever is asked of it, so on
   /// a simulator Apple declines. A release build never calls this: its
   /// weather comes from Apple and its position never leaves the phone.
-  Future<Map<String, dynamic>?> weatherReading() async {
+  Future<Map<String, dynamic>?> weatherReading({
+    double? latitude,
+    double? longitude,
+  }) async {
     try {
-      return await _get('/weather/reading');
+      final at = latitude == null || longitude == null
+          ? ''
+          : '?latitude=$latitude&longitude=$longitude';
+      return await _get('/weather/reading$at');
     } catch (_) {
       return null;
     }

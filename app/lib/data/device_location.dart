@@ -51,6 +51,40 @@ Future<DeviceLocation?> currentLocation() async {
 /// Opens the phone's own settings for this app, where location can be
 /// turned back on. When location is off for the whole phone it opens that
 /// switch instead. Nothing is read or written; it is a door.
+/// Where the phone is right now, but only if it has already been allowed to
+/// say. It never asks.
+///
+/// The weather card uses this so it is about where somebody is standing
+/// rather than where they were when they first opened the app. It is never
+/// written anywhere: the position in the profile is the one they gave, and
+/// only they change it.
+///
+/// Null when location is off, when permission was never given, or when the
+/// phone takes too long, and the card falls back to the profile.
+Future<DeviceLocation?> quietLocation() async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return null;
+
+    final permission = await Geolocator.checkPermission();
+    if (permission != LocationPermission.always &&
+        permission != LocationPermission.whileInUse) {
+      return null;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        // Coarse is enough for what the sky is doing, and it is quicker and
+        // cheaper on the battery than asking for a precise fix.
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 6),
+      ),
+    );
+    return DeviceLocation(position.latitude, position.longitude);
+  } catch (_) {
+    return null;
+  }
+}
+
 Future<void> openLocationSettings() async {
   try {
     if (!await Geolocator.isLocationServiceEnabled()) {

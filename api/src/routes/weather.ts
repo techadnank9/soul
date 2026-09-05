@@ -26,7 +26,14 @@ weather.get('/weather', async (c) => {
  * service for why it exists at all.
  */
 weather.get('/weather/reading', async (c) => {
-  return c.json(await reading(c.get('session')))
+  const latitude = Number(c.req.query('latitude'))
+  const longitude = Number(c.req.query('longitude'))
+  const at =
+    Number.isFinite(latitude) && Number.isFinite(longitude)
+      ? { latitude, longitude }
+      : undefined
+
+  return c.json(await reading(c.get('session'), at))
 })
 
 /**

@@ -154,8 +154,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Where to look comes from the service, and the weather itself from
-  /// Apple on this device, so the position never leaves the phone.
+  /// Where to look, and then the weather itself from Apple on this device,
+  /// so the position never leaves the phone.
+  ///
+  /// Where to look is the phone's own position when it has already been
+  /// allowed to say, so the card is about where somebody is standing rather
+  /// than where they were when they first opened the app. It falls back to
+  /// what the service holds, which is the position they gave in the profile
+  /// or the middle of the region they picked.
+  ///
+  /// The phone's position is never written anywhere. The one in the profile
+  /// is theirs, and only they change it.
   ///
   /// Null anywhere along the way means no card, which is an ordinary answer
   /// and is not shown as a failure. A card answered today is not shown
@@ -164,9 +173,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final where = await widget.api.weatherWhere();
     if (where == null || where.answeredToday) return;
 
+    final here = await quietLocation();
+    final latitude = here?.latitude ?? where.latitude;
+    final longitude = here?.longitude ?? where.longitude;
+
     var sky = await weatherAt(
-      latitude: where.latitude,
-      longitude: where.longitude,
+      latitude: latitude,
+      longitude: longitude,
       fahrenheit: where.fahrenheit,
     );
 
@@ -174,7 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // at. In a debug build the service reads it instead so the card is
     // there to look at. A release build never asks.
     if (sky == null && kDebugMode) {
-      final reading = await widget.api.weatherReading();
+      final reading = await widget.api.weatherReading(
+        latitude: latitude,
+        longitude: longitude,
+      );
       final condition = reading?['condition'] as String?;
       final celsius = (reading?['celsius'] as num?)?.toDouble();
       if (condition != null && celsius != null) {
@@ -189,10 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final found = sky;
     if (!mounted || found == null) return;
 
-    final place = (await placeName(where.latitude, where.longitude))
-        ?.split(',')
-        .first
-        .trim();
+    final place = (await placeName(latitude, longitude))?.split(',').first.trim();
     if (!mounted) return;
 
     final written = await widget.api.weatherQuestion(

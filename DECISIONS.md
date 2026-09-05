@@ -4466,3 +4466,29 @@ already been does not, because an entry written now belongs to now, and
 putting it on last Tuesday would be the app writing something nobody said
 then.
 
+---
+
+### 236. The card follows the phone, and the profile keeps what they gave
+Sep 2026, Adnan
+
+Decision: the weather card asks the phone where it is each time home opens,
+and uses that. It asks only when permission has already been given and never
+prompts. The position is used and dropped. Nothing writes it anywhere, and
+the position in the profile stays whatever the person put there.
+
+Why: the card was about where somebody was when they first opened the app,
+which is wrong the moment they go anywhere. It is a question about today and
+today happens where they are standing.
+
+Why it is not stored: a position taken quietly on every launch is a movement
+history, and there is no reason to hold one. The profile position is
+something a person gave once and can change or empty. Those are two
+different things and only one of them is theirs to keep.
+
+Falls back to what the service holds, which is the profile position or the
+middle of the region they picked, so a phone with location off still gets a
+card.
+
+Coarse accuracy rather than precise. What the sky is doing does not need a
+street, and coarse is quicker and easier on the battery.
+
