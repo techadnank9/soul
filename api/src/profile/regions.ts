@@ -70,6 +70,16 @@ const centres: Record<Exclude<Region, 'elsewhere'>, [number, number]> = {
   south_africa: [-29.0, 24.5],
 }
 
+/**
+ * The middle of a region, for when somebody picked one and never shared a
+ * position. Coarse on purpose: it answers which part of the world, which is
+ * enough to say what the sky is doing.
+ */
+export function centreOf(region: Region): [number, number] | null {
+  if (region === 'elsewhere') return null
+  return centres[region] ?? null
+}
+
 /** Rough great circle distance in kilometres. Good enough to pick a region. */
 function apart(a: [number, number], b: [number, number]): number {
   const toRad = Math.PI / 180

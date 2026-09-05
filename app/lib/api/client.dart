@@ -364,6 +364,16 @@ class SoulApi {
     await _post('/baseline', {'setVersion': setVersion, 'answers': chosen});
   }
 
+  /// What the sky is doing where they are. Null when there is nothing to
+  /// say, which home treats as no card rather than as a failure.
+  Future<WeatherNow?> weather() async {
+    try {
+      return WeatherNow.fromJson(await _get('/weather'));
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// The week behind the home screen.
   ///
   /// The week is bounded by the user's own timezone on the server, so a

@@ -40,7 +40,9 @@ class HomeScreen extends StatefulWidget {
   /// The profile, which left the tab bar and is reached from here.
   final VoidCallback? onOpenProfile;
 
-  final VoidCallback onCapture;
+  /// Opens capture. A prompt and a note put a question at the top of it,
+  /// which is how the weather card asks something specific.
+  final void Function({String? prompt, String? note}) onCapture;
 
   /// Given the date of the day that was tapped, as YYYY-MM-DD.
   final ValueChanged<String> onOpenDay;
@@ -64,10 +66,18 @@ class _HomeScreenState extends State<HomeScreen> {
   WeekView? _week;
   bool _failed = false;
 
+  /// Asked for on its own rather than as part of the week, so a slow or
+  /// unreachable weather service costs this card and nothing else on the
+  /// screen. Null is the ordinary answer when no position was ever shared.
+  WeatherNow? _weather;
+
   @override
   void initState() {
     super.initState();
     _load();
+    widget.api.weather().then((w) {
+      if (mounted) setState(() => _weather = w);
+    });
   }
 
   @override
@@ -110,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Something on your mind',
               kind: SoulButtonKind.filled,
               height: 56,
-              onPressed: widget.onCapture,
+              onPressed: () => widget.onCapture(),
             )
           : null,
     );
@@ -253,6 +263,53 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
+      // What the sky is doing, and one question that follows from it. It is
+      // the shortest way into the app: tapping it opens capture with the
+      // question already at the top.
+      if (_weather != null) ...[
+        const SizedBox(height: 16),
+        SoulCard(
+          background: SoulColors.clayLight,
+          borderColor: const Color(0x33EA5F17),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          onTap: () => widget.onCapture(
+            prompt: _weather!.question,
+            note: _weather!.line,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Label(_weather!.line),
+                    const SizedBox(height: 6),
+                    Text(
+                      _weather!.question,
+                      style: const TextStyle(
+                        fontFamily: SoulType.serif,
+                        fontSize: 18,
+                        height: 1.35,
+                        color: SoulColors.text,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: SoulColors.clay,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.mic_none, size: 18, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ],
       const SizedBox(height: 18),
       SoulCard(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),

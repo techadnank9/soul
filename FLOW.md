@@ -494,6 +494,16 @@ GET /reflection → services/reads/reflection.ts one theme, and the entries
 GET /people     → services/people/read.ts      who they write about
 GET /people/:id → services/people/read.ts      one person, and where they
                                                come up
+GET /weather    → services/weather/now.ts      what the sky is doing where
+                                               they are, and one question
+                                               that follows from it. Open
+                                               Meteo, no key, coordinates
+                                               rounded to two places and
+                                               nothing that says who they
+                                               are. Held twenty minutes per
+                                               person. Null when there is no
+                                               position and no region, which
+                                               home reads as no card
 GET /graph      → routes/graph.ts              the person as nodes and edges:
                                                open facts, people, patterns,
                                                decisions and outcomes. The

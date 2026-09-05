@@ -230,7 +230,8 @@ class _HomeState extends State<Home> {
     return AppShell(
       revision: _entries,
       name: widget.name,
-      onCapture: () => _openCapture(context),
+      onCapture: ({String? prompt, String? note}) =>
+          _openCapture(context, prompt: prompt, note: note),
     );
   }
 
@@ -255,13 +256,16 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _openCapture(BuildContext context) {
+  /// A prompt and a note put a specific question at the top, which is what
+  /// the weather card on home hands over. Without them it is the ordinary
+  /// open question.
+  void _openCapture(BuildContext context, {String? prompt, String? note}) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (capture) => CaptureScreen(
-          opener: 'right now',
-          prompt: 'What just happened?',
-          note: 'Thirty seconds is plenty.',
+          opener: prompt == null ? 'right now' : 'right now, where you are',
+          prompt: prompt ?? 'What just happened?',
+          note: note ?? 'Thirty seconds is plenty.',
           onClose: () => Navigator.of(capture).pop(),
           onSubmitted: (text, {required spoken, toneId}) =>
               _openSession(capture, text, spoken: spoken, toneId: toneId),

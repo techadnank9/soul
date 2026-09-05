@@ -4319,3 +4319,41 @@ which it was. The same idea fits in the line that was already there.
 
 Rejected: a paragraph of its own under the steps, which said more and was
 worth less than the four short lines it sat under.
+
+---
+
+### 232. The weather asks the first question
+Sep 2026, Adnan
+
+Decision: home carries a card with what the sky is doing where the person is
+and one question that follows from it. Tapping it opens capture with that
+question already at the top, and what they say is an ordinary entry through
+the ordinary loop.
+
+Why: the founder asked for it. It also answers something the screen did not
+have: a reason to write today. What just happened is a hard question from
+cold, and what is it like out there is not.
+
+Open Meteo, which needs no key and no account. What leaves is a pair of
+coordinates rounded to two places, about a kilometre, and nothing that says
+who they are. Their own position when they shared one, the middle of the
+region they picked when they did not, and no card at all when there is
+neither. Held twenty minutes per person, because home is opened more often
+than the sky changes.
+
+The line is written on the server from the weather code rather than by a
+model. It is four words about the sky, it has to be right rather than
+interesting, and a model call on the home path would cost a second every
+time the app is opened.
+
+The questions ask and never tell. None of them names a feeling, suggests
+one, or implies the weather ought to have done something to somebody. Rain
+gets how is it going in that, which is a question about the day and not
+about the rain.
+
+Fahrenheit in the United States, Celsius everywhere else, from the region
+already stored.
+
+Reverses if: it reads as small talk rather than as a way in, which is a
+thing to watch for in task 7 rather than to argue about now.
+

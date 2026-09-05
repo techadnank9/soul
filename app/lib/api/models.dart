@@ -629,3 +629,20 @@ class PersonView {
         ],
       );
 }
+
+/// What the sky is doing where they are, and a question that follows from
+/// it. Absent when there is no position, no region, or nothing came back.
+class WeatherNow {
+  const WeatherNow({required this.line, required this.question});
+  final String line;
+  final String question;
+
+  static WeatherNow? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    final line = json['line'] as String?;
+    final question = json['question'] as String?;
+    if (line == null || question == null) return null;
+    return WeatherNow(line: line, question: question);
+  }
+}
+

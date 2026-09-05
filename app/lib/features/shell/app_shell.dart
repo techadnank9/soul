@@ -31,7 +31,7 @@ class AppShell extends StatefulWidget {
     this.name,
   });
 
-  final VoidCallback onCapture;
+  final void Function({String? prompt, String? note}) onCapture;
 
   /// Changes when an entry lands, so the tabs behind the capture screen go and
   /// read again instead of showing what was true a minute ago.
@@ -106,7 +106,7 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: _TabBar(
         current: _tab,
         onChanged: (tab) => setState(() => _tab = tab),
-        onCapture: widget.onCapture,
+        onCapture: () => widget.onCapture(),
       ),
     );
   }
