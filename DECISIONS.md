@@ -4305,25 +4305,17 @@ and is more work than this was worth today.
 
 ---
 
-### 231. How it works says what the loop adds up to
+### 231. How it works gains the pattern in a line, not a paragraph
 Sep 2026, Adnan
 
-Decision: the second screen keeps its four steps and gains a fifth block
-under them, saying that what keeps coming back is offered as a pattern, that
-the person says whether it fits, and that the ones that do are sorted into
-what is doing them good and what is costing them.
+Decision: the second screen keeps its four steps, its layout and its length.
+The wording of the lines changed, and the fourth now carries the part the
+loop is for: what keeps returning becomes a pattern.
 
-Why: the four steps described one pass through the app and nothing else, so
-the screen read as a voice recorder that answers back. The part somebody
-would stay for was missing. The founder asked for it to be accurate about
-what comes back and about how a pattern forms.
+Why: the four steps described one pass through the app and stopped, so the
+screen read as a voice recorder that answers back. A fifth block was tried
+and the founder read it as too much to read on the second screen of an app,
+which it was. The same idea fits in the line that was already there.
 
-The steps themselves were made truer at the same time. Words land as they
-are spoken rather than a line coming back afterwards, the Mirror offers one
-question rather than deciding something, and the check back comes on the day
-the person chose rather than some days later.
-
-The screen scrolls now if it does not fit, and centres itself when it does.
-It was a column of fixed pieces between two spacers, which overflows rather
-than scrolls the moment there is one piece too many.
-
+Rejected: a paragraph of its own under the steps, which said more and was
+worth less than the four short lines it sat under.
