@@ -330,7 +330,12 @@ class _ProfileTabState extends State<ProfileTab> {
     );
 
     if (choice == 'share') await _shareLocation();
-    if (choice == 'forget') await _changeLocation(null, null);
+    // Forgetting it here forgets the fixes the home card keeps on the
+    // device too, so one button empties every copy.
+    if (choice == 'forget') {
+      await forgetRecentPositions();
+      await _changeLocation(null, null);
+    }
   }
 
   Future<void> _pick(

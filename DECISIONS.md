@@ -4545,3 +4545,37 @@ puts one back whatever arrives. And it wrote the temperature as a numeral
 with a degree sign, so numbers and units are out entirely: if the cold is
 worth saying, it says cold.
 
+## 220. The home card keeps the last three device positions in the keychain
+
+A phone indoors, in a lift, or holding on to a fix for a few seconds answers
+nothing, and the weather card was falling all the way back to the region
+picked during first run, which can be a thousand miles from where somebody
+is standing. `locationForCard` now asks the phone, then the phone's own last
+known fix, then up to three fixes we kept, and only then the position in the
+profile.
+
+They are kept in the keychain rather than a preferences file because where
+somebody has been is the most sensitive thing this app holds. They never
+leave the device, they are never sent with an entry, and they never touch
+the position in the profile, which is theirs and only they change it.
+Emptying location in the profile calls `forgetRecentPositions`, so one
+button clears every copy.
+
+Reverses the part of decision 061 that said the phone's live position is
+never written anywhere. Written on the device, still never written to the
+row.
+
+## 221. The card is always shown, and what keeps returning is not
+
+Two rules that pull in opposite directions and are both about the same
+thing: a screen should only offer what it can actually deliver.
+
+The weather card is shown even when there is no position and no reading. It
+asks the plain question instead, opens the same capture screen and takes the
+same entry. A card that vanishes because a phone is in a basement reads as
+an app that broke.
+
+What keeps returning is shown only once the week has themes from real
+entries. Sent to an empty patterns screen it is a promise the app cannot
+keep, and the four answers from first run are not reflection.
+

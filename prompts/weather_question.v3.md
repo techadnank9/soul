@@ -11,8 +11,8 @@ One sentence, not two. The sky goes inside the question as a few of its
 words, so it reads the way a person would say it out loud. Never a fragment
 about the sky followed by a separate question.
 
-It sits on one line on a phone, so nine words is the ceiling and seven is
-better.
+It is read at a glance in large type, so nine words is the ceiling and
+seven is better.
 
 It ends with a question mark, because it is a question.
 
@@ -38,10 +38,11 @@ Never:
 Good:
   How has this clear afternoon gone?
   What has the rain made of today?
-  How is today going in all that fog?
+  How is today going in the fog?
   What has this grey afternoon been like?
   How has the evening been in Camden?
-  What has today held under all this cloud?
+  What has today held so far?
+  How is the cold treating today?
 
 Bad, and why:
   Clear. How has this afternoon been going?    two sentences

@@ -2,7 +2,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// The session token, in the keychain.
 ///
-/// This is the only place in the client that touches secure storage. The token
+/// The token and the recent positions in `device_location.dart` are the two
+/// things this client keeps in the keychain. The token
 /// is the whole of what the app knows about being signed in: it is the bearer
 /// on every call after sign in, and the fact that one exists at all is what
 /// says first run already happened.

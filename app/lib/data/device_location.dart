@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// The device's own position, when the user allows it.
@@ -118,4 +119,99 @@ Future<String?> placeName(double latitude, double longitude) async {
   } catch (_) {
     return null;
   }
+}
+
+/// The last few positions this phone reported, newest first, kept on the
+/// device and nowhere else.
+///
+/// The card at the top of home is about where somebody is. A phone that
+/// cannot answer right now, because it is indoors, or in a lift, or has
+/// been told not to answer this launch, used to mean the card fell all the
+/// way back to the region picked during first run, which can be a thousand
+/// miles from where they are standing. Yesterday's fix is a far better
+/// guess than that.
+///
+/// It is written to the keychain rather than a preferences file, because
+/// where somebody has been is the most sensitive thing this app holds. It
+/// never leaves the phone, it is never sent with an entry, and it never
+/// touches the position in the profile, which is theirs and only they
+/// change it.
+const _fixes = FlutterSecureStorage();
+const _fixesKey = 'recent_positions';
+const _fixesKept = 3;
+
+Future<void> _remember(DeviceLocation at) async {
+  try {
+    final held = await _held();
+    final line = [
+      '${at.latitude},${at.longitude}',
+      for (final old in held)
+        if (!(old.latitude == at.latitude && old.longitude == at.longitude))
+          '${old.latitude},${old.longitude}',
+    ].take(_fixesKept).join(';');
+    await _fixes.write(key: _fixesKey, value: line);
+  } catch (_) {
+    // A keychain that will not open costs the next launch a better guess.
+  }
+}
+
+Future<List<DeviceLocation>> _held() async {
+  try {
+    final line = await _fixes.read(key: _fixesKey);
+    if (line == null || line.isEmpty) return const [];
+    final out = <DeviceLocation>[];
+    for (final pair in line.split(';')) {
+      final parts = pair.split(',');
+      if (parts.length != 2) continue;
+      final latitude = double.tryParse(parts[0]);
+      final longitude = double.tryParse(parts[1]);
+      if (latitude != null && longitude != null) {
+        out.add(DeviceLocation(latitude, longitude));
+      }
+    }
+    return out;
+  } catch (_) {
+    return const [];
+  }
+}
+
+/// Erases the trail. Called when a user empties their location from the
+/// profile, so clearing it there clears it everywhere.
+Future<void> forgetRecentPositions() async {
+  try {
+    await _fixes.delete(key: _fixesKey);
+  } catch (_) {
+    // Nothing more to do about it here.
+  }
+}
+
+/// Where to put on the card, in the order of how well it answers the
+/// question: where the phone is now, then where the phone was last, then
+/// the ones before that, and then nothing, which sends the caller to the
+/// position in the profile.
+///
+/// Every one of these is a place this person has actually been, which is
+/// the whole point. The card is shown either way.
+Future<DeviceLocation?> locationForCard() async {
+  final now = await locationNow();
+  if (now != null) {
+    await _remember(now);
+    return now;
+  }
+
+  // The phone's own last fix, which any app on it may have caused. Free,
+  // instant, and usually minutes old rather than hours.
+  try {
+    final last = await Geolocator.getLastKnownPosition();
+    if (last != null) {
+      final at = DeviceLocation(last.latitude, last.longitude);
+      await _remember(at);
+      return at;
+    }
+  } catch (_) {
+    // Refused or unavailable. The ones we kept are still here.
+  }
+
+  final held = await _held();
+  return held.isEmpty ? null : held.first;
 }

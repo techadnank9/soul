@@ -193,53 +193,75 @@ class _HomeScreenState extends State<HomeScreen> {
   /// again until tomorrow, and tapping one is not answering it.
   Future<void> _sky() async {
     final where = await widget.api.weatherWhere();
-    if (where == null || where.answeredToday) return;
+    if (where != null && where.answeredToday) return;
 
-    final here = await locationNow();
-    final latitude = here?.latitude ?? where.latitude;
-    final longitude = here?.longitude ?? where.longitude;
+    // Where the phone is, then where it last was, then the ones before
+    // that, then the position in the profile. The card is shown whatever
+    // this answers, because a card that disappears when somebody is in a
+    // basement reads as an app that broke.
+    final here = await locationForCard();
+    final latitude = here?.latitude ?? where?.latitude;
+    final longitude = here?.longitude ?? where?.longitude;
+    final fahrenheit = where?.fahrenheit ?? true;
 
-    var sky = await weatherAt(
-      latitude: latitude,
-      longitude: longitude,
-      fahrenheit: where.fahrenheit,
-    );
-
-    // Apple declines on a simulator, which is where most of this is looked
-    // at. In a debug build the service reads it instead so the card is
-    // there to look at. A release build never asks.
-    if (sky == null && kDebugMode) {
-      final reading = await widget.api.weatherReading(
+    DeviceWeather? sky;
+    if (latitude != null && longitude != null) {
+      sky = await weatherAt(
         latitude: latitude,
         longitude: longitude,
+        fahrenheit: fahrenheit,
       );
-      final condition = reading?['condition'] as String?;
-      final celsius = (reading?['celsius'] as num?)?.toDouble();
-      if (condition != null && celsius != null) {
-        sky = readingToWeather(
-          condition: condition,
-          celsius: celsius,
-          daylight: reading?['daylight'] as bool? ?? true,
-          fahrenheit: where.fahrenheit,
+
+      // Apple declines on a simulator, which is where most of this is looked
+      // at. In a debug build the service reads it instead so the card is
+      // there to look at. A release build never asks.
+      if (sky == null && kDebugMode) {
+        final reading = await widget.api.weatherReading(
+          latitude: latitude,
+          longitude: longitude,
         );
+        final condition = reading?['condition'] as String?;
+        final celsius = (reading?['celsius'] as num?)?.toDouble();
+        if (condition != null && celsius != null) {
+          sky = readingToWeather(
+            condition: condition,
+            celsius: celsius,
+            daylight: reading?['daylight'] as bool? ?? true,
+            fahrenheit: fahrenheit,
+          );
+        }
       }
     }
-    final found = sky;
-    if (!mounted || found == null) return;
 
-    final place = (await placeName(latitude, longitude))?.split(',').first.trim();
+    final found = sky;
+    if (!mounted) return;
+
+    // No position at all, or a sky nobody could read. The card still opens
+    // the same screen with the same mic; it just asks the plain question
+    // rather than one about the weather.
+    if (found == null) {
+      setState(() => _ask ??= _plainAsk);
+      return;
+    }
+
+    final place = latitude == null || longitude == null
+        ? null
+        : (await placeName(latitude, longitude))?.split(',').first.trim();
     if (!mounted) return;
 
     final written = await widget.api.weatherQuestion(
       condition: found.condition,
       degrees: found.degrees,
-      fahrenheit: where.fahrenheit,
+      fahrenheit: fahrenheit,
       daylight: found.daylight,
       place: place,
     );
     if (!mounted) return;
     setState(() => _ask = written ?? found.plainIn(place));
   }
+
+  /// What the card asks when there is no sky to ask about.
+  static const _plainAsk = 'What has today been like so far?';
 
   Future<void> _load() async {
     setState(() {
@@ -485,37 +507,35 @@ class _HomeScreenState extends State<HomeScreen> {
           borderColor: const Color(0x33EA5F17),
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
           onTap: () => widget.onCapture(prompt: _ask),
-          child: Row(
+          // The question has the whole width. It sat beside the mic, which
+          // left it a third of the card and shrank it to fit, so it read
+          // small however large the size was set.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // One line, always. The question is written to fit in nine
-              // words and this holds it to one line whatever comes back,
-              // shrinking a little rather than wrapping or being cut.
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _ask!,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: const TextStyle(
-                      fontFamily: SoulType.serif,
-                      fontSize: 22,
-                      height: 1.3,
-                      color: SoulColors.text,
-                    ),
-                  ),
+              // Full size, and a second line rather than smaller type. A
+              // question that shrinks to fit is a question nobody reads.
+              Text(
+                _ask!,
+                style: const TextStyle(
+                  fontFamily: SoulType.serif,
+                  fontSize: 25,
+                  height: 1.25,
+                  color: SoulColors.text,
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: SoulColors.clay,
-                  shape: BoxShape.circle,
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: SoulColors.clay,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.mic_none, size: 21, color: Colors.white),
                 ),
-                child: const Icon(Icons.mic_none, size: 20, color: Colors.white),
               ),
             ],
           ),
@@ -578,10 +598,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ],
-              if (week.themesFromAnswers) ...[
-                const SizedBox(height: 12),
-                const Center(child: Label('from what you answered')),
-              ],
             ],
           ],
         ),
@@ -626,6 +642,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+      // Only once entries have put something in it. Sent to an empty
+      // patterns screen, what keeps returning is a promise the app cannot
+      // keep yet, and the answers from first run are not reflection.
+      if (slices.isNotEmpty && !week.themesFromAnswers) ...[
       const SizedBox(height: 14),
       SoulCard(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -647,6 +667,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      ],
       const SizedBox(height: 60),
     ];
   }
