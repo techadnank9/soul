@@ -96,14 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
     _sky();
     _marks();
-    // The strip is built oldest first and opened at the end, so today is
-    // where it starts and the past is behind it.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_strip.hasClients) _strip.jumpTo(_strip.position.maxScrollExtent);
-    });
     _strip.addListener(() {
       if (!_strip.hasClients) return;
-      final away = _strip.position.maxScrollExtent - _strip.offset > 40;
+      final away = _strip.offset > 40;
       if (away != _scrolled) setState(() => _scrolled = away);
     });
   }
@@ -124,12 +119,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// The dates in the strip, oldest first, ending today.
+  /// The dates in the strip, today first. The row is drawn reversed, so
+  /// today sits at the right hand end and is where it opens, with no jump
+  /// to make once it has been laid out.
   List<DateTime> get _dates {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     return [
-      for (var back = _stripDays - 1; back >= 0; back--)
+      for (var back = 0; back < _stripDays; back++)
         today.subtract(Duration(days: back)),
     ];
   }
@@ -370,13 +367,14 @@ class _HomeScreenState extends State<HomeScreen> {
       // last month is a scroll rather than a search. Today sits at the
       // right hand end, where the row starts.
       SizedBox(
-        height: 64,
+        height: 78,
         child: Stack(
           children: [
             ListView(
               controller: _strip,
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 4),
+              reverse: true,
+              padding: const EdgeInsets.only(left: 4),
               children: [
                 for (final day in _dates)
                   Padding(
@@ -400,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () => _strip.animateTo(
-                    _strip.position.maxScrollExtent,
+                    0,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeOut,
                   ),

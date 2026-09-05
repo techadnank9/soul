@@ -33,20 +33,28 @@ export async function reading(session: Session): Promise<Reading | null> {
   url.searchParams.set('current', 'temperature_2m,weather_code,is_day')
 
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(4000) })
-    if (!response.ok) return null
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '')
+      console.warn(`weather reading: open meteo returned ${response.status}: ${detail.slice(0, 200)}`)
+      return null
+    }
     const data = (await response.json()) as {
       current?: { temperature_2m?: number; weather_code?: number; is_day?: number }
     }
     const current = data.current
-    if (!current || current.weather_code == null || current.temperature_2m == null) return null
+    if (!current || current.weather_code == null || current.temperature_2m == null) {
+      console.warn(`weather reading: nothing usable in ${JSON.stringify(data).slice(0, 200)}`)
+      return null
+    }
 
     return {
       condition: conditionFor(current.weather_code),
       celsius: current.temperature_2m,
       daylight: current.is_day !== 0,
     }
-  } catch {
+  } catch (error) {
+    console.warn(`weather reading: ${(error as Error).message}`)
     return null
   }
 }
