@@ -15,6 +15,11 @@ type Vars = { Variables: { session: Session } }
 export const weather = new Hono<Vars>()
 
 weather.get('/weather', async (c) => {
-  const now = await weatherNow(c.get('session'))
+  const session = c.get('session')
+  const now = await weatherNow(session)
+  console.log(
+    `weather: user ${session.studentId.slice(0, 8)} ` +
+      (now ? `"${now.line}"` : 'nothing to say'),
+  )
   return c.json(now)
 })
