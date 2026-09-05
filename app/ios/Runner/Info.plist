@@ -73,6 +73,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Soul uses your location to set your region and the hour it comes back to you. Your exact position is saved to your profile, where you can see it and remove it. You can skip this and pick from a list instead.</string>
+	<string>Soul uses where you are for the weather on your home screen and to set the hour it comes back to you. The position it reads for the weather is used and dropped, never saved. The one in your profile is the one you gave, and you can see it and remove it there.</string>
 </dict>
 </plist>

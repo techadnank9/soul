@@ -157,8 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Where to look, and then the weather itself from Apple on this device,
   /// so the position never leaves the phone.
   ///
-  /// Where to look is the phone's own position when it has already been
-  /// allowed to say, so the card is about where somebody is standing rather
+  /// Where to look is the phone's own position, asked for the first time
+  /// home opens, so the card is about where somebody is standing rather
   /// than where they were when they first opened the app. It falls back to
   /// what the service holds, which is the position they gave in the profile
   /// or the middle of the region they picked.
@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final where = await widget.api.weatherWhere();
     if (where == null || where.answeredToday) return;
 
-    final here = await quietLocation();
+    final here = await locationNow();
     final latitude = here?.latitude ?? where.latitude;
     final longitude = here?.longitude ?? where.longitude;
 

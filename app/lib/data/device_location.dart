@@ -51,21 +51,29 @@ Future<DeviceLocation?> currentLocation() async {
 /// Opens the phone's own settings for this app, where location can be
 /// turned back on. When location is off for the whole phone it opens that
 /// switch instead. Nothing is read or written; it is a door.
-/// Where the phone is right now, but only if it has already been allowed to
-/// say. It never asks.
+/// Where the phone is right now, for the card at the top of home.
 ///
-/// The weather card uses this so it is about where somebody is standing
-/// rather than where they were when they first opened the app. It is never
-/// written anywhere: the position in the profile is the one they gave, and
-/// only they change it.
+/// It asks the first time, so the card is about where somebody is standing
+/// rather than where they were when they first opened the app. iOS asks
+/// once and remembers the answer, so this is one dialog in the life of the
+/// app and never a dialog on every open. Somebody who has said no is not
+/// asked again.
 ///
-/// Null when location is off, when permission was never given, or when the
-/// phone takes too long, and the card falls back to the profile.
-Future<DeviceLocation?> quietLocation() async {
+/// It is never written anywhere. The position in the profile is the one
+/// they gave, and only they change it.
+///
+/// Null when location is off, when it was refused, or when the phone takes
+/// too long, and the card falls back to what the service holds.
+Future<DeviceLocation?> locationNow() async {
   try {
     if (!await Geolocator.isLocationServiceEnabled()) return null;
 
-    final permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
+    // Denied on iOS is also what never asked looks like. Refused for good
+    // is its own answer and is not asked again.
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
     if (permission != LocationPermission.always &&
         permission != LocationPermission.whileInUse) {
       return null;

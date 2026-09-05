@@ -4480,8 +4480,13 @@ Why: the card was about where somebody was when they first opened the app,
 which is wrong the moment they go anywhere. It is a question about today and
 today happens where they are standing.
 
-Why it is not stored: a position taken quietly on every launch is a movement
-history, and there is no reason to hold one. The profile position is
+It asks the first time home opens rather than only using a permission
+already given. iOS asks once and remembers the answer, so it is one dialog
+in the life of the app and never one on every open, and somebody who said no
+is not asked again.
+
+Why it is not stored: a position read on every launch is a movement history,
+and there is no reason to hold one. The profile position is
 something a person gave once and can change or empty. Those are two
 different things and only one of them is theirs to keep.
 
