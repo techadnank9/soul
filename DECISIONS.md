@@ -4206,3 +4206,26 @@ Evening runs from five in the afternoon through the night, because nobody
 wants to be told good night by the thing they opened at two in the morning.
 The date is written out without a package to do it.
 
+---
+
+### 227. The week runs across the top, and the profile leaves the bar
+Sep 2026, Adnan
+
+Decision: home opens with the greeting, the date, and the seven days of the
+week across the top, each with its weekday and its number, today boxed and a
+mark under any day written on. The card that held them halfway down the
+screen is gone. The profile is reached from a control at the top right
+rather than from a fifth tab, and the capture button sits in the middle of
+the bar rather than off in the corner.
+
+Why: the founder asked for all of it, with a reference. Which day it is and
+which days were written on are the two questions a calendar answers, and
+they are answered before the first card now rather than after it.
+
+The comment in the bar used to say that three destinations do not divide
+evenly around a centre button, which was true and is why capture sat in the
+corner. With the profile gone there are four, and four do.
+
+The profile is read now and then and changed rarely, which is not what a
+place in the bar is for. It keeps everything it had and gains a way back.
+

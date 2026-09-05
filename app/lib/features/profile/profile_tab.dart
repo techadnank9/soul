@@ -16,9 +16,13 @@ import '../onboarding/profile_fields.dart';
 /// The list of what is not held is on the screen on purpose. A child being
 /// asked their age by an app is owed the other half of that sentence.
 class ProfileTab extends StatefulWidget {
-  const ProfileTab({super.key, required this.api});
+  const ProfileTab({super.key, required this.api, this.onBack});
 
   final SoulApi api;
+
+  /// The way back, when the profile was opened from home rather than being
+  /// a tab. Absent means there is nowhere to go back to.
+  final VoidCallback? onBack;
 
   @override
   State<ProfileTab> createState() => _ProfileTabState();
@@ -146,6 +150,18 @@ class _ProfileTabState extends State<ProfileTab> {
       body: [
         // One way in for the whole card. A pencil on every row put four of
         // them on a screen that is read far more often than it is changed.
+        if (widget.onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onBack,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 16, bottom: 10),
+                child: Icon(Icons.chevron_left, size: 26, color: SoulColors.text3),
+              ),
+            ),
+          ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -55,6 +55,20 @@ class _AppShellState extends State<AppShell> {
         _tab = 1;
       });
 
+  /// The profile is a screen of its own now rather than a fifth tab. It is
+  /// read now and then and changed rarely, which is not what a place in the
+  /// bar is for.
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (route) => ProfileTab(
+          api: _api,
+          onBack: () => Navigator.of(route).maybePop(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,6 +81,7 @@ class _AppShellState extends State<AppShell> {
               HomeScreen(
                 api: _api,
                 name: widget.name,
+                onOpenProfile: _openProfile,
                 revision: widget.revision,
                 showFooter: false,
                 onCapture: widget.onCapture,
@@ -76,16 +91,17 @@ class _AppShellState extends State<AppShell> {
               DaysScreen(api: _api, revision: widget.revision, openOn: _day),
               PatternsScreen(api: _api, revision: widget.revision),
               PeopleScreen(api: _api, revision: widget.revision),
-              ProfileTab(api: _api),
             ],
           ),
-          // Capture floats clear of the bar rather than sitting inside it.
-          // Three destinations do not divide evenly around a centre button, and
-          // a lopsided bar looks like a mistake.
+          // Capture sits in the middle of the bar, raised out of it. Four
+          // destinations divide evenly around a centre button; five did not,
+          // which is why it used to sit off in the corner.
           Positioned(
-            right: 20,
-            bottom: 20,
-            child: GestureDetector(
+            left: 0,
+            right: 0,
+            bottom: 24,
+            child: Center(
+              child: GestureDetector(
               onTap: widget.onCapture,
               child: Container(
                 width: 62,
@@ -102,6 +118,7 @@ class _AppShellState extends State<AppShell> {
                   ],
                 ),
                 child: const Icon(Icons.add, color: Colors.white, size: 30),
+              ),
               ),
             ),
           ),
@@ -126,7 +143,6 @@ class _TabBar extends StatelessWidget {
     (icon: Icons.view_day_outlined, label: 'Days'),
     (icon: Icons.auto_awesome_outlined, label: 'Returning'),
     (icon: Icons.people_outline, label: 'People'),
-    (icon: Icons.person_outline, label: 'Profile'),
   ];
 
   @override
@@ -141,10 +157,21 @@ class _TabBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 62,
+          height: 68,
           child: Row(
             children: [
-              for (var i = 0; i < _tabs.length; i++)
+              for (var i = 0; i < 2; i++)
+                Expanded(
+                  child: _Tab(
+                    icon: _tabs[i].icon,
+                    label: _tabs[i].label,
+                    selected: current == i,
+                    onTap: () => onChanged(i),
+                  ),
+                ),
+              // The gap the capture button sits in.
+              const SizedBox(width: 78),
+              for (var i = 2; i < _tabs.length; i++)
                 Expanded(
                   child: _Tab(
                     icon: _tabs[i].icon,

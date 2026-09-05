@@ -27,6 +27,7 @@ class HomeScreen extends StatefulWidget {
     this.revision = 0,
     this.showFooter = true,
     this.name,
+    this.onOpenProfile,
   });
 
   final SoulApi api;
@@ -35,6 +36,9 @@ class HomeScreen extends StatefulWidget {
   /// once, on the empty screen, where the alternative is a room with nobody
   /// in it. Never used to praise them and never used twice in a row.
   final String? name;
+
+  /// The profile, which left the tab bar and is reached from here.
+  final VoidCallback? onOpenProfile;
 
   final VoidCallback onCapture;
 
@@ -203,15 +207,60 @@ class _HomeScreenState extends State<HomeScreen> {
       // one shape rather than four.
       // The same header every tab has: the tab's name in serif, one muted
       // line under it. The card holds the ring and nothing else.
-      Text(_greeting(widget.name), style: SoulType.heading),
-      const SizedBox(height: 6),
-      Label('${_today()} and ${_momentLine(week.moments)}'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_greeting(widget.name), style: SoulType.heading),
+                const SizedBox(height: 6),
+                Label(_today()),
+              ],
+            ),
+          ),
+          if (widget.onOpenProfile != null)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onOpenProfile,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: SoulColors.s1,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: SoulColors.border),
+                ),
+                child: const Icon(Icons.person_outline, size: 20, color: SoulColors.text2),
+              ),
+            ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      // The week across the top, the way a calendar reads, so which day it
+      // is and which days were written on are both answered before the
+      // first card. It used to sit halfway down as a card of its own.
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final day in week.days)
+            _DayColumn(
+              date: day.date,
+              written: day.count > 0,
+              today: day.date == today,
+              onTap: () => widget.onOpenDay(day.date),
+            ),
+        ],
+      ),
       const SizedBox(height: 18),
       SoulCard(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Label(_momentLine(week.moments)),
+            const SizedBox(height: 10),
             Center(
               child: SizedBox(
                 width: 132,
@@ -266,29 +315,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Center(child: Label('from what you answered')),
               ],
             ],
-          ],
-        ),
-      ),
-      const SizedBox(height: 14),
-      SoulCard(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Label('tap a day'),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                for (final day in week.days)
-                  _DayDot(
-                    letter: day.weekday,
-                    written: day.count > 0,
-                    today: day.date == today,
-                    onTap: () => widget.onOpenDay(day.date),
-                  ),
-              ],
-            ),
           ],
         ),
       ),
@@ -410,66 +436,76 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _DayDot extends StatelessWidget {
-  const _DayDot({
-    required this.letter,
+class _DayColumn extends StatelessWidget {
+  const _DayColumn({
+    required this.date,
     required this.written,
     required this.today,
     required this.onTap,
   });
 
-  final String letter;
+  /// The day, as the server gave it, so tapping opens the same day the
+  /// server would answer for.
+  final String date;
 
-  /// Whether anything was written that day. How much is not shown: the week
-  /// says nothing about which feeling a day held, and a dot that guessed one
-  /// would be the app making it up.
+  /// Whether anything was written that day. How much is not shown, and
+  /// neither is what it held: a mark that guessed a feeling would be the app
+  /// making one up.
   final bool written;
 
   final bool today;
   final VoidCallback onTap;
 
+  static const _letters = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
   @override
   Widget build(BuildContext context) {
+    final day = DateTime.parse(date);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        children: [
-          Text(letter, style: SoulType.muted),
-          const SizedBox(height: 8),
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              color: written
-                  ? SoulColors.clay.withValues(alpha: 0.22)
-                  : SoulColors.s3,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: today
-                    ? SoulColors.text3
-                    : (written
-                        ? SoulColors.clay.withValues(alpha: 0.55)
-                        : Colors.transparent),
-                width: today ? 1 : 1.5,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+          color: today ? SoulColors.s1 : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: today ? SoulColors.border2 : Colors.transparent,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_letters[day.weekday - 1], style: SoulType.muted),
+            const SizedBox(height: 3),
+            Text(
+              '${day.day}',
+              style: TextStyle(
+                fontFamily: SoulType.sans,
+                fontSize: 15,
+                fontWeight: today ? FontWeight.w600 : FontWeight.w400,
+                color: today ? SoulColors.text : SoulColors.text2,
               ),
             ),
-            child: written
-                ? const Center(
-                    child: SizedBox(
-                      width: 7,
-                      height: 7,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: SoulColors.clay,
-                          shape: BoxShape.circle,
-                        ),
+            const SizedBox(height: 5),
+            // Held open whether or not there is a mark, so the row does not
+            // shift as the week fills.
+            SizedBox(
+              height: 5,
+              child: written
+                  ? Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: SoulColors.clay,
+                        shape: BoxShape.circle,
                       ),
-                    ),
-                  )
-                : null,
-          ),
-        ],
+                    )
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }
