@@ -604,6 +604,14 @@ export const cueCards = pgTable(
     detail: text('detail'),
     decisionId: uuid('decision_id').references(() => decisions.id),
     answeredAt: timestamp('answered_at', { withTimezone: true }),
+
+    /**
+     * Put off until then. A card is not shown while this is in the future,
+     * and comes back on its own after. Set rather than the card deleted,
+     * because later is an answer about timing and not about the question.
+     */
+    deferredUntil: timestamp('deferred_until', { withTimezone: true }),
+
     createdAt: now(),
   },
   (t) => [

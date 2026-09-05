@@ -59,6 +59,10 @@ class _DayScreenState extends State<DayScreen> {
   /// can show it and one answered on another day cannot.
   final Map<String, CueCardAnswer> _answers = {};
 
+  /// Cards put off during this visit, so the pile moves on at once rather
+  /// than waiting for the day to be read again.
+  final Set<String> _later = {};
+
   @override
   void initState() {
     super.initState();
@@ -135,25 +139,95 @@ class _DayScreenState extends State<DayScreen> {
             ),
           // Under the day, because a card asks what happens next about
           // something that is already up there in the user's own words.
-          for (final card in day.cards) ...[
-            const SizedBox(height: 22),
-            CueCardTile(
-              // Keyed by the card, not by where it sits. Matched by position,
-              // a day whose cards reorder hands one card's typed words and its
-              // half made answer to the next one, and a user can answer a
-              // card they never read.
-              key: ValueKey(card.id),
-              card: card,
-              answer: _answers[card.id],
-              onAnswer: (answer) => _answer(card, answer),
-            ),
-          ],
+          //
+          // Only the top of the pile is shown. Four questions at once is a
+          // form, and the answer to the second one often depends on what was
+          // said to the first. The edges of the ones behind it show that
+          // there are more, and answering or putting off brings the next one
+          // forward.
+          ..._pile(day),
           // Room under the last entry for the capture button that floats over
           // this screen.
           const SizedBox(height: 60),
         ],
       ],
     );
+  }
+
+  /// The cards, as a pile with one on top and the answered ones under it.
+  List<Widget> _pile(DayView day) {
+    final waiting = [
+      for (final card in day.cards)
+        if (!card.answered && _answers[card.id] == null && !_later.contains(card.id)) card,
+    ];
+    final done = [
+      for (final card in day.cards)
+        if (card.answered || _answers[card.id] != null) card,
+    ];
+
+    return [
+      if (waiting.isNotEmpty) ...[
+        const SizedBox(height: 22),
+        CueCardTile(
+          // Keyed by the card, not by where it sits. Matched by position, a
+          // day whose cards reorder hands one card's typed words and its
+          // half made answer to the next one, and a user can answer a card
+          // they never read.
+          key: ValueKey(waiting.first.id),
+          card: waiting.first,
+          answer: _answers[waiting.first.id],
+          behind: waiting.length - 1,
+          onAnswer: (answer) => _answer(waiting.first, answer),
+          onLater: () => _later_(waiting.first),
+        ),
+        // The edges of the cards underneath, tucked up so they read as one
+        // pile rather than three separate things.
+        for (var i = 1; i < waiting.length && i < 3; i++)
+          Transform.translate(
+            offset: Offset(0, -6.0 * i),
+            child: Center(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 10.0 * i),
+                height: 10,
+                decoration: BoxDecoration(
+                  color: SoulColors.s1,
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  border: Border.all(color: SoulColors.border),
+                ),
+              ),
+            ),
+          ),
+        if (waiting.length > 1) ...[
+          const SizedBox(height: 10),
+          Center(
+            child: Label(
+              waiting.length == 2 ? 'one more after this' : '${waiting.length - 1} more after this',
+            ),
+          ),
+        ],
+      ],
+      for (final card in done) ...[
+        const SizedBox(height: 22),
+        CueCardTile(
+          key: ValueKey(card.id),
+          card: card,
+          answer: _answers[card.id],
+          onAnswer: (answer) => _answer(card, answer),
+        ),
+      ],
+    ];
+  }
+
+  /// Put off until tomorrow. Nothing is recorded about the question itself,
+  /// so the next one comes forward and this one comes back another day.
+  Future<void> _later_(CueCard card) async {
+    setState(() => _later.add(card.id));
+    try {
+      await widget.api.laterCard(card.id);
+    } catch (_) {
+      // It stays out of the way for this visit either way. The day is read
+      // again next time and the card comes back if the server never heard.
+    }
   }
 
   /// One card answered. A yes writes a decision and books the check back, a

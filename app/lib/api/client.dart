@@ -463,6 +463,12 @@ class SoulApi {
     await _delete('/people/$id');
   }
 
+  /// Later. The card goes until tomorrow and nothing is recorded about what
+  /// they think of it.
+  Future<void> laterCard(String cardId) async {
+    await _post('/cards/$cardId/later', const <String, Object?>{});
+  }
+
   Future<PatternsView> patterns() async =>
       PatternsView.fromJson(await _get('/patterns'));
 

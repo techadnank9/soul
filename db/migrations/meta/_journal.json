@@ -162,6 +162,13 @@
       "when": 1788571529853,
       "tag": "0022_opening_themes",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788572719175,
+      "tag": "0023_defer_cards",
+      "breakpoints": true
     }
   ]
 }

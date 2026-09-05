@@ -4252,3 +4252,26 @@ home. It is pushed from wherever it was asked for now.
 Reverses if: somebody needs the calendar week specifically, which no screen
 asks for.
 
+---
+
+### 229. Cards are a pile with one on top, and later is an answer about timing
+Sep 2026, Adnan
+
+Decision: a day shows one unanswered card at a time, with the edges of the
+ones behind it and a line saying how many are waiting. Answering brings the
+next forward. A card can be put off with maybe later, which shows the next
+one and brings that card back tomorrow. Answered cards stay listed below.
+
+Why: the founder asked for both. Four questions at once is a form, and the
+answer to the second often depends on what was said to the first.
+
+Later writes nothing about the question. It sets a time on the card and the
+day read skips a card whose time has not come. It is a statement about the
+moment, not about the thing being asked, so nothing is recorded as if it
+were an opinion, and no decision is booked.
+
+The card leaves the pile at once when later is tapped, before the server has
+answered, because the pile moving is the point of tapping it. If the server
+never heard, the card is back the next time the day is read, which is the
+right failure: the question was never settled.
+

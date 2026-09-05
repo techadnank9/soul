@@ -1,0 +1,1 @@
+ALTER TABLE "cue_cards" ADD COLUMN "deferred_until" timestamp with time zone;

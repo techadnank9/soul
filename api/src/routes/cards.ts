@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import * as contracts from '../contracts.js'
 import { answerCard } from '../services/cards/answer.js'
+import { deferCard } from '../services/cards/defer.js'
 import type { Session } from '../session.js'
 
 /**
@@ -42,4 +43,16 @@ cards.post('/cards/:id/answer', async (c) => {
   // Null on a no, which is a two hundred like any other. The student answered
   // the question and there was nothing to book.
   return c.json({ decisionId: result.decisionId })
+})
+
+/** Later. The card goes until tomorrow and nothing is recorded about it. */
+cards.post('/cards/:id/later', async (c) => {
+  const id = contracts.cardId.safeParse(c.req.param('id'))
+  if (!id.success) return c.json({ error: 'no such card' }, 404)
+
+  const put = await deferCard(c.get('session'), id.data)
+  if (!put) return c.json({ error: 'no such card' }, 404)
+
+  console.log(`card: put off until tomorrow`)
+  return c.json({ ok: true })
 })

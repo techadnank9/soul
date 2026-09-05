@@ -43,6 +43,8 @@ class CueCardTile extends StatefulWidget {
     required this.card,
     required this.answer,
     required this.onAnswer,
+    this.onLater,
+    this.behind = 0,
   });
 
   final CueCard card;
@@ -53,6 +55,14 @@ class CueCardTile extends StatefulWidget {
   /// Throws when the answer did not land, which is what puts the card into its
   /// failed state with a way back.
   final Future<void> Function(CueCardAnswer answer) onAnswer;
+
+  /// Put off until tomorrow. Absent on a card that has been answered, which
+  /// is past being put off.
+  final Future<void> Function()? onLater;
+
+  /// How many more are waiting behind this one, so the card can show that it
+  /// is the top of a pile rather than the only thing there is.
+  final int behind;
 
   @override
   State<CueCardTile> createState() => _CueCardTileState();
@@ -252,6 +262,17 @@ class _CueCardTileState extends State<CueCardTile> {
           onPressed: _ready && !_sending ? _send : null,
         ),
       ),
+      // Later is not an answer and nothing is written down for it. The card
+      // comes back tomorrow, so a question asked at the wrong moment does
+      // not have to be settled at the wrong moment.
+      if (widget.onLater != null) ...[
+        const SizedBox(height: 4),
+        SoulButton(
+          'Maybe later',
+          kind: SoulButtonKind.ghost,
+          onPressed: _sending ? null : () => widget.onLater!(),
+        ),
+      ],
       if (_failed) ...[
         const SizedBox(height: 10),
         Row(

@@ -84,6 +84,9 @@ export async function day(session: Session, date: string): Promise<DayView> {
       join entries e on e.id = c.entry_id
       where c.student_id = ${session.studentId}
         and (e.created_at at time zone ${zone})::date = ${date}::date
+        -- Put off until later, and later has not come. It answers itself
+        -- back onto the day when it does.
+        and (c.deferred_until is null or c.deferred_until <= now())
       order by (c.answered_at is not null), c.created_at`
 
     return { date, entries: rows, cards }
