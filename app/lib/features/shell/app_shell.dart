@@ -73,70 +73,47 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SoulColors.bg,
-      body: Stack(
+      body: IndexedStack(
+        index: _tab,
         children: [
-          IndexedStack(
-            index: _tab,
-            children: [
-              HomeScreen(
-                api: _api,
-                name: widget.name,
-                onOpenProfile: _openProfile,
-                revision: widget.revision,
-                showFooter: false,
-                onCapture: widget.onCapture,
-                onOpenDay: _openDay,
-                onOpenPatterns: () => setState(() => _tab = 2),
-              ),
-              DaysScreen(api: _api, revision: widget.revision, openOn: _day),
-              PatternsScreen(api: _api, revision: widget.revision),
-              PeopleScreen(api: _api, revision: widget.revision),
-            ],
+          HomeScreen(
+            api: _api,
+            name: widget.name,
+            onOpenProfile: _openProfile,
+            revision: widget.revision,
+            showFooter: false,
+            onCapture: widget.onCapture,
+            onOpenDay: _openDay,
+            onOpenPatterns: () => setState(() => _tab = 2),
           ),
-          // Capture sits in the middle of the bar, raised out of it. Four
-          // destinations divide evenly around a centre button; five did not,
-          // which is why it used to sit off in the corner.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 24,
-            child: Center(
-              child: GestureDetector(
-              onTap: widget.onCapture,
-              child: Container(
-                width: 62,
-                height: 62,
-                decoration: const BoxDecoration(
-                  color: SoulColors.clay,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x4DEA5F17),
-                      blurRadius: 18,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.add, color: Colors.white, size: 30),
-              ),
-              ),
-            ),
-          ),
+          DaysScreen(api: _api, revision: widget.revision, openOn: _day),
+          PatternsScreen(api: _api, revision: widget.revision),
+          PeopleScreen(api: _api, revision: widget.revision),
         ],
       ),
       bottomNavigationBar: _TabBar(
         current: _tab,
         onChanged: (tab) => setState(() => _tab = tab),
+        onCapture: widget.onCapture,
       ),
     );
   }
 }
 
 class _TabBar extends StatelessWidget {
-  const _TabBar({required this.current, required this.onChanged});
+  const _TabBar({
+    required this.current,
+    required this.onChanged,
+    required this.onCapture,
+  });
 
   final int current;
   final ValueChanged<int> onChanged;
+
+  /// Capture sits in the row with the four destinations rather than floating
+  /// above it. It is the middle of five things on one line, which is where
+  /// the thumb already is.
+  final VoidCallback onCapture;
 
   static const _tabs = [
     (icon: Icons.circle_outlined, label: 'This week'),
@@ -169,8 +146,31 @@ class _TabBar extends StatelessWidget {
                     onTap: () => onChanged(i),
                   ),
                 ),
-              // The gap the capture button sits in.
-              const SizedBox(width: 78),
+              SizedBox(
+                width: 78,
+                child: Center(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onCapture,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: SoulColors.clay,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x33EA5F17),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.add, color: Colors.white, size: 26),
+                    ),
+                  ),
+                ),
+              ),
               for (var i = 2; i < _tabs.length; i++)
                 Expanded(
                   child: _Tab(
