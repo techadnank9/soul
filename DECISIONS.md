@@ -4523,3 +4523,25 @@ somebody in California was told they were in the evening at lunchtime, and
 one of the labels was late afternoon, which is how it got into the sentence
 in the first place.
 
+---
+
+### 238. One sentence, one line
+Sep 2026, Adnan
+
+Decision: the question on the weather card is one sentence of nine words at
+most, with the sky inside it rather than announced before it, and it is held
+to one line on the screen whatever comes back.
+
+Why: it was a fragment about the sky, a full stop, and then a question, and
+it wrapped onto two lines. Read at a glance that is two things to read
+rather than one. A person asking this out loud would say it in one breath.
+
+The widget shrinks the sentence a little rather than wrapping it or cutting
+it off, so a long answer is still one line and still whole.
+
+Two things the model kept doing and now cannot. It dropped the question mark
+once it was told not to use a full stop except at the end, so the service
+puts one back whatever arrives. And it wrote the temperature as a numeral
+with a degree sign, so numbers and units are out entirely: if the cold is
+worth saying, it says cold.
+

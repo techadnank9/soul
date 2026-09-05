@@ -41,8 +41,11 @@ export async function weatherQuestionFor(
       schema: weatherQuestion,
       session,
     })
-    held.set(key, { at: Date.now(), question: result.value.question })
-    return result.value.question
+    // It is a question and it is read at a glance, so it ends the way a
+    // question ends whatever came back.
+    const question = result.value.question.trim().replace(/[.?!]*$/, '') + '?'
+    held.set(key, { at: Date.now(), question })
+    return question
   } catch (error) {
     console.warn(`weather question: ${(error as Error).message}`)
     return null

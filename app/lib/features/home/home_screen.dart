@@ -467,14 +467,23 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => widget.onCapture(prompt: _ask),
           child: Row(
             children: [
+              // One line, always. The question is written to fit in nine
+              // words and this holds it to one line whatever comes back,
+              // shrinking a little rather than wrapping or being cut.
               Expanded(
-                child: Text(
-                  _ask!,
-                  style: const TextStyle(
-                    fontFamily: SoulType.serif,
-                    fontSize: 18,
-                    height: 1.35,
-                    color: SoulColors.text,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _ask!,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(
+                      fontFamily: SoulType.serif,
+                      fontSize: 18,
+                      height: 1.35,
+                      color: SoulColors.text,
+                    ),
                   ),
                 ),
               ),
