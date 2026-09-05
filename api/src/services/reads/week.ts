@@ -82,19 +82,35 @@ export async function week(session: Session): Promise<WeekView> {
       order by d.horizon
       limit 1`
 
-    // Only while there is nothing to divide. Their own week replaces it the
-    // moment it has something in it.
-    const opening = themes.length === 0
-      ? (await tx<{ opening: string | null }[]>`
-          select opening from students where id = ${session.studentId}`)[0]?.opening ?? null
-      : null
+    /**
+     * Only while there is nothing of their own to divide. A week with one
+     * real theme in it is their week, and the answers stop being shown the
+     * moment that happens rather than being blended into it.
+     */
+    let opening: string | null = null
+    let shown: ThemeRow[] = [...themes]
+    let themesFromAnswers = false
+
+    if (themes.length === 0) {
+      const row = (
+        await tx<{ opening: string | null; opening_themes: unknown }[]>`
+          select opening, opening_themes from students where id = ${session.studentId}`
+      )[0]
+      opening = row?.opening ?? null
+      const fromAnswers = row?.opening_themes as { name: string; weight: number }[] | null
+      if (fromAnswers && fromAnswers.length > 0) {
+        shown = fromAnswers.map((t) => ({ name: t.name, count: t.weight }))
+        themesFromAnswers = true
+      }
+    }
 
     return {
       // The count of the seven days, not a query of its own, so the number
       // above the ring can never disagree with the ring.
       moments: days.reduce((total, day) => total + day.count, 0),
       opening,
-      themes,
+      themesFromAnswers,
+      themes: shown,
       days,
       holding: holding[0] ?? null,
     }

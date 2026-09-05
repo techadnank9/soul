@@ -13,10 +13,15 @@ import type { Session } from '../../session.js'
  * The prompt is told situations never traits, no praise and no score, which
  * is the same voice every other line in the product is written in.
  */
+export type Opening = {
+  line: string
+  themes: { name: string; weight: number }[]
+}
+
 export async function welcomeLine(
   session: Session,
   input: WelcomeAnswers,
-): Promise<string> {
+): Promise<Opening> {
   const said = input.answers
     .map((a) => `${a.question}\n  they chose: ${a.answer}`)
     .join('\n\n')
@@ -27,5 +32,5 @@ export async function welcomeLine(
     session,
   })
 
-  return result.value.line
+  return result.value
 }

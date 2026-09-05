@@ -185,6 +185,14 @@ export const students = pgTable(
     opening: text('opening'),
 
     /**
+     * Three or four things the baseline answers point at, each with a
+     * weight, as [{ name, weight }]. They fill the week ring until the
+     * tagger has named something from their own entries, and are never
+     * shown beside real themes.
+     */
+    openingThemes: jsonb('opening_themes'),
+
+    /**
      * Exact coordinates, when the student shared their location.
      *
      * This is precise location data about a child and it is the most sensitive

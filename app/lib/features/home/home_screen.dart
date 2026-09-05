@@ -203,9 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // one shape rather than four.
       // The same header every tab has: the tab's name in serif, one muted
       // line under it. The card holds the ring and nothing else.
-      const Text('This week', style: SoulType.heading),
+      Text(_greeting(widget.name), style: SoulType.heading),
       const SizedBox(height: 6),
-      Label(_momentLine(week.moments)),
+      Label('${_today()} and ${_momentLine(week.moments)}'),
       const SizedBox(height: 18),
       SoulCard(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
@@ -250,9 +250,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     for (var j = i; j < i + 2 && j < slices.length; j++)
-                      Expanded(child: _LegendRow(slice: slices[j])),
+                      Expanded(
+                        child: _LegendRow(
+                          slice: slices[j],
+                          // These have no entries behind them yet, so there
+                          // is no number to give.
+                          counted: !week.themesFromAnswers,
+                        ),
+                      ),
                   ],
                 ),
+              ],
+              if (week.themesFromAnswers) ...[
+                const SizedBox(height: 12),
+                const Center(child: Label('from what you answered')),
               ],
             ],
           ],
@@ -348,6 +359,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static String _momentLine(int moments) =>
       moments == 1 ? 'one moment' : '$moments moments';
+
+  /// Morning until noon, afternoon until five, evening after that and
+  /// through the night, because nobody wants to be told good night by the
+  /// thing they opened at two in the morning.
+  static String _greeting(String? name) {
+    final hour = DateTime.now().hour;
+    final part = hour >= 5 && hour < 12
+        ? 'Good morning'
+        : hour >= 12 && hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+    return name == null ? part : '$part, $name';
+  }
+
+  static const _weekdays = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+  ];
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  /// Written out rather than in numbers, and without a package to do it.
+  static String _today() {
+    final now = DateTime.now();
+    return '${_weekdays[now.weekday - 1]} ${now.day} ${_months[now.month - 1]}';
+  }
 
   /// The themes, each given one of the four colours.
   ///
@@ -496,9 +534,14 @@ class _WeekRing extends CustomPainter {
 /// One line of the key under the ring. The dot carries the colour, the name
 /// says what it is, the number is last because it is the least of the three.
 class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.slice});
+  const _LegendRow({required this.slice, this.counted = true});
 
   final ({String name, int count, Color colour}) slice;
+
+  /// Whether the number means anything. A theme drawn from the baseline
+  /// answers has no entries behind it, so it carries a weight rather than a
+  /// count and the weight is nobody's business.
+  final bool counted;
 
   @override
   Widget build(BuildContext context) {
@@ -520,16 +563,18 @@ class _LegendRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 6),
-        Text(
-          '${slice.count}',
-          style: const TextStyle(
-            fontFamily: SoulType.sans,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: SoulColors.text,
+        if (counted) ...[
+          const SizedBox(width: 6),
+          Text(
+            '${slice.count}',
+            style: const TextStyle(
+              fontFamily: SoulType.sans,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: SoulColors.text,
+            ),
           ),
-        ),
+        ],
         const SizedBox(width: 14),
       ],
     );

@@ -160,6 +160,13 @@ export const weekView = z.object({
    */
   opening: z.string().nullable(),
 
+  /**
+   * Whether the themes below came from the baseline answers rather than from
+   * entries. The ring is drawn the same way; what is written under it is
+   * not, because these have no entries behind them and no count to give.
+   */
+  themesFromAnswers: z.boolean(),
+
   themes: z
     .array(z.object({ name: z.string(), count: z.number().int() }))
     .max(4),
@@ -507,8 +514,20 @@ export const welcomeAnswers = z.object({
 })
 export type WelcomeAnswers = z.infer<typeof welcomeAnswers>
 
-/** Two sentences, and the screen holds room for three lines of them. */
+/**
+ * Two sentences, and three or four things that look likely to keep coming
+ * up. The themes fill the week ring until their own entries can.
+ */
 export const welcomeResult = z.object({
   line: z.string().trim().min(1).max(320),
+  themes: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(28),
+        weight: z.number().int().min(1).max(5),
+      }),
+    )
+    .min(1)
+    .max(4),
 })
 

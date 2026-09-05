@@ -24,11 +24,17 @@ welcome.post('/welcome', async (c) => {
   const startedAt = Date.now()
   try {
     const session = c.get('session')
-    const line = await welcomeLine(session, parsed.data)
-    // Kept, because home shows it until there is a week of their own.
-    await db.update(students).set({ opening: line }).where(eq(students.id, session.studentId))
-    console.log(`welcome: ${line.split(/\s+/).length} words, ${Date.now() - startedAt}ms`)
-    return c.json({ line })
+    const opening = await welcomeLine(session, parsed.data)
+    // Kept, because home shows both until there is a week of their own.
+    await db
+      .update(students)
+      .set({ opening: opening.line, openingThemes: opening.themes })
+      .where(eq(students.id, session.studentId))
+    console.log(
+      `welcome: ${opening.line.split(/\s+/).length} words, ` +
+        `${opening.themes.length} themes, ${Date.now() - startedAt}ms`,
+    )
+    return c.json({ line: opening.line })
   } catch (error) {
     console.warn(`welcome: failed after ${Date.now() - startedAt}ms: ${(error as Error).message}`)
     return c.json({ error: 'no line' }, 502)

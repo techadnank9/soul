@@ -121,6 +121,7 @@ class WeekView {
     required this.themes,
     required this.days,
     this.opening,
+    this.themesFromAnswers = false,
     this.holding,
   });
 
@@ -136,6 +137,10 @@ class WeekView {
   /// says something on day one and their own week replaces it after.
   final String? opening;
 
+  /// Whether the themes came from the baseline answers rather than from
+  /// entries. They have no entries behind them, so no count is shown.
+  final bool themesFromAnswers;
+
   /// Exactly seven, Monday first.
   final List<WeekDay> days;
 
@@ -145,6 +150,7 @@ class WeekView {
 
   static WeekView fromJson(Map<String, dynamic> json) => WeekView(
         opening: json['opening'] as String?,
+        themesFromAnswers: json['themesFromAnswers'] as bool? ?? false,
         moments: json['moments'] as int,
         themes: [
           for (final theme in json['themes'] as List)

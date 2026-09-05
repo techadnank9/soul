@@ -4164,3 +4164,45 @@ soon as their own entries can fill the ring.
 Reverses if: the ring learns to divide by something an untagged week already
 has, in which case there is no empty state left to fill.
 
+---
+
+### 225. The ring is filled from the answers until entries can fill it
+Sep 2026, Adnan
+
+Decision: the same call that writes the opening line also names three or
+four things the baseline answers point at, each with a weight. They are kept
+on the student and drawn in the week ring while the tagger has named nothing
+of their own. The key under the ring shows no numbers for them and says
+where they came from. One real theme replaces the whole set.
+
+Why: the founder asked for the ring to be filled from the answers. A ring
+with nothing in it, on the screen somebody lands on after fifteen questions,
+says less than the questions did.
+
+What keeps it honest: they are drawn in the same ring but they are never
+blended with real themes, they carry no count because they have no entries
+behind them, and the card says from what you answered. They are named as
+situations in the person's own register, never as qualities, which is the
+same rule the tagger works under.
+
+The prompt had to be shown the JSON shape rather than told it. The first
+version described the themes in prose with weights in brackets and the model
+answered in that shape, which the schema refused, which is the schema doing
+its job.
+
+---
+
+### 226. Home greets by the hour and dates the day
+Sep 2026, Adnan
+
+Decision: the heading on home is a greeting with the name when there is one,
+and the line under it is the date and the count of moments. This week is
+gone from the top of the screen.
+
+Why: the founder asked for it. The week is what the card below says, and the
+top of the screen is better spent saying which day it is.
+
+Evening runs from five in the afternoon through the night, because nobody
+wants to be told good night by the thing they opened at two in the morning.
+The date is written out without a package to do it.
+
