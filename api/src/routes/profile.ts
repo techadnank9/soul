@@ -37,6 +37,7 @@ profile.get('/profile', async (c) => {
       longitude: students.longitude,
       recordedAt: students.profileRecordedAt,
       email: students.email,
+      phone: students.phone,
       appleUserId: students.appleUserId,
     })
     .from(students)
@@ -63,11 +64,12 @@ profile.get('/profile', async (c) => {
     // Whether anything but this phone can reach this account. A device
     // account with neither is one log out away from being unreachable, and
     // the profile offers sign in when this is false.
-    signedIn: Boolean(row?.email || row?.appleUserId),
+    signedIn: Boolean(row?.email || row?.phone || row?.appleUserId),
     // The address itself, so the client can hand it to the funnels. A
     // response from a tester has to be a person somebody can write back to,
     // and a uuid is not one. Decision 226.
     email: row?.email ?? null,
+    phone: row?.phone ?? null,
     displayName: row?.displayName ?? null,
     ageBand: row?.ageBand ?? null,
     gender: row?.gender ?? null,

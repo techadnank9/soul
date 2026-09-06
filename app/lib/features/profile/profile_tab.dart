@@ -8,6 +8,7 @@ import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../onboarding/profile_fields.dart';
 import '../onboarding/sign_in_screen.dart';
+import 'add_phone_screen.dart';
 
 /// The profile tab.
 ///
@@ -225,6 +226,23 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               // The place decides the zone, and the zone decides the hour a
               // check back arrives, so it is shown under the place.
+              // Sign in rather than profile, strictly, but it belongs with
+              // the things the app holds about somebody and this is where
+              // they look for those.
+              _Row(
+                label: 'Phone',
+                value: _held?['phone'] as String?,
+                empty: 'add one',
+                onTap: () => _addPhone(context),
+                // Always tappable. The other rows are answers that can be
+                // changed; this one is a thing to do, and hiding it behind
+                // Edit hides the only way to attach a number.
+                editing: true,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Rule(),
+              ),
               _Row(
                 label: 'Location',
                 value: _position,
@@ -289,6 +307,25 @@ class _ProfileTabState extends State<ProfileTab> {
         const SizedBox(height: 90),
       ],
     );
+  }
+
+  /// A code by text, and the number goes on the account already here.
+  ///
+  /// A number already on another account signs into that one instead, which
+  /// is the server's answer and the right one: somebody who can read a code
+  /// sent to a number owns it.
+  Future<void> _addPhone(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => AddPhoneScreen(
+          api: widget.api,
+          onAdded: () {
+            if (mounted) _load();
+          },
+        ),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   /// Sign in on an account that has neither an address nor an Apple id.
@@ -452,6 +489,7 @@ class _Row extends StatelessWidget {
   const _Row({
     required this.label,
     required this.value,
+    this.empty = 'not given',
     required this.onTap,
     required this.editing,
     this.note,
@@ -459,6 +497,11 @@ class _Row extends StatelessWidget {
 
   final String label;
   final String? value;
+
+  /// What stands in for a value that is not there. The four answers read
+  /// not given, because they were asked and skipped. The number was never
+  /// asked for, so it says what to do about it instead.
+  final String empty;
   final String? note;
   final VoidCallback onTap;
 
@@ -482,7 +525,7 @@ class _Row extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    value ?? 'not given',
+                    value ?? empty,
                     style: value == null
                         ? SoulType.lead.copyWith(color: SoulColors.text3)
                         : SoulType.lead,
