@@ -26,6 +26,10 @@ const _host = String.fromEnvironment(
 
 bool _on = false;
 
+/// Whether anything is being sent, which is also whether the switches in
+/// flags.dart can be read.
+bool get analyticsOn => _on;
+
 Future<void> startAnalytics() async {
   if (_key.isEmpty) return;
   try {

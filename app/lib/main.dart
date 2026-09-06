@@ -8,6 +8,7 @@ import 'api/client.dart';
 import 'api/models.dart' as api;
 
 import 'data/analytics.dart';
+import 'data/flags.dart';
 import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
@@ -41,6 +42,7 @@ const _sentryDsn = String.fromEnvironment(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await startAnalytics();
+  await loadFlags();
 
   if (_sentryDsn.isEmpty) {
     runApp(const SoulApp());
@@ -385,7 +387,9 @@ class _SessionState extends State<Session> {
             _beat = _Beat.one;
           });
           // The question follows the line on its own. Nobody has to ask.
-          _lookCloser();
+          // Unless the Mirror is switched off, in which case beat one is
+          // the whole of it and nothing on screen says otherwise.
+          if (isOn(Flag.mirror)) _lookCloser();
         case api.HelpNeeded help:
           setState(() {
             _help = help;

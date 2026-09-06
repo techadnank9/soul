@@ -4713,3 +4713,27 @@ changes. The superuser string in `.env` is not what PostHog holds. The role
 carries bypassrls, because a role with no policies would otherwise read
 nothing, which is the sync saying out loud that it reads everything.
 
+## 228. Four kill switches, and they fail on rather than off
+
+The app ships through TestFlight. A build with a broken feature in it is
+live until Apple has processed the next one, which is hours at best, and
+every feature that can break in that way breaks because somebody else's
+service is down rather than because the code is wrong.
+
+So the four things that call out sit behind PostHog flags: `weather_card`,
+`voice_capture`, `tone_capture` and `mirror`. Each one turns off cleanly
+into a state the app already knows how to be. No card on home. No mic on the
+capture screen, and the box still there, which is the honest thing to show
+when the transcriber is down rather than letting somebody speak for thirty
+seconds into nothing. No tone row for that entry. Beat one on its own with
+nothing on screen saying the Mirror is missing.
+
+They fail on. A flag comes back null when there is no network, no key or no
+such flag, and null is on. A switch that fails to the off position is a
+switch that empties the app the first time the flag service has an outage,
+which is the opposite of what it is for. Nothing about turning one off is
+ever said to the user.
+
+Verified by switching `weather_card` off in PostHog and relaunching: the
+card was gone and the rest of home was untouched.
+

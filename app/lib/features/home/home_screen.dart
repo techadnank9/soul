@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../data/analytics.dart';
 import '../../data/device_location.dart';
+import '../../data/flags.dart';
 import '../../data/device_weather.dart';
 import '../../api/models.dart';
 import '../day/day_screen.dart';
@@ -197,6 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// and is not shown as a failure. A card answered today is not shown
   /// again until tomorrow, and tapping one is not answering it.
   Future<void> _sky() async {
+    // The whole weather path behind one switch: the position, Apple, the
+    // geocoder and the written question. Off is a home with no card, which
+    // is a state this screen already knows how to be.
+    if (!isOn(Flag.weatherCard)) return;
+
     final where = await widget.api.weatherWhere();
     if (where != null && where.answeredToday) return;
 

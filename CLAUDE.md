@@ -94,6 +94,15 @@ entry text, never a transcript, never a name, an address or coordinates.
 This is not a product for children and the COPPA reasoning that used to sit
 here does not decide it. Decision 226.
 
+**Anything that talks to somebody else's service sits behind a switch.** The
+app ships through TestFlight, so a build with a broken feature in it is live
+until Apple has processed the next one. `app/lib/data/flags.dart` holds the
+four: the weather card, voice capture, the tone judgement and the Mirror.
+They are read once at launch and everything is on unless PostHog says
+otherwise, so no network, no key and no such flag all read as on. A switch
+that fails to the off position breaks the app the first time the flag
+service is down. Decision 228.
+
 ## The quiz protocol
 
 Before a change lands that touches the orchestrator, the context builder, the

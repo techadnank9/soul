@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 import '../../api/client.dart';
+import '../../data/flags.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import 'live_speech.dart';
@@ -343,7 +344,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       // How it sounded, judged once from the audio the phone held, then the
       // audio goes. Nobody waits on this: send can happen before it lands.
-      if (held.length > 16000) {
+      if (held.length > 16000 && isOn(Flag.toneCapture)) {
         _judging = _api.tone(held).then((id) {
           _toneId = id;
         }).catchError((Object error) {
@@ -429,6 +430,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     : null,
               ),
               const SizedBox(height: 18),
+              if (isOn(Flag.voiceCapture))
               GestureDetector(
                 onTap: _toggleRecording,
                 child: AnimatedContainer(
@@ -461,6 +463,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 ),
               ),
               const SizedBox(height: 10),
+              // Nothing is said about the mic being gone. A person who is
+              // told the voice is switched off wonders what else is, and
+              // the box under this does the same job.
               if (_failure != null) ...[
                 Text(
                   _failure!,
