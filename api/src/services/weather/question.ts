@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, or } from 'drizzle-orm'
 import { db, entries, students, tags } from '../../db.js'
 import { call } from '../../gateway/call.js'
 import { weatherQuestion, type WeatherAsk } from '../../contracts.js'
@@ -192,6 +192,10 @@ async function lastTime(
   session: Session,
 ): Promise<{ entryId: string; ago: string; about: string } | null> {
   try {
+    // The newest entry the tagger has finished with, not simply the newest
+    // one. The tagger runs after the response is on screen, so the last
+    // thing somebody wrote usually has no situation on it yet, and asking
+    // about the one before it is the right question anyway.
     const rows = await db
       .select({
         id: entries.id,
@@ -200,8 +204,13 @@ async function lastTime(
         domain: tags.domain,
       })
       .from(entries)
-      .leftJoin(tags, eq(tags.entryId, entries.id))
-      .where(eq(entries.studentId, session.studentId))
+      .innerJoin(tags, eq(tags.entryId, entries.id))
+      .where(
+        and(
+          eq(entries.studentId, session.studentId),
+          or(isNotNull(tags.trigger), isNotNull(tags.domain)),
+        ),
+      )
       .orderBy(desc(entries.createdAt))
       .limit(1)
 
