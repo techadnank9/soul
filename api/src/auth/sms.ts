@@ -1,5 +1,6 @@
 import {
   PinpointSMSVoiceV2Client,
+  SendNotifyTextMessageCommand,
   SendTextMessageCommand,
 } from '@aws-sdk/client-pinpoint-sms-voice-v2'
 import { env } from '../env.js'
@@ -34,9 +35,38 @@ function sender(): PinpointSMSVoiceV2Client {
   }))
 }
 
+/**
+ * Two ways out, and the configuration decides which.
+ *
+ * Notify is AWS holding the number and the carrier registrations. It is
+ * live in minutes and costs four and a half cents a message on top of the
+ * message itself. A toll free number of our own is two dollars a month and
+ * about a penny all in, and costs a verification form and a week or two of
+ * waiting.
+ *
+ * Notify wins while this is small, because a week of forms to save thirty
+ * dollars is not a trade worth making yet. The number wins the moment there
+ * is real volume, and switching is an environment variable.
+ */
 export async function sendSignInCodeBySms(to: string, code: string): Promise<void> {
+  const notify = env.providers.smsNotifyConfigurationId
+  if (notify) {
+    await sender().send(
+      new SendNotifyTextMessageCommand({
+        NotifyConfigurationId: notify,
+        DestinationPhoneNumber: to,
+        // Notify writes the sentence around the code from a template the
+        // carriers have already approved. The code is the only part that is
+        // ours, which is the whole point of not doing the paperwork.
+        TemplateId: env.providers.smsNotifyTemplateId,
+        TemplateVariables: { otp_code: code },
+      }),
+    )
+    return
+  }
+
   const from = env.providers.smsOriginationIdentity
-  if (!from) throw new SmsUnavailable('SMS_ORIGINATION_IDENTITY is not set')
+  if (!from) throw new SmsUnavailable('no SMS sender is configured')
 
   // The body says what it is and nothing else. A code arriving with a
   // sentence of marketing in it is a code the carrier is entitled to block,

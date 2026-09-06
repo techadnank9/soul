@@ -4770,8 +4770,23 @@ ten minutes, one use, five attempts, five codes an hour, and the number
 attaching to the account this device already has rather than making a new
 one.
 
-Not live yet. It needs a toll free number on the AWS account, its
-verification, which is free, and production access out of the SMS sandbox.
-Until then the route answers 503 and the screen says text sign in is not
-available, which is what it already does for email without a Resend key.
+There are two ways to send and an environment variable decides which.
+Notify is AWS holding the number and the carrier registrations: nothing to
+provision, live in minutes, and four and a half cents a message on top of
+the message. A toll free number of our own is two dollars a month and about
+a penny all in, and costs a verification form and a week or two of waiting.
+
+Notify first, because a fortnight of forms to save thirty dollars is not a
+trade worth making before anybody is using this. Set
+`SMS_ORIGINATION_IDENTITY` instead of `SMS_NOTIFY_CONFIGURATION_ID` when
+the volume turns that round, and no code changes.
+
+Notify writes the sentence around the code from a template the carriers
+have already approved, so the message body is not ours. For a code that is
+the right trade.
+
+Not live either way yet. It needs the AWS account off the free plan and a
+Notify configuration, or a number and its verification. Until then the
+route answers 503 and the screen says text sign in is not available, which
+is what it already does for email without a Resend key.
 

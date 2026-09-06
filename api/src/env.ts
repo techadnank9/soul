@@ -78,5 +78,18 @@ export const env = {
     awsAccessKeyId: optional('AWS_ACCESS_KEY_ID'),
     awsSecretAccessKey: optional('AWS_SECRET_ACCESS_KEY'),
     smsOriginationIdentity: optional('SMS_ORIGINATION_IDENTITY'),
+
+    /**
+     * Notify, which is AWS leasing the number and holding the carrier
+     * registrations instead of us. Set this and nothing else is needed:
+     * no toll free number, no verification form, no weeks of waiting.
+     *
+     * It costs four and a half cents a message on top of the message,
+     * which is the price of not doing the paperwork. Set the origination
+     * identity above instead once the volume makes that worth a fortnight
+     * of forms, and this file needs no other change.
+     */
+    smsNotifyConfigurationId: optional('SMS_NOTIFY_CONFIGURATION_ID'),
+    smsNotifyTemplateId: optional('SMS_NOTIFY_TEMPLATE_ID'),
   },
 }
