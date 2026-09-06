@@ -72,6 +72,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>com.posthog.posthog.AUTO_INIT</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>For the weather on your home screen. It stays on your phone, and your profile is where you remove it.</string>
 </dict>

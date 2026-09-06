@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import '../data/session_store.dart';
+import '../data/analytics.dart';
 import 'models.dart';
 
 /// The API client.
@@ -170,6 +171,9 @@ class SoulApi {
   /// carries what a person wrote or said.
   void event(String name, [Map<String, Object?> detail = const {}]) {
     Sentry.addBreadcrumb(Breadcrumb(message: name, data: detail, category: 'app'));
+    // The same name, to the same three places: our own table, Sentry as a
+    // breadcrumb, and the funnels. One call site so they cannot drift.
+    capture(name, detail);
     if (name.endsWith('_failed')) {
       Sentry.captureMessage('$name ${jsonEncode(detail)}', level: SentryLevel.warning);
     }

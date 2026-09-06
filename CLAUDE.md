@@ -84,12 +84,15 @@ that breaks one is wrong regardless of what it improves.
 every service is a sub processor named in a school data agreement. Prefer the
 standard library, prefer one more function over one more package.
 
-**No analytics SDK in the app.** Product analytics goes to our own backend, in
-`app_events`, a fixed event name and a status code or a count, never anything
-a person wrote or said. Sentry is the one exception and it is for errors and
-session replay only: it went in on a founder decision when the first testers
-hit failures nobody could see. This is not a product for children and the
-COPPA reasoning that used to sit here does not decide it.
+**Analytics is allowed, and it carries names and counts only.** Two SDKs are
+in the app on founder decisions: Sentry for errors and session replay, and
+PostHog for product analytics. Everything either of them sees goes through
+`SoulApi.event`, which posts the same name to our own `app_events` table.
+One call site, so the table stays the record and the three can never drift.
+What goes out is a fixed event name and a status code or a count. Never
+entry text, never a transcript, never a name, an address or coordinates.
+This is not a product for children and the COPPA reasoning that used to sit
+here does not decide it. Decision 226.
 
 ## The quiz protocol
 
@@ -196,7 +199,10 @@ app, the API and the worker, on whenever a DSN is set, with the app's own
 events as breadcrumbs. The `app_events` table holds every small event the
 app posts, a fixed name and a status code or a count, never anything a person
 wrote or said, and reading it alongside the service logs shows the whole path
-of a session. There is no analytics SDK in the app and there will not be one.
+of a session. PostHog holds the funnels: which screens are reached, where first run loses
+people, whether anybody comes back. It is off unless `POSTHOG_KEY` is given
+at build time, which release.sh passes and a build made by hand does not, so
+a simulator being poked at never lands in the numbers.
 
 The iOS simulator has no microphone unless the Mac has one. Voice paths have to
 be checked against a real device or a plugged in mic; the simulator returns an

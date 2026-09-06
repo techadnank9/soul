@@ -32,6 +32,11 @@ dependencies:
   # agreement.
   flutter_secure_storage: ^11.0.0
   sentry_flutter: ^9.0.0
+  # Product analytics: which screens people reach, where first run loses
+  # them, whether anybody comes back. It sends event names and counts, never
+  # anything a person wrote or said, and it is off unless a key is given at
+  # build time. Decision 226.
+  posthog_flutter: ^5.39.0
 
 dev_dependencies:
   flutter_test:

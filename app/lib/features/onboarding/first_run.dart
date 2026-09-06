@@ -133,6 +133,14 @@ class _FirstRunState extends State<FirstRun> {
       _forward = true;
       _at++;
     });
+    // The funnel. First run is fifteen screens long and where it loses
+    // people is the one thing worth knowing about it, so every step forward
+    // says which screen was reached and how far along it is.
+    _api.event('first_run_step', {
+      'step': _step.name,
+      'at': _at,
+      'of': _steps.length,
+    });
   }
 
   void _previous() {

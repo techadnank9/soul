@@ -7,6 +7,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'api/client.dart';
 import 'api/models.dart' as api;
 
+import 'data/analytics.dart';
 import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
@@ -38,6 +39,9 @@ const _sentryDsn = String.fromEnvironment(
 );
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await startAnalytics();
+
   if (_sentryDsn.isEmpty) {
     runApp(const SoulApp());
     return;
@@ -118,6 +122,8 @@ class SoulApp extends StatelessWidget {
         maxScaleFactor: 1.2,
         child: child ?? const SizedBox.shrink(),
       ),
+      // Screen names, so a funnel can say which screen somebody stopped on.
+      navigatorObservers: [?screenObserver()],
       home: _requestedScreen() ?? const _Launch(),
       routes: {'/start': (_) => _firstRun()},
     );

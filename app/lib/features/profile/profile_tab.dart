@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
+import '../../data/analytics.dart';
 import '../../data/device_location.dart';
 import '../../data/device_weather.dart';
 import '../../data/session_store.dart';
@@ -266,6 +267,12 @@ class _ProfileTabState extends State<ProfileTab> {
           onPressed: () => _logOut(context),
         ),
         const SizedBox(height: 22),
+        // Which build this is. The first question on any report from a
+        // tester is which one they are looking at, and asking somebody to
+        // find it in TestFlight is asking them to do support's job.
+        if (_build.isNotEmpty)
+          Center(child: Text('Soul $_build', style: SoulType.muted.copyWith(fontSize: 12))),
+        if (_build.isNotEmpty) const SizedBox(height: 10),
         // Apple asks for this wherever their weather is shown. It is one
         // line on a card at the top of home, so the attribution lives here
         // rather than under it.
@@ -299,8 +306,12 @@ class _ProfileTabState extends State<ProfileTab> {
     if (mounted) await _load();
   }
 
+  /// Set at build time by release.sh, empty in a build made by hand.
+  static const _build = String.fromEnvironment('SOUL_BUILD');
+
   Future<void> _logOut(BuildContext context) async {
     widget.api.event('logged_out');
+    await forgetWhoTheyAre();
     await clearSessionToken();
     await clearFirstRunDone();
     if (!context.mounted) return;

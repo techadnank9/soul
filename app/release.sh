@@ -14,6 +14,8 @@
 set -eu
 cd "$(dirname "$0")"
 API="${SOUL_API:-https://soul-api-i6mr.onrender.com}"
+# Product analytics, off in any build made without it. Export POSTHOG_KEY
+# before running this, or put it in the shell profile on the release Mac.
 
 version=$(grep '^version:' pubspec.yaml | sed 's/version: *//')
 name=${version%%+*}
@@ -22,7 +24,10 @@ next=$((build + 1))
 sed -i '' "s/^version: .*/version: $name+$next/" pubspec.yaml
 echo "building $name build $next against $API"
 
-flutter build ipa --flavor soul --dart-define="SOUL_API=$API"
+flutter build ipa --flavor soul \
+  --dart-define="SOUL_API=$API" \
+  --dart-define="SOUL_BUILD=$name ($next)" \
+  --dart-define="POSTHOG_KEY=${POSTHOG_KEY:-}"
 # The dart define above is optional now: a release build defaults to Render.
 
 echo "uploading to App Store Connect"

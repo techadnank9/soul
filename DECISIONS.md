@@ -4660,3 +4660,29 @@ on this phone only and offers sign in, which attaches the address to the
 account that is already there rather than making a new one, so what was
 written stays.
 
+## 226. PostHog for product analytics, through the event we already send
+
+The repository said never an analytics SDK, on COPPA reasoning that stopped
+applying when this became a product for anybody. Sentry already went in for
+errors. This adds PostHog for the other half: which screens are reached,
+where first run loses people, whether anybody comes back.
+
+PostHog rather than the others because the free tier is a million events and
+five thousand replays a month, it has a first party Flutter SDK, and funnels
+and retention are the questions actually being asked. Firebase is free
+without limit and answers those questions worse.
+
+It is wired through `SoulApi.event` and nowhere else. That one function
+posts to `app_events`, drops a Sentry breadcrumb and captures to PostHog
+with the same name, so the table stays the record and the three cannot
+drift. Autocapture is off: a tap on an unnamed widget is noise. Screen names
+come from the navigator observer. Session replay is off there because Sentry
+already does it.
+
+Identity is the account's uuid from `GET /profile`, so the same account on
+two phones is one person in a funnel. Never a name, an address or
+coordinates. Log out calls reset.
+
+Off unless `POSTHOG_KEY` is given at build time, and off in debug, so a
+simulator being worked on is never in the numbers.
+

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kDebugMode, listEquals;
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
+import '../../data/analytics.dart';
 import '../../data/device_location.dart';
 import '../../data/device_weather.dart';
 import '../../api/models.dart';
@@ -127,6 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _whoTheyAre() async {
     try {
       final held = await widget.api.profileHeld();
+      // The account, not the person: a random id, so the same account on a
+      // second phone is one line in a funnel rather than two.
+      final account = held['accountId'] as String?;
+      if (account != null) await identify(account);
       final name = held['displayName'] as String?;
       if (mounted && name != null && name.isNotEmpty) {
         setState(() => _name = name);

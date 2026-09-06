@@ -26,6 +26,7 @@ profile.get('/profile', async (c) => {
   const session = c.get('session')
   const rows = await db
     .select({
+      id: students.id,
       displayName: students.displayName,
       ageBand: students.ageBand,
       gender: students.gender,
@@ -44,6 +45,10 @@ profile.get('/profile', async (c) => {
 
   const row = rows[0]
   return c.json({
+    // The account's own id. It goes to the funnels as the person there, so
+    // the same account on two phones is one person rather than two. It is a
+    // random uuid and it carries nothing about anybody.
+    accountId: row?.id ?? null,
     recorded: Boolean(row?.recordedAt),
     // Whether anything but this phone can reach this account. A device
     // account with neither is one log out away from being unreachable, and
