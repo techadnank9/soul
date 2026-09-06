@@ -505,37 +505,36 @@ class _HomeScreenState extends State<HomeScreen> {
         SoulCard(
           background: SoulColors.clayLight,
           borderColor: const Color(0x33EA5F17),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
           onTap: () => widget.onCapture(prompt: _ask),
-          // The question has the whole width. It sat beside the mic, which
-          // left it a third of the card and shrank it to fit, so it read
-          // small however large the size was set.
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // The mic sits beside the question rather than under it. On its
+          // own row it left a band of empty card below the words and made
+          // the card twice the height of what it says.
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               // Full size, and a second line rather than smaller type. A
               // question that shrinks to fit is a question nobody reads.
-              Text(
-                _ask!,
-                style: const TextStyle(
-                  fontFamily: SoulType.serif,
-                  fontSize: 25,
-                  height: 1.25,
-                  color: SoulColors.text,
+              Expanded(
+                child: Text(
+                  _ask!,
+                  style: const TextStyle(
+                    fontFamily: SoulType.serif,
+                    fontSize: 25,
+                    height: 1.25,
+                    color: SoulColors.text,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: SoulColors.clay,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.mic_none, size: 21, color: Colors.white),
+              const SizedBox(width: 12),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: SoulColors.clay,
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.mic_none, size: 21, color: Colors.white),
               ),
             ],
           ),
