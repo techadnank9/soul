@@ -65,19 +65,37 @@ void capture(String name, [Map<String, Object?> properties = const {}]) {
 }
 
 /// Ties what this phone does to the account it is signed in as, so the same
-/// person on a second phone is one person in a funnel. The account id, and
-/// how much of the app they have actually used. No name, no address, and
-/// nothing anybody wrote.
+/// person on a second phone is one person in a funnel.
+///
+/// The account id, the address they signed in with, the name they gave, and
+/// how much of the app they have actually used. The address is here because
+/// a survey answer from a uuid is a survey answer nobody can write back to,
+/// and the whole point of asking a tester what they would change is being
+/// able to ask them what they meant.
+///
+/// Still nothing anybody wrote in the app: no entry, no transcript, no
+/// position.
 ///
 /// `entries_written` is what a question is asked of. Somebody who opened
 /// this once and left has no opinion worth collecting yet, and asking for
 /// one is how an app becomes the thing that interrupts you.
-Future<void> identify(String accountId, {int? entriesWritten}) async {
+Future<void> identify(
+  String accountId, {
+  int? entriesWritten,
+  String? email,
+  String? name,
+}) async {
   if (!_on) return;
   try {
     await Posthog().identify(
       userId: accountId,
-      userProperties: {'entries_written': ?entriesWritten},
+      userProperties: {
+        'entries_written': ?entriesWritten,
+        // PostHog shows a person by their email when they have one, which
+        // is what turns a row of survey answers into somebody to reply to.
+        'email': ?email,
+        'name': ?name,
+      },
     );
   } catch (_) {}
 }

@@ -90,7 +90,10 @@ PostHog for product analytics. Everything either of them sees goes through
 `SoulApi.event`, which posts the same name to our own `app_events` table.
 One call site, so the table stays the record and the three can never drift.
 What goes out is a fixed event name and a status code or a count. Never
-entry text, never a transcript, never a name, an address or coordinates.
+entry text, never a transcript, never a position. A person carries their
+account id, their address, the name they gave and how many moments they
+have written, because a survey answer nobody can reply to is not worth
+collecting.
 This is not a product for children and the COPPA reasoning that used to sit
 here does not decide it. Decision 226.
 

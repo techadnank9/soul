@@ -64,6 +64,10 @@ profile.get('/profile', async (c) => {
     // account with neither is one log out away from being unreachable, and
     // the profile offers sign in when this is false.
     signedIn: Boolean(row?.email || row?.appleUserId),
+    // The address itself, so the client can hand it to the funnels. A
+    // response from a tester has to be a person somebody can write back to,
+    // and a uuid is not one. Decision 226.
+    email: row?.email ?? null,
     displayName: row?.displayName ?? null,
     ageBand: row?.ageBand ?? null,
     gender: row?.gender ?? null,

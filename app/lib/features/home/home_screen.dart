@@ -151,6 +151,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         await identify(
           account,
           entriesWritten: (held['entriesWritten'] as num?)?.toInt(),
+          email: held['email'] as String?,
+          name: held['displayName'] as String?,
         );
       }
       final name = held['displayName'] as String?;

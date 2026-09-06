@@ -4680,8 +4680,11 @@ come from the navigator observer. Session replay is off there because Sentry
 already does it.
 
 Identity is the account's uuid from `GET /profile`, so the same account on
-two phones is one person in a funnel. Never a name, an address or
-coordinates. Log out calls reset.
+two phones is one person in a funnel. The address and the name they gave go
+with it, because the first survey answer arrived as a uuid and the whole
+point of asking a tester what they would change is being able to ask them
+what they meant. Nothing anybody wrote in the app goes, and no position.
+Log out calls reset.
 
 Off unless `POSTHOG_KEY` is given at build time, and off in debug, so a
 simulator being worked on is never in the numbers.
