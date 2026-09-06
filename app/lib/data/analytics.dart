@@ -13,9 +13,11 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 /// that governs `app_events` governs this, and there is nothing to strip
 /// because nothing of the sort is ever passed in.
 ///
-/// Off unless a key is given at build time, and off in debug, so a
-/// simulator being poked at does not land in the same funnels as the people
-/// using the app.
+/// Off unless a key is given at build time. release.sh passes it and a
+/// build made by hand does not, so a simulator is only ever in the numbers
+/// when somebody deliberately put the key on the command line. When it is,
+/// every event carries environment development, so the funnels can be read
+/// without the work being done on them.
 const _key = String.fromEnvironment('POSTHOG_KEY');
 const _host = String.fromEnvironment(
   'POSTHOG_HOST',
@@ -25,7 +27,7 @@ const _host = String.fromEnvironment(
 bool _on = false;
 
 Future<void> startAnalytics() async {
-  if (_key.isEmpty || kDebugMode) return;
+  if (_key.isEmpty) return;
   try {
     final config = PostHogConfig(_key)
       ..host = _host
@@ -50,6 +52,7 @@ void capture(String name, [Map<String, Object?> properties = const {}]) {
       properties: {
         for (final entry in properties.entries)
           if (entry.value != null) entry.key: entry.value!,
+        'environment': kReleaseMode ? 'production' : 'development',
       },
     );
   } catch (_) {
