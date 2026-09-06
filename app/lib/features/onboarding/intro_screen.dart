@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
-import '../../theme/widgets.dart';
 import 'onboarding_kit.dart';
 
 /// The first screen a person ever sees.
@@ -13,17 +12,9 @@ import 'onboarding_kit.dart';
 /// It settles into place in parts rather than snapping on, because the
 /// first thing the app does should be to arrive rather than appear.
 class IntroScreen extends StatelessWidget {
-  const IntroScreen({super.key, required this.onContinue, this.onSkip, this.onSignIn});
+  const IntroScreen({super.key, required this.onContinue, this.onSignIn});
 
   final VoidCallback onContinue;
-
-  /// Development only. Jumps the whole of first run and opens home as the
-  /// seeded demo user, who has a week of entries behind them, so how home
-  /// behaves can be looked at without answering fifteen questions first.
-  ///
-  /// It is labelled on the screen as what it is. A skip that looks like a
-  /// product control is one somebody ships by forgetting it is there.
-  final VoidCallback? onSkip;
 
   /// For somebody who has been here before, on another phone or after a log
   /// out. Straight to sign in, no questions. Without this the only sign in
@@ -100,23 +91,7 @@ class IntroScreen extends StatelessWidget {
             delay: const Duration(milliseconds: 520),
             child: Row(
               children: [
-                if (onSkip != null)
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: SizedBox(
-                        width: 180,
-                        child: SoulButton(
-                          'Demo home, dev only',
-                          kind: SoulButtonKind.ghost,
-                          alignLeft: true,
-                          onPressed: onSkip,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  const Spacer(),
+                const Spacer(),
                 PrimaryCta(
                   'Begin',
                   arrow: true,

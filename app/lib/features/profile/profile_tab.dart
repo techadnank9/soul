@@ -6,6 +6,7 @@ import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../onboarding/profile_fields.dart';
+import '../onboarding/sign_in_screen.dart';
 
 /// The profile tab.
 ///
@@ -239,6 +240,25 @@ class _ProfileTabState extends State<ProfileTab> {
         ],
         const SizedBox(height: 20),
         const SizedBox(height: 24),
+        // An account this phone reached without signing in is one log out
+        // away from being unreachable, and everything written on it goes
+        // with it. Signing in from here attaches the address to the account
+        // that is already here, so nothing is lost and the next phone can
+        // reach it.
+        if (_held != null && _held!['signedIn'] == false) ...[
+          const Text(
+            'This account lives on this phone only. Sign in and it follows '
+            'you, and what you have written comes with it.',
+            style: SoulType.secondary,
+          ),
+          const SizedBox(height: 14),
+          SoulButton(
+            'Sign in',
+            kind: SoulButtonKind.filled,
+            onPressed: () => _signIn(context),
+          ),
+          const SizedBox(height: 14),
+        ],
         // Log out forgets this phone's session. The account stays, and
         // signing in with the same Apple account or email brings it back.
         SoulButton(
@@ -262,6 +282,21 @@ class _ProfileTabState extends State<ProfileTab> {
         const SizedBox(height: 90),
       ],
     );
+  }
+
+  /// Sign in on an account that has neither an address nor an Apple id.
+  /// The server attaches whichever is given to the account this phone is
+  /// already on, so the entries stay where they are.
+  Future<void> _signIn(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => SignInScreen(
+          onSignedIn: () => Navigator.of(page).pop(),
+          onBack: () => Navigator.of(page).pop(),
+        ),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   Future<void> _logOut(BuildContext context) async {

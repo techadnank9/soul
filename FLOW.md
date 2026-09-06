@@ -140,12 +140,20 @@ main.dart → onboarding/first_run.dart, FirstRun
         the answers until there is a week of their own
 ```
 
-The skip on the welcome screen is its own path. `POST /auth/demo` makes a
-fresh account, fills it with a week from `services/demo/seed.ts`, and hands
-back a session, so whoever presses it lands on a home with something in it.
-Every press makes its own account. It used to sign in as the seeded test
-student through a path the server refuses anywhere real, which is why every
-screen behind it failed.
+There is no way past first run but through it. The two development skips,
+the demo on the welcome screen and the one on the sign in screen, were taken
+out on the founder's call before the app went to testers. `POST /auth/demo`
+and `services/demo/seed.ts` are still on the server and nothing in the app
+calls them.
+
+An account reached without signing in is a real account, made by
+`POST /auth/device` on first launch. `GET /profile` says whether anything
+but this phone can reach it, and when it cannot the profile offers sign in:
+the address attaches to the account already here, so the entries stay. The
+header on home, with the way to the profile in it, is on every state of that
+screen for the same reason. It used to be inside the branch with a week in
+it, so somebody with nothing written yet had no profile button and no way to
+reach sign in or log out at all.
 
 Every question in first run is mandatory. The skips were removed on the
 founder's call, so the name field, the four profile questions and all ten

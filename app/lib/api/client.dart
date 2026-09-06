@@ -206,13 +206,6 @@ class SoulApi {
     return jsonDecode(text) as Map<String, dynamic>;
   }
 
-  /// The demo skip: a fresh account already holding a week of entries, and
-  /// its session. Every press makes its own, so nobody shares one.
-  Future<String> demoSession() async {
-    final json = await _post('/auth/demo', {});
-    return json['token'] as String;
-  }
-
   /// The line on the last screen of first run, written from the answers
   /// just given. Asked for the moment the baseline ends, so it is ready
   /// before the screen that shows it.

@@ -20,7 +20,6 @@ class SignInScreen extends StatefulWidget {
   const SignInScreen({
     super.key,
     required this.onSignedIn,
-    required this.onSkip,
     this.onBack,
   });
 
@@ -28,10 +27,6 @@ class SignInScreen extends StatefulWidget {
 
   /// The screen before this one.
   final VoidCallback? onBack;
-
-  /// Development only. Goes straight to home with no account. It is labelled
-  /// as such on the screen so nobody ships it by forgetting it is there.
-  final VoidCallback onSkip;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -322,19 +317,6 @@ class _SignInScreenState extends State<SignInScreen> {
             onSendCode: _sendCode,
           ),
           ],
-          const SizedBox(height: 6),
-          // Development only, and it says so. It exists because first run is
-          // fifteen questions long and testing the rest of the app should not
-          // cost an Apple account every time.
-          //
-          // Nothing is stored on this path, on purpose. A skip that left a
-          // token behind would hide first run from the next launch, which is
-          // the one thing the person pressing it is usually trying to see.
-          SoulButton(
-            'Skip sign in, development only',
-            kind: SoulButtonKind.ghost,
-            onPressed: _running ? null : widget.onSkip,
-          ),
         ],
       ),
     );

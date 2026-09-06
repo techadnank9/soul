@@ -298,8 +298,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Widget> _waiting() => const [
-        SizedBox(height: 120),
+  /// The greeting, the date, and the way to the profile.
+  ///
+  /// On every state of this screen, not only the one with a week in it. It
+  /// used to sit inside the populated branch, so a person whose week had
+  /// nothing in it, or whose week would not load, had no profile button on
+  /// screen and therefore no way to reach sign in or log out.
+  List<Widget> _header() => [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_greeting(_name), style: SoulType.heading),
+                  const SizedBox(height: 6),
+                  Label(_today()),
+                ],
+              ),
+            ),
+            if (widget.onOpenProfile != null)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onOpenProfile,
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: SoulColors.s1,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: SoulColors.border),
+                  ),
+                  child: const Icon(Icons.person_outline, size: 20, color: SoulColors.text2),
+                ),
+              ),
+          ],
+        ),
+      ];
+
+  List<Widget> _waiting() => [
+        ..._header(),
+        const SizedBox(height: 120),
         Center(
           child: SizedBox(
             width: 22,
@@ -313,6 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
 
   List<Widget> _notLoaded() => [
+        ..._header(),
         const SizedBox(height: 40),
         const Text('Not loaded', style: SoulType.heading),
         const SizedBox(height: 14),
@@ -329,11 +370,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Day one. No week circle, no patterns, one invitation.
   List<Widget> _dayOne() => [
+        ..._header(),
         const SizedBox(height: 40),
-        Text(
-          _name == null ? 'Nothing here yet' : 'Nothing here yet, $_name',
-          style: SoulType.heading,
-        ),
+        const Text('Nothing here yet', style: SoulType.heading),
         const SizedBox(height: 14),
         const Text(
           'This fills in as you go. One moment is enough to start.',
@@ -385,38 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // four numbers side by side say how much of each, and the ring says
       // how the week divided. The proportion is the point, so it is drawn as
       // one shape rather than four.
-      // The same header every tab has: the tab's name in serif, one muted
-      // line under it. The card holds the ring and nothing else.
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_greeting(_name), style: SoulType.heading),
-                const SizedBox(height: 6),
-                Label(_today()),
-              ],
-            ),
-          ),
-          if (widget.onOpenProfile != null)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onOpenProfile,
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: SoulColors.s1,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: SoulColors.border),
-                ),
-                child: const Icon(Icons.person_outline, size: 20, color: SoulColors.text2),
-              ),
-            ),
-        ],
-      ),
+      ..._header(),
       const SizedBox(height: 16),
       // The strip runs back six weeks and opens on today, so a day from
       // last month is a scroll rather than a search. Today sits at the

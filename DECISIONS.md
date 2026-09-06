@@ -4640,3 +4640,23 @@ compute now, the way the location picker beside it already did.
 The waves list was fixed length, six hundred events of it. That one was
 already fixed in f255542 and the reports are from a build before it.
 
+## 225. No skips, and no account that cannot be reached again
+
+The two development skips are gone: the demo on the welcome screen and the
+skip on the sign in screen. The way past first run is to sign in.
+
+Removing them exposed the hole underneath. A phone that took the skip has a
+real account from `POST /auth/device` with no address and no Apple id on it,
+and three things then went wrong together. Home only drew its header, and
+therefore the profile button, when the week had something in it, so somebody
+with nothing written had no way to reach the profile at all. Log out on such
+an account clears the token and the next launch makes another empty one, so
+it reads as a log out that does nothing. And there was no way to attach an
+address to the account already on the phone.
+
+All three are fixed. The header is on every state of home. `GET /profile`
+returns `signedIn`, and when it is false the profile says the account lives
+on this phone only and offers sign in, which attaches the address to the
+account that is already there rather than making a new one, so what was
+written stays.
+

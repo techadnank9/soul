@@ -27,7 +27,6 @@ class FirstRun extends StatefulWidget {
   const FirstRun({
     super.key,
     required this.onFinished,
-    required this.onDemo,
     required this.onSignInAgain,
     this.startAt,
   });
@@ -35,8 +34,6 @@ class FirstRun extends StatefulWidget {
   /// Home, with whatever name was given.
   final ValueChanged<String?> onFinished;
 
-  /// Development only. The seeded demo account, straight to home.
-  final VoidCallback onDemo;
 
   /// Somebody who has been here before, on another phone or after a log
   /// out. Straight to sign in, no questions.
@@ -147,21 +144,6 @@ class _FirstRunState extends State<FirstRun> {
     });
   }
 
-  Future<void> _skipToDemo() async {
-    try {
-      final token = await _api.demoSession();
-      await storeSessionToken(token);
-      await markFirstRunDone();
-      _api.event('demo_skipped');
-      if (!mounted) return;
-      widget.onDemo();
-    } catch (error) {
-      _api.event('demo_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      });
-    }
-  }
-
   /// Sent in the background as the last profile question is left, because
   /// a person should never wait on this, and a profile where nothing was
   /// given is never sent at all.
@@ -235,7 +217,6 @@ class _FirstRunState extends State<FirstRun> {
             await _account;
             _next();
           },
-          onSkip: _skipToDemo,
           onSignIn: widget.onSignInAgain,
         ),
       _Kind.how => HowItWorksScreen(onContinue: _next),
@@ -275,13 +256,10 @@ class _FirstRunState extends State<FirstRun> {
       // Last. Signing in comes after there is something to keep, not before
       // the person has seen what this is.
       // No way out at the end of first run. There is nothing behind this
-      // screen to close back to, and the way past it is to sign in or to
-      // take the skip. The close button belongs to the other way in, from
-      // the first screen, where there is something to go back to.
-      _Kind.signIn => SignInScreen(
-          onSignedIn: _toHome,
-          onSkip: _toHome,
-        ),
+      // screen to close back to, and the way past it is to sign in. The
+      // close button belongs to the other way in, from the first screen,
+      // where there is something to go back to.
+      _Kind.signIn => SignInScreen(onSignedIn: _toHome),
     };
   }
 

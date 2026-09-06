@@ -35,6 +35,8 @@ profile.get('/profile', async (c) => {
       latitude: students.latitude,
       longitude: students.longitude,
       recordedAt: students.profileRecordedAt,
+      email: students.email,
+      appleUserId: students.appleUserId,
     })
     .from(students)
     .where(eq(students.id, session.studentId))
@@ -43,6 +45,10 @@ profile.get('/profile', async (c) => {
   const row = rows[0]
   return c.json({
     recorded: Boolean(row?.recordedAt),
+    // Whether anything but this phone can reach this account. A device
+    // account with neither is one log out away from being unreachable, and
+    // the profile offers sign in when this is false.
+    signedIn: Boolean(row?.email || row?.appleUserId),
     displayName: row?.displayName ?? null,
     ageBand: row?.ageBand ?? null,
     gender: row?.gender ?? null,

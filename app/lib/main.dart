@@ -93,7 +93,7 @@ Widget? _requestedScreen() {
   return switch (name) {
     'intro' || 'how' || 'profile' || 'baseline' || 'ready' =>
       _firstRun(startAt: name),
-    'sign_in' => SignInScreen(onSignedIn: nothing, onSkip: nothing),
+    'sign_in' => SignInScreen(onSignedIn: nothing),
     'capture' => CaptureScreen(onSubmitted: (_, {spoken = false, toneId}) {}),
     'home' => const Home(),
     'day' => DayScreen(api: api, date: todayOnDevice(), onBack: nothing),
@@ -160,7 +160,6 @@ class SignInAgain extends StatelessWidget {
     return SignInScreen(
       onBack: () => Navigator.of(context).maybePop(),
       onSignedIn: home,
-      onSkip: home,
     );
   }
 }
@@ -214,12 +213,6 @@ Widget _firstRun({String? startAt}) {
       startAt: startAt,
       onFinished: (name) => Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => Home(name: name)),
-      ),
-      // Straight to a home with a week in it. The server makes a fresh
-      // account and fills it, so the skip works on any phone and nobody
-      // shares an account.
-      onDemo: () => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Home(name: 'Sam')),
       ),
       onSignInAgain: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const SignInAgain()),
