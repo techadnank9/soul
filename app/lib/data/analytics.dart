@@ -65,12 +65,20 @@ void capture(String name, [Map<String, Object?> properties = const {}]) {
 }
 
 /// Ties what this phone does to the account it is signed in as, so the same
-/// person on a second phone is one person in a funnel. The account id and
-/// nothing else: no name, no address.
-Future<void> identify(String accountId) async {
+/// person on a second phone is one person in a funnel. The account id, and
+/// how much of the app they have actually used. No name, no address, and
+/// nothing anybody wrote.
+///
+/// `entries_written` is what a question is asked of. Somebody who opened
+/// this once and left has no opinion worth collecting yet, and asking for
+/// one is how an app becomes the thing that interrupts you.
+Future<void> identify(String accountId, {int? entriesWritten}) async {
   if (!_on) return;
   try {
-    await Posthog().identify(userId: accountId);
+    await Posthog().identify(
+      userId: accountId,
+      userProperties: {'entries_written': ?entriesWritten},
+    );
   } catch (_) {}
 }
 

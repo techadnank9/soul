@@ -132,7 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
       // The account, not the person: a random id, so the same account on a
       // second phone is one line in a funnel rather than two.
       final account = held['accountId'] as String?;
-      if (account != null) await identify(account);
+      if (account != null) {
+        await identify(
+          account,
+          entriesWritten: (held['entriesWritten'] as num?)?.toInt(),
+        );
+      }
       final name = held['displayName'] as String?;
       if (mounted && name != null && name.isNotEmpty) {
         setState(() => _name = name);

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
-import { db, students } from '../db.js'
+import { count, eq } from 'drizzle-orm'
+import { db, entries, students } from '../db.js'
 import * as contracts from '../contracts.js'
 import { saveProfile } from '../services/profile/save.js'
 import type { Session } from '../session.js'
@@ -43,8 +43,18 @@ profile.get('/profile', async (c) => {
     .where(eq(students.id, session.studentId))
     .limit(1)
 
+  // How many moments they have written, ever. It is the one number that
+  // says whether somebody has actually used this, and the client hands it
+  // to the funnels so a question can be asked of people who have rather
+  // than of everybody who opened it once.
+  const written = await db
+    .select({ n: count() })
+    .from(entries)
+    .where(eq(entries.studentId, session.studentId))
+
   const row = rows[0]
   return c.json({
+    entriesWritten: written[0]?.n ?? 0,
     // The account's own id. It goes to the funnels as the person there, so
     // the same account on two phones is one person rather than two. It is a
     // random uuid and it carries nothing about anybody.
