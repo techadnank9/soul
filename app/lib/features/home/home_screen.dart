@@ -236,28 +236,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final found = sky;
     if (!mounted) return;
 
-    // No position at all, or a sky nobody could read. The card still opens
-    // the same screen with the same mic; it just asks the plain question
-    // rather than one about the weather.
-    if (found == null) {
-      setState(() => _ask ??= _plainAsk);
-      return;
-    }
-
     final place = latitude == null || longitude == null
         ? null
         : (await placeName(latitude, longitude))?.split(',').first.trim();
     if (!mounted) return;
 
+    // The sky is one of the things the question can be built from, not the
+    // thing it needs. A phone that could not read it still gets a question
+    // written from the time, the day, the season and where they left off.
     final written = await widget.api.weatherQuestion(
-      condition: found.condition,
-      degrees: found.degrees,
+      condition: found?.condition,
+      degrees: found?.degrees,
       fahrenheit: fahrenheit,
-      daylight: found.daylight,
+      daylight: found?.daylight,
       place: place,
     );
     if (!mounted) return;
-    setState(() => _ask = written ?? found.plainIn(place));
+    setState(() => _ask = written ?? found?.plainIn(place) ?? _plainAsk);
   }
 
   /// What the card asks when there is no sky to ask about.

@@ -370,21 +370,27 @@ class SoulApi {
   /// One question for the card, written from what the phone found. Null
   /// when it could not be written, and the app falls back to a plain
   /// question of its own rather than showing nothing.
+  /// The sky is optional. A phone that could not read it still gets a
+  /// question, written from the time, the day, the season and what they
+  /// last wrote about.
   Future<String?> weatherQuestion({
-    required String condition,
-    required int degrees,
+    String? condition,
+    int? degrees,
     required bool fahrenheit,
-    required bool daylight,
+    bool? daylight,
     String? place,
   }) async {
     try {
+      final now = DateTime.now();
       final json = await _post('/weather/question', {
-        'condition': condition,
-        'degrees': degrees,
+        'condition': ?condition,
+        'degrees': ?degrees,
         'fahrenheit': fahrenheit,
-        'daylight': daylight,
+        'daylight': ?daylight,
         'place': ?place,
-        'hour': DateTime.now().hour,
+        'hour': now.hour,
+        'weekday': now.weekday,
+        'month': now.month,
       });
       return json['question'] as String?;
     } catch (_) {

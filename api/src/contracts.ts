@@ -543,15 +543,21 @@ export const welcomeResult = z.object({
  * service answers with one question that uses it.
  */
 export const weatherAsk = z.object({
-  condition: z.string().trim().min(1).max(40),
-  degrees: z.number().int().min(-100).max(150),
-  fahrenheit: z.boolean(),
-  daylight: z.boolean(),
+  /// The sky, when the phone could read it. A card is shown either way, so
+  /// all four of these are optional and the question is written from the
+  /// time, the day and what they last said instead.
+  condition: z.string().trim().min(1).max(40).optional(),
+  degrees: z.number().int().min(-100).max(150).optional(),
+  daylight: z.boolean().optional(),
   place: z.string().trim().max(80).optional(),
 
-  /// The hour on the phone, so the part of the day is theirs rather than
-  /// the server's idea of it.
+  fahrenheit: z.boolean(),
+
+  /// The hour, the weekday and the month on the phone, so when it is is
+  /// theirs rather than the server's idea of it. Monday is 1.
   hour: z.number().int().min(0).max(23),
+  weekday: z.number().int().min(1).max(7),
+  month: z.number().int().min(1).max(12),
 })
 export type WeatherAsk = z.infer<typeof weatherAsk>
 

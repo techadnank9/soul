@@ -4579,3 +4579,32 @@ What keeps returning is shown only once the week has themes from real
 entries. Sent to an empty patterns screen it is a promise the app cannot
 keep, and the four answers from first run are not reflection.
 
+## 222. The card question is written from the day, not from the weather
+
+The card started as a weather card. It is the first thing somebody reads
+when they open the app, and a question built only on the sky reads like a
+widget with a question mark on it.
+
+It is now written from what is true around them: the part of the day, the
+day of the week, the season where they are, the sky and the place when the
+phone could read them, and what they last wrote about when there is one.
+The model is told to use one of those, or two when they belong together,
+because a sentence carrying all five is a machine listing what it knows.
+
+Where they left off is the situation from the tagger, the trigger or the
+domain, and roughly how long ago in words. Never the feeling that was named
+on it, and never their own sentence quoted back. A question built on a
+feeling from four days ago is a question about a person, and situations
+never traits is the rule the whole product is inside. The prompt also bans
+saying you noticed or remembered, which is the thing that makes remembering
+feel like being watched.
+
+The sky is optional in the contract now, so a phone that could not read it
+still gets a written question rather than the app's plain fallback.
+
+The purpose is still called weather_question. Renaming it costs an enum
+migration and every generations row already written, and nothing outside
+these three files reads the name.
+
+prompts/weather_question.v4.md.
+
