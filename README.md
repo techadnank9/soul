@@ -237,11 +237,20 @@ reason a simulator no longer goes quiet when nothing is running here.
 Without provider keys the safety classifier cannot answer, so every entry
 returns the help screen. That is the designed behaviour, not a failure.
 
-## Shipping the first TestFlight build
+## Shipping a TestFlight build
 
-Everything below is in order, and each step is blocked by the one before it.
-The code is ready. What is missing is accounts and keys, and none of those can
-be created by an assistant.
+The first one is done and the accounts and keys below all exist. The steps
+are kept because they say where each of them lives.
+
+To ship another one, that is the whole of it:
+
+```
+app/release.sh
+```
+
+It raises the build number in `app/pubspec.yaml`, builds the signed archive
+against the Render API and uploads it. The version stays at 0.2.0 so App
+Store Connect holds one version with a list of builds under it.
 
 1. **An Apple Developer Program membership.** This Mac has no signing identity
    and Xcode has no team. Join at developer.apple.com, then in Xcode open
@@ -264,8 +273,8 @@ be created by an assistant.
    message and typed entries work. Put it in the Render dashboard and, for
    local runs, in `.env`.
 
-4. **The build and the upload.** Raise `version` in `app/pubspec.yaml`,
-   because Apple refuses a second upload with the same version, then:
+4. **The build and the upload.** The script raises the build number itself,
+   because Apple refuses a repeat of the same version and build:
 
    ```
    app/release.sh

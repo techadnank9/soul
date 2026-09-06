@@ -494,6 +494,26 @@ GET /reflection → services/reads/reflection.ts one theme, and the entries
 GET /people     → services/people/read.ts      who they write about
 GET /people/:id → services/people/read.ts      one person, and where they
                                                come up
+POST /weather/question
+                → services/weather/question.ts the one question on the card
+                                               at the top of home. The
+                                               server picks one angle, where
+                                               they left off, or the sky, or
+                                               the day, and tells the model
+                                               that and nothing else, because
+                                               told everything it writes
+                                               everything. What comes back is
+                                               checked before it is shown:
+                                               length, one sentence, no
+                                               numbers, the banned phrases,
+                                               and stacked context. Rejected
+                                               twice and the plain sentence
+                                               goes on the card instead.
+                                               Where they left off is the
+                                               situation from the newest
+                                               tagged entry, never the
+                                               feeling on it. Decisions 222
+                                               and 223
 GET /weather    → services/weather/now.ts      where to look, and whether
                                                today has been answered. The
                                                weather itself is read on the

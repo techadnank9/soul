@@ -84,9 +84,12 @@ that breaks one is wrong regardless of what it improves.
 every service is a sub processor named in a school data agreement. Prefer the
 standard library, prefer one more function over one more package.
 
-**Never add analytics or crash reporting SDKs to the student app.** COPPA treats
-persistent identifiers as personal information and the app store kids policies
-restrict third party data collection. Log events to our own backend instead.
+**No analytics SDK in the app.** Product analytics goes to our own backend, in
+`app_events`, a fixed event name and a status code or a count, never anything
+a person wrote or said. Sentry is the one exception and it is for errors and
+session replay only: it went in on a founder decision when the first testers
+hit failures nobody could see. This is not a product for children and the
+COPPA reasoning that used to sit here does not decide it.
 
 ## The quiz protocol
 
@@ -137,10 +140,19 @@ as nodes and edges. Do not move any of it to a hosted memory service and do
 not paraphrase a fact into a trait anywhere it is rendered.
 
 **Empty states get built before populated ones.** Every mockup shows a full week
-of data. No student has that on day one. Home is the test of this: on day one
-the ring is filled from the baseline answers and says so, the strip is the
-seven days ending today so nothing in it is greyed out, and the line under
-the greeting is the one written at the end of first run.
+of data. No user has that on day one. Home is the test of this: on day one
+the ring is filled from the baseline answers, the strip is the seven days
+ending today so nothing in it is greyed out, and the line under the greeting
+is the one written at the end of first run. What keeps returning is not
+shown at all until there are themes from real entries, because an empty
+patterns screen is a promise the app cannot keep.
+
+**The card at the top of home always appears, unless today has been
+answered.** No position, no weather reading, no network: it still asks
+something and it still opens capture with that question. A card that
+vanishes when somebody is in a basement reads as an app that broke. What it
+asks is written from one thing, chosen on the server, and checked before it
+is shown. Decisions 221 and 222.
 
 ## How to run it
 
@@ -189,6 +201,17 @@ of a session. There is no analytics SDK in the app and there will not be one.
 The iOS simulator has no microphone unless the Mac has one. Voice paths have to
 be checked against a real device or a plugged in mic; the simulator returns an
 empty buffer and the app correctly reports that nothing came through.
+
+## Releasing
+
+`app/release.sh` builds the signed archive and uploads it to TestFlight. It
+raises the build number in pubspec.yaml itself on every run and leaves the
+version where it is, at 0.2.0. One version in App Store Connect with a list
+of builds under it, rather than a version per upload. Decision 223.
+
+Sentry holds what the testers hit. The token in the repo history is an
+upload token with no read scope, so issues are read in the Sentry web UI
+rather than from the API.
 
 ## Working style
 
