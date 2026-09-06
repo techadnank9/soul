@@ -41,35 +41,139 @@ export async function weatherQuestionFor(
   const cached = held.get(key)
   if (cached && Date.now() - cached.at < HELD_MS) return cached.question
 
-  const said = [
-    `Part of the day: ${part(ask)}.`,
-    `Day of the week: ${WEEKDAYS[ask.weekday - 1] ?? 'unknown'}.`,
-    `Season: ${await season(session, ask.month)}.`,
-    ask.condition ? `The sky: ${ask.condition}.` : null,
-    ask.condition && ask.degrees != null
-      ? `Temperature: ${ask.degrees} degrees ${ask.fahrenheit ? 'fahrenheit' : 'celsius'}.`
-      : null,
-    ask.place ? `Where: ${ask.place}.` : null,
-    last ? `Last wrote: ${last.ago}, about ${last.about}.` : 'Has not written anything yet.',
-  ]
-    .filter(Boolean)
-    .join('\n')
+  // One angle, chosen here rather than by the model. Given everything it
+  // knows it writes everything it knows, and the card read "What has this
+  // mostly clear autumn Saturday evening in Union Square held?", which is
+  // five facts and no question anybody would ask.
+  const chosen = angle(ask, last, await season(session, ask.month))
 
-  try {
-    const result = await call('weather_question', {
-      user: said,
-      schema: weatherQuestion,
-      session,
-    })
-    // It is a question and it is read at a glance, so it ends the way a
-    // question ends whatever came back.
-    const question = result.value.question.trim().replace(/[.?!]*$/, '') + '?'
-    held.set(key, { at: Date.now(), question })
-    return question
-  } catch (error) {
-    console.warn(`weather question: ${(error as Error).message}`)
-    return null
+  for (let go = 0; go < 2; go++) {
+    let written: string
+    try {
+      const result = await call('weather_question', {
+        user: chosen.said,
+        schema: weatherQuestion,
+        session,
+      })
+      // It is a question and it is read at a glance, so it ends the way a
+      // question ends whatever came back.
+      written = result.value.question.trim().replace(/[.?!]*$/, '') + '?'
+    } catch (error) {
+      console.warn(`weather question: ${(error as Error).message}`)
+      return chosen.plain
+    }
+
+    const wrong = wrongWith(written)
+    if (!wrong) {
+      held.set(key, { at: Date.now(), question: written })
+      return written
+    }
+    console.warn(`weather question rejected, ${wrong}: ${written}`)
   }
+
+  // Twice is enough. The written question is the better one when it comes,
+  // and the plain one always makes sense, which is the part that matters.
+  held.set(key, { at: Date.now(), question: chosen.plain })
+  return chosen.plain
+}
+
+/**
+ * The one thing the question is about, and the sentence to fall back on.
+ *
+ * Where they left off first, because it is the only thing on the card that
+ * could not have been written by any app on the phone. Then the sky, which
+ * is at least about today. Then the day itself, which is always true.
+ *
+ * The model is told this one thing and nothing else, so it cannot stack
+ * them.
+ */
+function angle(
+  ask: WeatherAsk,
+  last: { ago: string; about: string } | null,
+  season: string,
+): { said: string; plain: string } {
+  const when = part(ask)
+  const day = WEEKDAYS[ask.weekday - 1] ?? 'today'
+
+  if (last) {
+    return {
+      said: [
+        `They last wrote ${last.ago}, about ${last.about}.`,
+        `It is ${when} for them.`,
+        'Write the question about that, as somebody who was there would ask it.',
+      ].join('\n'),
+      plain: `Where did ${last.about} get to?`,
+    }
+  }
+
+  if (ask.condition) {
+    const sky = ask.condition.toLowerCase()
+    return {
+      said: [
+        `The sky is ${sky}, and it is ${when} for them.`,
+        ask.place ? `They are in ${ask.place}.` : null,
+        'Write the question about the sky and the time, and nothing else.',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      plain: `What has this ${sky} ${when} been like?`,
+    }
+  }
+
+  return {
+    said: [
+      `It is ${day} ${when} for them, in ${season}.`,
+      'Write the question about the day itself, and nothing else.',
+    ].join('\n'),
+    plain: `What has ${day} held so far?`,
+  }
+}
+
+/**
+ * Why a written question cannot go on the card, or nothing when it can.
+ *
+ * The card is the first thing somebody reads, so it is checked before it is
+ * shown rather than hoped about. Every one of these has actually come back
+ * from the model at least once.
+ */
+function wrongWith(question: string): string | null {
+  const words = question.split(/\s+/).filter(Boolean)
+  if (words.length > 11) return 'too long'
+  if (words.length < 3) return 'too short'
+  if (!question.endsWith('?')) return 'not a question'
+  if (/\d/.test(question)) return 'has a number'
+  if (/[.!]/.test(question.slice(0, -1))) return 'more than one sentence'
+  if (/[-\u2010-\u2015]/.test(question)) return 'has a dash'
+
+  const said = question.toLowerCase()
+  const banned = [
+    'how are you',
+    'how do you feel',
+    'feeling',
+    'your day',
+    'your mood',
+    'energy',
+    'vibe',
+    'unfolding',
+    'i noticed',
+    'i remember',
+    'thinking about you',
+    'where you are',
+    'your area',
+  ]
+  for (const phrase of banned) {
+    if (said.includes(phrase)) return `says ${phrase}`
+  }
+
+  // Four adjectives about the sky and the calendar in one breath is the
+  // failure this whole path exists to stop.
+  const stacked = ['clear', 'cloudy', 'rain', 'autumn', 'winter', 'spring', 'summer'].filter(
+    (word) => said.includes(word),
+  ).length
+  const days = WEEKDAYS.filter((day) => said.includes(day.toLowerCase())).length
+  if (stacked + days > 2) return 'stacks the context'
+
+  return null
 }
 
 /**
