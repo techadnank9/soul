@@ -99,8 +99,11 @@ function angle(
     return {
       said: [
         `They last wrote ${last.ago}, about ${last.about}.`,
-        `It is ${when} for them.`,
-        'Write the question about that, as somebody who was there would ask it.',
+        `It is ${when} for them${ask.condition ? `, and the sky is ${ask.condition.toLowerCase()}` : ''}.`,
+        'Write the question about what they last wrote about, as somebody',
+        'who was there would ask it. The time and the sky are the room it is',
+        'asked in: two words at most, or leave them out. The situation is the',
+        'subject and everything else is furniture.',
       ].join('\n'),
       plain: `Where did ${last.about} get to?`,
     }
@@ -219,8 +222,15 @@ async function lastTime(
     if (!row || !about) return null
 
     const days = Math.floor((Date.now() - row.createdAt.getTime()) / 86_400_000)
+
+    // Past a fortnight it is not where they left off any more, it is
+    // something they said once. Asking where a deadline from five weeks ago
+    // got to is the app showing it has not been paying attention rather
+    // than that it has, so the card goes back to the day and the sky.
+    if (days > 14) return null
+
     const ago =
-      days < 1 ? 'earlier today' : days < 2 ? 'yesterday' : days < 8 ? 'this week' : 'a while ago'
+      days < 1 ? 'earlier today' : days < 2 ? 'yesterday' : days < 8 ? 'this week' : 'last week'
     return { entryId: row.id, ago, about }
   } catch (error) {
     console.warn(`weather question, last time: ${(error as Error).message}`)

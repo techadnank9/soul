@@ -66,7 +66,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   WeekView? _week;
   bool _failed = false;
 
@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _name = widget.name;
     _load();
+    WidgetsBinding.instance.addObserver(this);
     _sky();
     _marks();
     if (_name == null) _whoTheyAre();
@@ -119,8 +120,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Coming back to the app is opening it. The card is about where somebody
+  /// is standing and what the sky is doing there, and both of those change
+  /// while a phone is in a pocket. Without this the card was written once at
+  /// launch and then sat there for as long as the app stayed in memory,
+  /// which on a phone is days.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _sky();
+    _load();
+    _marks();
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _strip.dispose();
     super.dispose();
   }
