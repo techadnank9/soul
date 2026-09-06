@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Soul asks where you are once, to set your region and your time zone. It never tracks you and never uses your location in the background.</string>
+	<string>For the weather on your home screen. It stays on your phone, and your profile is where you remove it.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSMicrophoneUsageDescription</key>
@@ -73,6 +73,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Soul uses where you are for the weather on your home screen and to set the hour it comes back to you. The position it reads for the weather is used and dropped, never saved. The one in your profile is the one you gave, and you can see it and remove it there.</string>
+	<string>For the weather on your home screen. It stays on your phone, and your profile is where you remove it.</string>
 </dict>
 </plist>
