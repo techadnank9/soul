@@ -183,6 +183,10 @@ Two test students exist: `student_with_consent` and `student_no_consent`. The
 second one is how you check the gate without editing code. They are created by
 `npm run seed`, so a reset does not lose them.
 
+There are three ways in: Apple, an email code and a code by text. The last
+one goes through AWS End User Messaging and is dark until a toll free
+number is on the AWS account and it is out of the SMS sandbox. Decision 229.
+
 First run is a welcome, a how it works screen, four profile questions, the
 ten baseline questions, a spoken introduction, a landing, then sign in and
 home. Every question has to be answered. The profile questions have a

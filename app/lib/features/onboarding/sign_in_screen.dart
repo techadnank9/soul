@@ -53,12 +53,16 @@ class _SignInScreenState extends State<SignInScreen> {
   /// button for anybody Apple's sheet does not work for, and it is a full
   /// sign in rather than a fallback: the address is the way back in.
   final _email = TextEditingController();
+  final _phone = TextEditingController(text: '+1 ');
+  bool _phoneRunning = false;
+  String? _phoneNote;
   bool _emailRunning = false;
   String? _emailNote;
 
   @override
   void dispose() {
     _email.dispose();
+    _phone.dispose();
     super.dispose();
   }
 
@@ -92,7 +96,7 @@ class _SignInScreenState extends State<SignInScreen> {
       // is the only thing on it.
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => EmailCodeScreen(
+          builder: (_) => CodeScreen(
             email: email,
             onSignedIn: (token) => _finish(token, 'email'),
           ),
@@ -114,6 +118,62 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _emailRunning = false;
         _emailNote = 'That did not go through.';
+      });
+    }
+  }
+
+  /// A code by text.
+  ///
+  /// The number goes as E.164, which is a plus, a country code and the rest
+  /// with every space and bracket taken out. Anything the server will not
+  /// take is said here rather than sent, because a code that never arrives
+  /// is the worst failure this screen has.
+  Future<void> _sendTextCode() async {
+    if (!_agreed) {
+      setState(() => _tried = true);
+      return;
+    }
+    final phone = '+${_phone.text.replaceAll(RegExp(r'[^0-9]'), '')}';
+    if (!RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone)) {
+      setState(() => _phoneNote = 'That does not look like a phone number. '
+          'Start with the country code.');
+      return;
+    }
+    setState(() {
+      _phoneRunning = true;
+      _phoneNote = null;
+    });
+    try {
+      await _api.phoneStart(phone);
+      _api.event('signin_phone_code_sent');
+      if (!mounted) return;
+      setState(() => _phoneRunning = false);
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => CodeScreen(
+            email: phone,
+            byPhone: true,
+            onSignedIn: (token) => _finish(token, 'phone'),
+          ),
+        ),
+      );
+    } on SoulApiException catch (error) {
+      _api.event('signin_phone_start_failed', {'status': error.status});
+      if (!mounted) return;
+      setState(() {
+        _phoneRunning = false;
+        _phoneNote = switch (error.status) {
+          503 => 'Text sign in is not available right now.',
+          429 => 'Too many codes for now. Try again in a while.',
+          502 => 'That number did not go through. Your email works too.',
+          _ => 'That did not go through.',
+        };
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _phoneRunning = false;
+        _phoneNote = 'That did not go through.';
       });
     }
   }
@@ -309,12 +369,27 @@ class _SignInScreenState extends State<SignInScreen> {
           ],
           if (_emailOffered) ...[
           const SizedBox(height: 14),
-          _EmailSignIn(
+          _CodeRequest(
             enabled: _agreed && !_running,
             running: _emailRunning,
             note: _emailNote,
             email: _email,
             onSendCode: _sendCode,
+            hint: 'Email',
+            keyboard: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 16),
+          // The number, under the address, because a phone knows its own
+          // Apple account and most people here will use that first. Both
+          // are the same six digits arriving on the same screen.
+          _CodeRequest(
+            enabled: _agreed && !_running,
+            running: _phoneRunning,
+            note: _phoneNote,
+            email: _phone,
+            onSendCode: _sendTextCode,
+            hint: 'Phone number',
+            keyboard: TextInputType.phone,
           ),
           ],
         ],
@@ -400,13 +475,15 @@ class _AppleButton extends StatelessWidget {
 /// last, in one line, and is the only feedback: no toasts, no dialogs.
 /// The address, and the button that sends a code to it. The code itself is
 /// asked for on its own screen.
-class _EmailSignIn extends StatelessWidget {
-  const _EmailSignIn({
+class _CodeRequest extends StatelessWidget {
+  const _CodeRequest({
     required this.enabled,
     required this.running,
     required this.note,
     required this.email,
     required this.onSendCode,
+    required this.hint,
+    required this.keyboard,
   });
 
   final bool enabled;
@@ -414,6 +491,8 @@ class _EmailSignIn extends StatelessWidget {
   final String? note;
   final TextEditingController email;
   final VoidCallback onSendCode;
+  final String hint;
+  final TextInputType keyboard;
 
   @override
   Widget build(BuildContext context) {
@@ -425,8 +504,8 @@ class _EmailSignIn extends StatelessWidget {
         children: [
           _Field(
             controller: email,
-            hint: 'Email',
-            keyboard: TextInputType.emailAddress,
+            hint: hint,
+            keyboard: keyboard,
             enabled: enabled && !running,
             onDone: onSendCode,
           ),
@@ -451,24 +530,31 @@ class _EmailSignIn extends StatelessWidget {
 
 /// The code, on its own screen, because it is one thing to do and the screen
 /// behind it has three.
-class EmailCodeScreen extends StatefulWidget {
-  const EmailCodeScreen({
+class CodeScreen extends StatefulWidget {
+  const CodeScreen({
     super.key,
     required this.email,
     required this.onSignedIn,
+    this.byPhone = false,
   });
 
+  /// The address or the number the code went to, shown back on the screen
+  /// so nobody has to remember which one they typed.
   final String email;
+
+  /// Whether it went by text. The two paths are the same six digits and the
+  /// same two calls, so this is the only thing that differs.
+  final bool byPhone;
 
   /// Handed the session token. The screen behind this one stores it and
   /// carries on, so this one only has to close.
   final Future<void> Function(String token) onSignedIn;
 
   @override
-  State<EmailCodeScreen> createState() => _EmailCodeScreenState();
+  State<CodeScreen> createState() => _CodeScreenState();
 }
 
-class _EmailCodeScreenState extends State<EmailCodeScreen> {
+class _CodeScreenState extends State<CodeScreen> {
   final _api = SoulApi.fromEnvironment();
   final _code = TextEditingController();
   bool _running = false;
@@ -491,7 +577,9 @@ class _EmailCodeScreenState extends State<EmailCodeScreen> {
       _note = null;
     });
     try {
-      final token = await _api.emailVerify(widget.email, code);
+      final token = widget.byPhone
+          ? await _api.phoneVerify(widget.email, code)
+          : await _api.emailVerify(widget.email, code);
       if (!mounted) return;
       Navigator.of(context).pop();
       await widget.onSignedIn(token);
@@ -513,7 +601,11 @@ class _EmailCodeScreenState extends State<EmailCodeScreen> {
       _note = null;
     });
     try {
-      await _api.emailStart(widget.email);
+      if (widget.byPhone) {
+        await _api.phoneStart(widget.email);
+      } else {
+        await _api.emailStart(widget.email);
+      }
       if (!mounted) return;
       setState(() {
         _running = false;

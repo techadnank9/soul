@@ -9,6 +9,8 @@ import { db, students } from '../db.js'
 import { eq } from 'drizzle-orm'
 import { EmailRefused, startEmailSignIn, verifyEmailSignIn } from '../auth/email.js'
 import { EmailUnavailable } from '../auth/resend.js'
+import { SmsUnavailable } from '../auth/sms.js'
+import { PhoneRefused, startPhoneSignIn, verifyPhoneSignIn } from '../auth/phone.js'
 import { resolveSession, type Session } from '../session.js'
 
 /**
@@ -97,6 +99,53 @@ auth.post('/auth/email/verify', async (c) => {
   } catch (error) {
     if (error instanceof EmailRefused) {
       console.log(`email code refused: ${error.message}`)
+      return c.json({ error: 'sign in refused' }, 401)
+    }
+    throw error
+  }
+})
+
+/**
+ * A code by text. The same two calls as the email path and the same
+ * answers, so the client can hold one shape for both.
+ */
+auth.post('/auth/phone/start', async (c) => {
+  const parsed = contracts.phoneStart.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'invalid number' }, 400)
+
+  try {
+    await startPhoneSignIn(parsed.data.phone)
+    return c.json({ ok: true })
+  } catch (error) {
+    if (error instanceof PhoneRefused) {
+      console.log(`phone sign in refused: ${error.message}`)
+      return c.json({ error: 'try later' }, 429)
+    }
+    if (error instanceof SmsUnavailable) {
+      console.error(error.message)
+      return c.json({ error: 'text sign in is not available' }, 503)
+    }
+    // A number AWS will not send to reads as a bad number rather than as a
+    // fault in the app. In the sandbox that is every number but the ones
+    // that have been verified there.
+    console.error(`sms send failed: ${(error as Error).message}`)
+    return c.json({ error: 'that number did not go through' }, 502)
+  }
+})
+
+auth.post('/auth/phone/verify', async (c) => {
+  const parsed = contracts.phoneVerify.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'invalid code' }, 401)
+
+  const header = c.req.header('authorization')
+  const bearer = header?.startsWith('Bearer ') ? header.slice(7) : undefined
+  const current = await resolveSession(bearer)
+
+  try {
+    return c.json(await verifyPhoneSignIn(parsed.data.phone, parsed.data.code, current))
+  } catch (error) {
+    if (error instanceof PhoneRefused) {
+      console.log(`phone code refused: ${error.message}`)
       return c.json({ error: 'sign in refused' }, 401)
     }
     throw error

@@ -183,6 +183,13 @@
       "when": 1788649367916,
       "tag": "0025_weather_question",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788732986742,
+      "tag": "0026_pink_riptide",
+      "breakpoints": true
     }
   ]
 }

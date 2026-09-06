@@ -4740,3 +4740,38 @@ ever said to the user.
 Verified by switching `weather_card` off in PostHog and relaunching: the
 card was gone and the rest of home was untouched.
 
+## 229. Sign in by text, through AWS rather than a verification product
+
+A third way in, beside Apple and email. It is the one a person has when
+they will not give an address, and the one that works on a phone that is
+not theirs.
+
+AWS End User Messaging rather than Twilio Verify. Verify charges five cents
+a verification to generate a code, store it and compare it, which is what
+`auth/phone.ts` does in eighty lines beside the file that already does it
+for email. The message itself is about six tenths of a cent, plus carrier
+fees. On the hundred dollars of AWS credit this account holds that is eight
+or nine thousand sign ins rather than seventeen hundred.
+
+Amazon Pinpoint's console is switched off in October 2026. The SMS API is
+not: it continues as End User Messaging under the `pinpoint-sms-voice-v2`
+namespace, which is what the client speaks. This is the only AWS SDK in the
+API, and the only SDK at all apart from the model providers. Resend gets a
+fetch call because it is one POST with a bearer token; signing AWS requests
+by hand to save a dependency would be the wrong kind of thrift.
+
+`phone_codes` is its own table rather than a channel column on
+`email_codes`. One table with a nullable address, a nullable number and a
+column saying which of them means anything is a table where a row has to be
+read before it is known what it is.
+
+The rest is the email path exactly: six digits, hashed with the number,
+ten minutes, one use, five attempts, five codes an hour, and the number
+attaching to the account this device already has rather than making a new
+one.
+
+Not live yet. It needs a toll free number on the AWS account, its
+verification, which is free, and production access out of the SMS sandbox.
+Until then the route answers 503 and the screen says text sign in is not
+available, which is what it already does for email without a Resend key.
+

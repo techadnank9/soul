@@ -150,6 +150,15 @@ export const students = pgTable(
     email: text('email'),
 
     /**
+     * A phone number in E.164, present once a user has signed in with one.
+     * It is the second way back into the account, and the code sent to it
+     * is the credential. Held for that and nothing else: nothing is ever
+     * sent to it except a sign in code, and no marketing message will ever
+     * be, which is a promise the carriers also enforce.
+     */
+    phone: text('phone'),
+
+    /**
      * The profile, given by the student at first run. Every column is
      * nullable, because a student can leave first run at any point and a
      * half answered profile is a real state rather than a broken one.
@@ -223,6 +232,7 @@ export const students = pgTable(
     uniqueIndex('students_school_external_ref_idx').on(t.schoolId, t.externalRef),
     uniqueIndex('students_apple_user_id_idx').on(t.appleUserId),
     uniqueIndex('students_email_idx').on(t.email),
+    uniqueIndex('students_phone_idx').on(t.phone),
   ],
 )
 
@@ -287,6 +297,29 @@ export const emailCodes = pgTable(
  * request. revoked_at is set rather than the row deleted, because a district
  * asking when a device stopped being trusted needs the row to still be there.
  */
+/**
+ * Sign in codes sent by SMS.
+ *
+ * The same shape as the email one and deliberately not merged with it. One
+ * table with a nullable address and a nullable number, and a channel column
+ * saying which of them means anything, is a table where half the rows have
+ * to be read before it is known what a row is. Two small tables that each
+ * say one thing cost a file and buy clarity.
+ */
+export const phoneCodes = pgTable(
+  'phone_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    phone: text('phone').notNull(),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => [index('phone_codes_phone_created_idx').on(t.phone, t.createdAt.desc())],
+)
+
 export const sessions = pgTable(
   'sessions',
   {

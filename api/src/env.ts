@@ -63,5 +63,20 @@ export const env = {
     geminiKey: optional('GEMINI_API_KEY'),
     openrouterKey: optional('OPENROUTER_API_KEY'),
     elevenlabsKey: optional('ELEVENLABS_API_KEY'),
+
+    /**
+     * AWS End User Messaging, for sign in codes by text. Unset anywhere
+     * these are missing, and the phone path says it is not available the
+     * same way the email one does without Resend.
+     *
+     * The origination identity is the number the message comes from: a toll
+     * free number while this is small, because toll free verification is
+     * free and the ten digit long code registration is a month of carrier
+     * paperwork.
+     */
+    awsRegion: optional('AWS_REGION'),
+    awsAccessKeyId: optional('AWS_ACCESS_KEY_ID'),
+    awsSecretAccessKey: optional('AWS_SECRET_ACCESS_KEY'),
+    smsOriginationIdentity: optional('SMS_ORIGINATION_IDENTITY'),
   },
 }

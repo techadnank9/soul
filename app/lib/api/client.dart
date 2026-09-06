@@ -275,6 +275,18 @@ class SoulApi {
     return json['token'] as String;
   }
 
+  /// A code by text. The number is E.164, which is what the field builds.
+  Future<void> phoneStart(String phone) async {
+    await _post('/auth/phone/start', {'phone': phone});
+  }
+
+  /// The code, traded for a session token. The bearer is this phone's own
+  /// session, so a new number attaches to the account already here.
+  Future<String> phoneVerify(String phone, String code) async {
+    final json = await _post('/auth/phone/verify', {'phone': phone, 'code': code});
+    return json['token'] as String;
+  }
+
   /// The agreement, recorded with its version.
   Future<void> recordConsent(String version) async {
     await _post('/consent', {'version': version});

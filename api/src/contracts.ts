@@ -372,6 +372,19 @@ export const emailVerify = z.object({
   code: z.string().trim().regex(/^\d{6}$/),
 })
 
+/**
+ * Signing in by text. The number is E.164, which is a plus and up to
+ * fifteen digits, because that is the only shape a carrier understands and
+ * the client has already put it in that shape.
+ */
+export const phoneStart = z.object({
+  phone: z.string().trim().regex(/^\+[1-9]\d{7,14}$/),
+})
+export const phoneVerify = z.object({
+  phone: z.string().trim().regex(/^\+[1-9]\d{7,14}$/),
+  code: z.string().trim().regex(/^\d{6}$/),
+})
+
 export const appleSession = z.object({
   token: z.string(),
   expiresAt: z.string(),
