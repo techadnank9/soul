@@ -4608,3 +4608,35 @@ these three files reads the name.
 
 prompts/weather_question.v4.md.
 
+## 223. One version in TestFlight, and the build number goes up
+
+Thirteen versions, each holding one build, is a menu to scroll rather than
+a thing to test. The version is pinned at 0.2.0 in pubspec.yaml and
+release.sh raises the build number by one on every run. 0.2.0 because App
+Store Connect will not take a version below the newest one it already has,
+and 0.1.15 was the last.
+
+## 224. What Sentry reported from the first testers, and what was done
+
+A route pushed from inside didUpdateWidget in days_screen locked the
+navigator, which threw '!_debugLocked' and then 'setState called during
+build' on the overlay above it. It is deferred to after the frame now, and
+_open refuses a second push while one is open.
+
+Type set larger than about a fifth above the default overflowed the day
+strip and the tab bar by a few pixels, reported as a fatal every time the
+frame was drawn. Text scaling is clamped at 1.2 at the root. The screens
+should be built to hold more than that, and this is the floor rather than
+the answer.
+
+A phone with no signal was arriving as a fatal from the API client. Every
+screen that makes a call already says the connection is gone, so beforeSend
+drops network errors and the real ones stop being buried.
+
+The world map's quarter of a megabyte was decoded on the main isolate,
+which held the frame long enough to be reported as a hang. It goes through
+compute now, the way the location picker beside it already did.
+
+The waves list was fixed length, six hundred events of it. That one was
+already fixed in f255542 and the reports are from a build before it.
+

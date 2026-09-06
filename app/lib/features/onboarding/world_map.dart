@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 import '../../theme/soul_theme.dart';
 
@@ -54,15 +55,25 @@ class CountryShape {
   }
 }
 
+List<Map<String, dynamic>> _decode(String text) => [
+      for (final item in jsonDecode(text) as List) item as Map<String, dynamic>,
+    ];
+
 /// Read once, then held.
 class WorldMapData {
   static Future<List<CountryShape>>? _loading;
 
   static Future<List<CountryShape>> load() {
-    return _loading ??= rootBundle.loadString('assets/world_map.json').then((text) {
-      final list = jsonDecode(text) as List;
-      return [for (final item in list) CountryShape.fromJson(item as Map<String, dynamic>)];
-    });
+    // The decode is a quarter of a megabyte of coastlines and it was
+    // running on the main isolate, which held the frame long enough for
+    // Sentry to call the app hung. The picker beside this one already
+    // parses its two megabytes this way.
+    return _loading ??= rootBundle.loadString('assets/world_map.json').then(
+      (text) async => [
+        for (final item in await compute(_decode, text))
+          CountryShape.fromJson(item),
+      ],
+    );
   }
 }
 

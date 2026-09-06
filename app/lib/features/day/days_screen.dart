@@ -63,8 +63,14 @@ class _DaysScreenState extends State<DaysScreen> {
   void didUpdateWidget(covariant DaysScreen old) {
     super.didUpdateWidget(old);
     if (widget.revision != old.revision) _load();
-    if (widget.openOn != null && widget.openOn != old.openOn) {
-      _open(widget.openOn!);
+    // After the frame, never during it. Pushing a route from inside an
+    // update locks the navigator, which threw '!_debugLocked' and then
+    // 'setState called during build' on the overlay above it.
+    final wanted = widget.openOn;
+    if (wanted != null && wanted != old.openOn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _open(wanted);
+      });
     }
   }
 
@@ -83,7 +89,13 @@ class _DaysScreenState extends State<DaysScreen> {
 
   /// Opens the day on its own page. The list stays where it was, so coming
   /// back lands on the same row rather than at the top.
+  bool _opening = false;
+
   Future<void> _open(String date) async {
+    // One page at a time. Two calls landing together pushed the same day
+    // twice and left a back press going nowhere.
+    if (_opening) return;
+    _opening = true;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (page) => DayScreen(
@@ -94,6 +106,8 @@ class _DaysScreenState extends State<DaysScreen> {
         ),
       ),
     );
+
+    _opening = false;
 
     // A card answered on that page changes nothing in this list, but an entry
     // written from it does, and coming back is the only moment to notice.

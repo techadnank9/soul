@@ -53,6 +53,20 @@ Future<void> main() async {
       // so a replay shows where a person tapped, not what they wrote.
       options.replay.sessionSampleRate = 1.0;
       options.replay.onErrorSampleRate = 1.0;
+
+      // A phone with no signal is not a fault in the app. Every screen that
+      // makes a call already tells the person the connection is gone, and
+      // these were arriving as fatals and burying the real ones.
+      options.beforeSend = (event, hint) {
+        final said = event.throwable?.toString() ?? '';
+        final network = said.contains('SocketException') ||
+            said.contains('Connection refused') ||
+            said.contains('Connection closed') ||
+            said.contains('Failed host lookup') ||
+            said.contains('Network is unreachable') ||
+            said.contains('TimeoutException');
+        return network ? null : event;
+      };
     },
     appRunner: () => runApp(SentryWidget(child: const SoulApp())),
   );
@@ -97,6 +111,13 @@ class SoulApp extends StatelessWidget {
       title: 'Soul',
       debugShowCheckedModeBanner: false,
       theme: soulTheme(),
+      // The screens are built for type up to about a fifth larger. Past
+      // that the day strip and the tab bar overflowed by a few pixels,
+      // which Sentry reports as a fatal every time it is drawn.
+      builder: (context, child) => MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.2,
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: _requestedScreen() ?? const _Launch(),
       routes: {'/start': (_) => _firstRun()},
     );
