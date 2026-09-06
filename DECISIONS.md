@@ -4686,3 +4686,30 @@ coordinates. Log out calls reset.
 Off unless `POSTHOG_KEY` is given at build time, and off in debug, so a
 simulator being worked on is never in the numbers.
 
+## 227. The whole database is synced to PostHog's warehouse
+
+A Postgres source in PostHog reads the public schema and copies it. Twenty
+seven tables including entries, tags, facts, people, voice tones and
+students. It was a founder decision taken against the advice in this file,
+which was to sync app_events alone.
+
+What it means, stated plainly so nobody has to work it out later. Everything
+anybody has written in this app now exists in a second place, owned by a
+vendor, readable by anybody with access to the PostHog organisation. Row
+level security does not reach it: `db/sql/rls.sql` scopes what a request can
+read, and a warehouse sync is not a request. The privacy policy and the App
+Store privacy labels have to say so before the next submission, and a
+deletion request now has two places to satisfy.
+
+Two things were kept out of it. `sessions` holds live session token hashes
+and `email_codes` holds sign in code hashes. They are credentials, they have
+no analytical value at all, and copying them to a third party is a security
+question rather than the privacy one that was decided. Turn them on
+deliberately if they are ever wanted.
+
+The connection is a role of its own, `posthog_reader`, with select on the
+public schema and nothing else: no insert, no update, no delete, no schema
+changes. The superuser string in `.env` is not what PostHog holds. The role
+carries bypassrls, because a role with no policies would otherwise read
+nothing, which is the sync saying out loud that it reads everything.
+
