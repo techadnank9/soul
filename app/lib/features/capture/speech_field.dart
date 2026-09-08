@@ -18,10 +18,19 @@ class SpeechField extends StatefulWidget {
     super.key,
     required this.controller,
     this.hint = 'Say or type anything about it',
+    this.focusNode,
+    this.maxLines = 10,
   });
 
   final TextEditingController controller;
   final String hint;
+
+  /// So the screen around it can put the keyboard away, which is what the
+  /// cue card does before it sends.
+  final FocusNode? focusNode;
+
+  /// Room for a paragraph by default. A card in a list wants less.
+  final int maxLines;
 
   @override
   State<SpeechField> createState() => _SpeechFieldState();
@@ -168,12 +177,13 @@ class _SpeechFieldState extends State<SpeechField> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              focusNode: widget.focusNode,
               scrollController: _scroll,
               minLines: 1,
               // Room for a paragraph rather than a sentence. Somebody
               // speaking their answer fills four lines in about fifteen
               // seconds and then cannot see any of what they have said.
-              maxLines: 10,
+              maxLines: widget.maxLines,
               style: const TextStyle(
                 fontFamily: SoulType.sans,
                 fontSize: 16,

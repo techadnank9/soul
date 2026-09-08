@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import '../capture/speech_field.dart';
 
 /// What the user said, on their way to a decision.
 ///
@@ -221,7 +222,15 @@ class _CueCardTileState extends State<CueCardTile> {
       const SizedBox(height: 16),
       const Label('anything you want to say, or nothing'),
       const SizedBox(height: 8),
-      SoulField(controller: _detail, focusNode: _detailFocus),
+      // Spoken or typed, the same as everywhere else. A card that asks how
+      // something went and then insists on a keyboard is asking for the
+      // shortest answer somebody can give it.
+      SpeechField(
+        controller: _detail,
+        focusNode: _detailFocus,
+        hint: 'Say it or type it',
+        maxLines: 6,
+      ),
       if (over) ...[
         const SizedBox(height: 8),
         const Label('500 characters is the most this holds'),

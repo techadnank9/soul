@@ -5073,3 +5073,19 @@ decision and its own quiz. This does not replace it.
 Reverses if: somebody reads the circle as being told to calm down, which is
 the failure to watch for, or if streaming lands and there is no wait left to
 fill.
+
+## 231. Every box somebody tells something in can be spoken into
+
+The cue card asked whether they would call their brother back and then gave
+them a keyboard. So did the check back, which asks what happened. Both are
+places where a person is telling something rather than filling a field, and
+this app exists because typing is the wrong way to do that.
+
+`SpeechField` is on all of them now: the capture screen's own box, beat one,
+the feedback sheet, the cue card and the check back. It takes a focus node
+and a line count so it can stand where `SoulField` did.
+
+The boxes that are still typed are the ones where speaking makes no sense: a
+first name, a phone number, somebody's name on the people screen. Short
+answers with a spelling.
+

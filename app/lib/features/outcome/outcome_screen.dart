@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import '../capture/speech_field.dart';
 
 /// Screen 8. How it went, days later.
 ///
@@ -59,9 +60,12 @@ class _OutcomeScreenState extends State<OutcomeScreen> {
         // did turns the check back into a test they can fail.
         const Text('What happened?', style: SoulType.lead),
         const SizedBox(height: 14),
-        SoulField(
+        // What happened is a story, and a story is the thing this app asks
+        // people to speak rather than type.
+        SpeechField(
           controller: _controller,
           hint: 'Whatever happened, or did not',
+          maxLines: 8,
         ),
         const SizedBox(height: 24),
         const Text('And afterwards?', style: SoulType.lead),
