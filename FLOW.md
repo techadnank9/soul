@@ -132,10 +132,11 @@ main.dart → onboarding/first_run.dart, FirstRun
   │        the bearer is the phone's own session, which is the account the
   │        Apple account attaches to. On a later phone the Apple account
   │        decides which account this is, whatever the bearer said
-  │     email and phone appear once Apple has failed, and also once its
-  │     sheet has been backed out of twice, because a sheet somebody
-  │     cannot get through reports a cancel like any other. Decisions 219
-  │     and 250
+  │     email appears the moment Apple's sheet closes with no session,
+  │     for any reason, a cancel included. A sheet somebody cannot get
+  │     through reports a cancel like any other. Decisions 219 and 260
+  │     the number is built and switched off in the client, because AWS
+  │     has no toll free number yet and the route answers 503
   │        POST /auth/email/start sends a six digit code through Resend
   │        the code is asked for on a screen of its own, EmailCodeScreen
   │        POST /auth/email/verify trades it for a session

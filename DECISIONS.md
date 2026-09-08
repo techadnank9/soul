@@ -5280,3 +5280,33 @@ lowering the count, which does not help when every group has one row in it.
 
 Reverses if: the ten phrases turn out to flatten things somebody would have
 told apart, at which point the answer is more phrases rather than free text.
+
+### 260. Email appears on the first cancel, and the number is not drawn at all
+Sep 2026, Adnan
+
+Decision: two changes to the sign in screen, both on the founder's call after
+seeing it on a device.
+
+**Email appears the moment Apple's sheet closes with no session**, for any
+reason, a cancel included. Decision 250 waited for a second cancel, to keep
+the screen bare for somebody who had only changed their mind. Watching it
+happen, that is the wrong trade: somebody who cannot get through Apple's
+sheet closes it, sees nothing on the screen change, and has no reason to open
+it a second time. One wasted tap for the person who changed their mind is
+cheaper than a locked door for the person who cannot use Apple at all.
+Supersedes 250.
+
+**The number is not drawn.** `_phoneSignIn` in sign_in_screen.dart is a const
+false. Everything behind it stays: the route, the codes table, the AWS
+client, the screen. It is off because AWS has no toll free number and no
+Notify configuration yet, so the route answers 503 and the box was a way in
+that is not a way in. Two boxes stacked under Apple, one of which cannot
+work, is worse than one that does. Turn the const to true when the number
+exists, and nothing else changes.
+
+Rejected: a PostHog flag for it, which is how the other four switches work.
+Those fail on, which is right for a feature that works and might break. This
+one is a feature that does not work yet, and a flag that fails on would draw
+it for everybody the first time PostHog is unreachable.
+
+Reverses if: the number lands, which is the point.

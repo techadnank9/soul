@@ -49,10 +49,14 @@ class _SignInScreenState extends State<SignInScreen> {
   /// the answer to something.
   bool _emailOffered = false;
 
-  /// How many times Apple's sheet has closed with nothing. Backing out once
-  /// is somebody changing their mind. Twice is the sheet not working for
-  /// them, whatever it reported, and the other two ways in appear.
-  int _backedOut = 0;
+  /// Whether a code by text is offered at all.
+  ///
+  /// False until the AWS account is off the free plan and has either a Notify
+  /// configuration or a verified toll free number on it. Until then the route
+  /// answers 503 and the box is a way in that is not a way in, which is worse
+  /// than one fewer option. Turn it on here when the number exists.
+  /// Decision 260.
+  static const _phoneSignIn = false;
 
   /// The email path. An address, then a code, then in. It sits under Apple's
   /// button for anybody Apple's sheet does not work for, and it is a full
@@ -216,10 +220,8 @@ class _SignInScreenState extends State<SignInScreen> {
       );
       await _finish(token, 'apple');
     } on SignInWithAppleAuthorizationException catch (error) {
-      // Backing out of Apple's sheet once is a decision, not a fault. The
-      // screen goes back to how it was and says nothing about it. Twice is
-      // read as the sheet not working for this person, and the email and
-      // phone boxes appear under the button.
+      // Backing out of Apple's sheet is not a fault, so nothing is said
+      // about it, but the way in by email appears underneath either way.
       if (error.code != AuthorizationErrorCode.canceled) {
         _api.event('signin_apple_failed', {'code': error.code.name});
       }
@@ -228,11 +230,11 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _running = false;
         _failed = !cancelled;
-        if (cancelled) _backedOut += 1;
-        // A second cancel opens the other two ways in and says nothing about
-        // it. Nothing went wrong, so the line about it not going through
-        // stays off and the boxes are simply there.
-        if (_failed || _backedOut >= 2) _emailOffered = true;
+        // Any return from Apple's sheet with no session opens the other way
+        // in, a cancel included. Waiting for a second one made somebody who
+        // cannot use Apple close the sheet, see nothing change, and have no
+        // reason to try it again. Decision 260.
+        _emailOffered = true;
       });
     } catch (error) {
       // Refused, offline, or the server said no. One line, and the button is
@@ -390,19 +392,22 @@ class _SignInScreenState extends State<SignInScreen> {
             hint: 'Email',
             keyboard: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 16),
-          // The number, under the address, because a phone knows its own
-          // Apple account and most people here will use that first. Both
-          // are the same six digits arriving on the same screen.
-          _CodeRequest(
-            enabled: _agreed && !_running,
-            running: _phoneRunning,
-            note: _phoneNote,
-            email: _phone,
-            onSendCode: _sendTextCode,
-            hint: 'Phone number',
-            keyboard: TextInputType.phone,
-          ),
+          // The number, under the address, when there is a number to send
+          // from. The whole path is built and the route answers 503 until
+          // AWS has one, so it is off here rather than offering a box that
+          // cannot work.
+          if (_phoneSignIn) ...[
+            const SizedBox(height: 16),
+            _CodeRequest(
+              enabled: _agreed && !_running,
+              running: _phoneRunning,
+              note: _phoneNote,
+              email: _phone,
+              onSendCode: _sendTextCode,
+              hint: 'Phone number',
+              keyboard: TextInputType.phone,
+            ),
+          ],
           ],
         ],
       ),

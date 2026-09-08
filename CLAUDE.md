@@ -196,6 +196,9 @@ second one is how you check the gate without editing code. They are created by
 There are three ways in: Apple, an email code and a code by text. The last
 one goes through AWS End User Messaging and is dark until a toll free
 number is on the AWS account and it is out of the SMS sandbox. Decision 248.
+Dark now means not drawn at all: `_phoneSignIn` in sign_in_screen.dart is
+false, so the screen offers Apple and email only. Turn it on when the number
+exists. Decision 260.
 
 First run is a welcome, a how it works screen, four profile questions, the
 ten baseline questions, a spoken introduction, a landing, sign in, two
