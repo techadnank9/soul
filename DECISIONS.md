@@ -5011,3 +5011,24 @@ every day.
 Supersedes the wording in decision 253. Everything else there stands: one
 box, no stars, no categories, into our table and into the funnels from one
 call.
+
+## 230. Feedback can be spoken
+
+The sheet asked for the one thing this app is built around somebody not
+having to type, and gave them a keyboard. The mic is on it now, under the
+box, and the words land in the box where they can still be changed before
+they go. Dictation rather than a recording, because feedback somebody
+cannot edit is feedback they will not send.
+
+`features/capture/dictation.dart` is the small version of what the capture
+screen does: one recorder, one connection, text out. The capture screen
+keeps its own because it also draws the waves, judges the tone and holds the
+audio to the end, and none of that belongs in a box on a sheet.
+
+The keyboard no longer opens on its own here. A keyboard already covering
+the screen makes the mic look like an afterthought, and half the people
+opening this would rather say it.
+
+It is behind `voice_capture`, the same switch as the capture screen. A
+transcriber that is down should take the mic off both.
+
