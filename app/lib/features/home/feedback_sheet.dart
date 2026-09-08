@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/client.dart';
-import '../../data/flags.dart';
-import '../capture/dictation.dart';
+import '../capture/speech_field.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 
@@ -50,39 +49,6 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
   bool _sent = false;
   String? _note;
 
-  /// Saying it out loud instead of typing it. The same transcriber the rest
-  /// of the app uses, in its small form: no waves, no tone, just the words
-  /// arriving in the box where they can still be edited before they go.
-  late final _dictation = Dictation(
-    api: _api,
-    onText: (text) {
-      _text.value = TextEditingValue(
-        text: text,
-        selection: TextSelection.collapsed(offset: text.length),
-      );
-    },
-  );
-  bool _listening = false;
-
-  Future<void> _toggleVoice() async {
-    if (_listening) {
-      setState(() => _listening = false);
-      await _dictation.stop();
-      return;
-    }
-    setState(() {
-      _note = null;
-      _listening = true;
-    });
-    final failed = await _dictation.start();
-    if (!mounted) return;
-    if (failed != null) {
-      setState(() {
-        _listening = false;
-        _note = failed;
-      });
-    }
-  }
 
   @override
   void initState() {
@@ -92,7 +58,6 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
 
   @override
   void dispose() {
-    _dictation.dispose();
     _text.dispose();
     super.dispose();
   }
@@ -151,58 +116,10 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
           style: SoulType.secondary,
         ),
         const SizedBox(height: 16),
-        SoulField(
-          controller: _text,
-          // The keyboard does not come up on its own any more. Half the
-          // people opening this would rather say it, and a keyboard already
-          // covering the screen makes the mic look like an afterthought.
-          autofocus: false,
-          // It grows to about half the sheet and scrolls after that, so a
-          // long answer never pushes the send button off the screen.
-          maxLines: 8,
-          hint: 'Say it plainly',
-        ),
-        // The same switch the capture screen is behind. A transcriber that
-        // is down should take the mic off both screens, not one.
-        if (isOn(Flag.voiceCapture)) ...[
-        const SizedBox(height: 12),
-        // Speak it. The words land in the box above and can be changed
-        // before they go, which is the difference between dictation and a
-        // recording somebody cannot take back.
-        Align(
-          alignment: Alignment.centerLeft,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _sending ? null : _toggleVoice,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: _listening ? SoulColors.clay : SoulColors.s2,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _listening ? SoulColors.clay : SoulColors.border2,
-                    ),
-                  ),
-                  child: Icon(
-                    _listening ? Icons.stop_rounded : Icons.mic_none,
-                    size: 20,
-                    color: _listening ? Colors.white : SoulColors.text2,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  _listening ? 'Listening. Tap to stop.' : 'Or say it',
-                  style: SoulType.secondary.copyWith(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        ),
-        ],
+        // The same box the rest of the app puts in front of somebody:
+        // type into it, or tap the mic on its right and say it. Feedback is
+        // the last place that should insist on a keyboard.
+        SpeechField(controller: _text, hint: 'Say it plainly'),
         if (_note != null) ...[
           const SizedBox(height: 12),
           Text(_note!, style: SoulType.secondary.copyWith(color: SoulColors.clay)),
