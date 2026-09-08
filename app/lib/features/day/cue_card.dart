@@ -86,10 +86,6 @@ class _CueCardTileState extends State<CueCardTile> {
   bool _sending = false;
   bool _failed = false;
 
-  /// What the server will take. Quietly cutting somebody's own words down to
-  /// fit would be worse than saying the field is full.
-  static const _detailLimit = 500;
-
   static const _horizons = [
     (days: 1, label: 'Tomorrow'),
     (days: 3, label: 'In three days'),
@@ -100,8 +96,9 @@ class _CueCardTileState extends State<CueCardTile> {
   @override
   void initState() {
     super.initState();
-    // The button turns off when the box is over length, so the box has to say
-    // when it changes.
+    // Nothing about the box decides whether the answer can be sent any
+    // more. It still says when it changes, because an empty box and a full
+    // one are not the same card.
     _detail.addListener(_detailChanged);
   }
 
@@ -116,10 +113,12 @@ class _CueCardTileState extends State<CueCardTile> {
     super.dispose();
   }
 
-  /// An answer, inside the length the server takes. The box is not part of
-  /// this: yes on its own is an answer and no on its own is an answer.
-  bool get _ready =>
-      _yes != null && _detail.text.trim().length <= _detailLimit;
+  /// The box is not part of this: yes on its own is an answer and no on its
+  /// own is an answer. There is no length to be inside any more. It used to
+  /// stop at five hundred characters, which is a minute of talking, and
+  /// being cut off mid sentence after answering out loud reads as the app
+  /// throwing the answer away.
+  bool get _ready => _yes != null;
 
   Future<void> _send() async {
     final yes = _yes;
@@ -197,7 +196,6 @@ class _CueCardTileState extends State<CueCardTile> {
 
   List<Widget> _asking(CueCard card) {
     final yes = _yes;
-    final over = _detail.text.trim().length > _detailLimit;
 
     return [
       Text(card.question, style: SoulType.lead),
@@ -231,10 +229,6 @@ class _CueCardTileState extends State<CueCardTile> {
         hint: 'Say it or type it',
         maxLines: 6,
       ),
-      if (over) ...[
-        const SizedBox(height: 8),
-        const Label('500 characters is the most this holds'),
-      ],
       // Only a yes has something to come back to. A no closes the thing and
       // asking which day it should be reopened on would be the card refusing
       // to take no for an answer.

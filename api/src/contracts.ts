@@ -134,7 +134,7 @@ export const createDecision = z.object({
 
 export const recordOutcome = z.object({
   decisionId: z.string().uuid(),
-  whatHappened: z.string().max(2000).optional(),
+  whatHappened: z.string().max(8000).optional(),
   felt: z.enum(['lighter', 'same', 'worse']).optional(),
 })
 
@@ -258,7 +258,11 @@ export const cardId = z.string().uuid()
  */
 export const answerCard = z.object({
   answer: z.enum(['yes', 'no']),
-  detail: z.string().trim().max(500).optional(),
+  // The same room an entry gets. Five hundred characters was a typed
+  // answer's worth, and a spoken one fills that in a minute of talking,
+  // which is a person being cut off mid sentence by a number nobody chose
+  // for a reason.
+  detail: z.string().trim().max(8000).optional(),
   horizonDays: z.number().int().min(1).max(30).default(3),
 })
 export type AnswerCard = z.infer<typeof answerCard>

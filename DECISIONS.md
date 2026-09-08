@@ -5089,3 +5089,18 @@ The boxes that are still typed are the ones where speaking makes no sense: a
 first name, a phone number, somebody's name on the people screen. Short
 answers with a spelling.
 
+## 232. The boxes hold as much as an entry does
+
+Five hundred characters on a cue card and two thousand on a check back were
+a typed answer's worth. Somebody speaking fills five hundred in about a
+minute, and being cut off mid sentence after answering out loud reads as the
+app throwing the answer away.
+
+Both are eight thousand now, the same as an entry, which is the number that
+was already decided for the longest thing anybody says here. The column is
+text and was never the constraint.
+
+The cue card no longer counts what is in the box at all. Yes on its own is
+an answer, no on its own is an answer, and the box was never part of whether
+one could be sent.
+
