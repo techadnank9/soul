@@ -4,7 +4,7 @@ import '../../api/client.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 
-/// Telling us what is wrong with this.
+/// Saying anything about the app itself.
 ///
 /// It sits at the bottom of home rather than in the profile, because the
 /// moment somebody has an opinion about the app is the moment they have just
@@ -13,6 +13,10 @@ import '../../theme/widgets.dart';
 /// Not a survey and not a rating. One box, no stars, no categories to pick
 /// from and nothing required before it will send, because every one of those
 /// is a reason to close the sheet instead.
+///
+/// The words are neutral on purpose. Asking what is not working is a
+/// question with an answer already in it, and somebody who liked something
+/// has nowhere to put that.
 ///
 /// What comes back is a yes or a no. This is the one thing a person writes
 /// that is addressed to us, and closing on the promise of having sent it
@@ -102,11 +106,11 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
   }
 
   List<Widget> _form() => [
-        const Text('What is not working?', style: SoulType.lead),
+        const Text('Give us feedback', style: SoulType.lead),
         const SizedBox(height: 8),
         const Text(
-          'Anything about the app itself. What is confusing, what is missing, '
-          'what the line back got wrong. It comes straight to us.',
+          'Anything about the app itself. What works, what does not, what is '
+          'missing. It comes straight to us.',
           style: SoulType.secondary,
         ),
         const SizedBox(height: 16),

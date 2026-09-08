@@ -422,12 +422,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ];
 
-  /// The way to tell us the app is wrong.
+  /// The way to say something about the app.
   ///
   /// Quiet, at the bottom, under whatever the week turned out to be. Loud
   /// would be an app asking to be rated, which is the opposite of what this
   /// product is for. Findable, because the alternative is somebody deciding
   /// on their own that nobody is listening.
+  ///
+  /// Neutral words. It asked what was not working, which is a question with
+  /// its answer already in it and no room for anybody who liked something.
   List<Widget> _tellUs() => [
         const SizedBox(height: 36),
         Center(
@@ -440,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               child: Text(
-                'Tell us what is not working',
+                'Give us feedback',
                 style: SoulType.secondary.copyWith(
                   color: SoulColors.text3,
                   decoration: TextDecoration.underline,

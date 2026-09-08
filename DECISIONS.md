@@ -4993,3 +4993,21 @@ nobody can act on.
 
 Reverses if: it fills with nothing, or with the same thing a hundred times,
 in which case the question rather than the box is wrong.
+
+### 254. The feedback words are neutral
+Sep 2026, Adnan
+
+Decision: the line on home reads "Give us feedback" rather than "Tell us what
+is not working", and the sheet under it asks for what works, what does not
+and what is missing.
+
+Why: the founder's call, and he is right. The first wording is a question
+with its answer already in it. It tells somebody what kind of answer is
+expected before they have written a word, and it leaves nowhere for anybody
+who wanted to say a thing worked. It also reads as an app that expects to be
+broken, which is not the impression to give somebody on the screen they open
+every day.
+
+Supersedes the wording in decision 253. Everything else there stands: one
+box, no stars, no categories, into our table and into the funnels from one
+call.
