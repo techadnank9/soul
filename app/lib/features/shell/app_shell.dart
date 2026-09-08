@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
+import '../../data/reminders.dart';
 import '../people/people_screen.dart';
 import '../profile/profile_tab.dart';
 import '../day/day_screen.dart';
@@ -43,8 +44,33 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   final _api = SoulApi.fromEnvironment();
+
+  /// What they said they would do, booked on this phone as notifications.
+  ///
+  /// Synced when the app opens and every time it comes back to the front. A
+  /// reminder written on another phone has to reach this one, and iOS forgets
+  /// what an app had scheduled when the app is replaced.
+  late final _reminders = Reminders(_api);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _reminders.sync();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _reminders.sync();
+  }
   int _tab = 0;
 
   /// Which day the Days tab should open, when the user picked one from the

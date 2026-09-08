@@ -99,6 +99,23 @@ The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random
 `external_ref`, and look like every other row.
 
+## reminders
+`id`, `student_id`, `school_id`, `district_id`, `entry_id`, `due_at`, `said`,
+`cancelled_at`, `scheduled_at`, `created_at`
+
+Something a person said they would do, at a time they named themselves.
+Written by the `extract_reminders` job after the tagger, and empty for almost
+every entry. `due_at` is an instant: the model is told the local time where
+they are and answers in their clock, and the service turns that into an
+instant using `students.timezone`. `said` is one sentence in their own words
+and is the whole of what the notification shows.
+
+Nothing here is inferred. A row exists only because somebody named a time out
+loud, and the app never decides on its own that anybody should be reminded of
+anything. `entry_id` cascades, so deleting the entry takes the reminder with
+it, and `cancelled_at` is how a person takes one back without losing the
+record that they did. Decision 256.
+
 ## feedback
 `id`, `student_id`, `school_id`, `district_id`, `text`, `surface`,
 `app_version`, `created_at`

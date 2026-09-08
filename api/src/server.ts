@@ -31,6 +31,7 @@ import { auth } from './routes/auth.js'
 import { jobs } from './routes/jobs.js'
 import { events } from './routes/events.js'
 import { feedback } from './routes/feedback.js'
+import { reminders } from './routes/reminders.js'
 import { speech } from './routes/speech.js'
 import { welcome } from './routes/welcome.js'
 import { weather } from './routes/weather.js'
@@ -91,6 +92,7 @@ app.route('/', profile)
 app.route('/', peopleRoutes)
 app.route('/', events)
 app.route('/', feedback)
+app.route('/', reminders)
 app.route('/', speech)
 app.route('/', welcome)
 app.route('/', weather)

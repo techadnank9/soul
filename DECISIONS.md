@@ -5104,3 +5104,63 @@ The cue card no longer counts what is in the box at all. Yes on its own is
 an answer, no on its own is an answer, and the box was never part of whether
 one could be sent.
 
+
+### 256. A time somebody names out loud rings back at them
+Sep 2026, Adnan
+
+Decision: when an entry names a time and something happening at it, the phone
+rings at that time and says back what they said. "Tomorrow I am meeting my
+brother at two, I want to talk to him about my future" becomes a notification
+at two tomorrow reading "You said you wanted to talk to your brother about
+your future."
+
+**Only a time they named.** A row is written when the entry carries both a
+time said out loud and something happening then. Nothing is inferred from a
+mood, a habit or a pattern, and the app never decides on its own that
+somebody ought to be reminded of anything. A wish with no hour in it, "I keep
+meaning to call the bank", produces nothing. That line is the whole
+difference between this and an app that nags, and the prompt spends most of
+its length holding it.
+
+**The sentence is written from where they will be standing when it rings.**
+By then tomorrow is today, so the word tomorrow never appears in it. And when
+they said what they wanted out of the meeting, that is the sentence rather
+than the appointment: the calendar already knows they are seeing their
+brother, and the thing they will have forgotten is why they wanted to.
+
+**The phone rings itself.** `GET /reminders` hands back what is still ahead
+and the client books a local notification for each one. There is no device
+token anywhere in this system, nothing about anybody goes to a notification
+service, and a phone that is off simply rings when it is next on. The
+alternative was push, which means registering every person with Apple and
+sending them their own sentence through somebody else's server, for a feature
+that works without either.
+
+**Permission is asked the first time there is something to ring about**, never
+at launch. An app asking to send notifications before it has anything to say
+is asking for a habit rather than for permission.
+
+**Three packages, which the rules say to ask about first.**
+`flutter_local_notifications`, `timezone` and `flutter_timezone`. There is no
+version of this feature without a notification plugin, and the zone packages
+are what the plugin requires to schedule an hour rather than a duration.
+Taken without asking on the founder's standing instruction to decide rather
+than ask. They are the maintained ones and they are the only ones added.
+
+**A bug found next door and fixed here.** The runner claims only job types
+named in its `HANDLED` list, and `release_held` was never in it, although
+`routes/consent.ts` has been booking those since consent was written. Every
+one of them has been sitting pending, which means no entry held for missing
+consent has ever been released through the classifier afterwards. Both it and
+`extract_reminders` are in the list now. Worth knowing how it was found: the
+new job sat pending in exactly the same way, and the list was the first place
+to look because the comment above it says this has happened before.
+
+Rejected: putting the reminder on the check back path, which already asks
+about a decision days later. That asks how something went and this says what
+somebody meant to do, and folding them together would make the check back
+into an alarm clock.
+
+Reverses if: people start naming times in order to get reminders, which would
+make this a to do list wearing a journal's clothes, or if the model starts
+finding appointments in entries that have none.

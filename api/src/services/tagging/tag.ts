@@ -72,4 +72,8 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   // and closes the ones this entry contradicts, which is not work the tagger
   // should be retried for.
   await enqueue('extract_facts', { entryId }, session)
+
+  // Booked here rather than run inside the tagger, so an entry is never left
+  // untagged because a time could not be read out of it.
+  await enqueue('extract_reminders', { entryId }, session)
 }

@@ -205,6 +205,19 @@ class SoulApi {
     await _post('/feedback', {'text': text, 'surface': surface});
   }
 
+  /// What they said they would do and have not been rung about yet.
+  ///
+  /// Only what is still ahead. The phone books a local notification for each
+  /// one, so nothing about anybody goes to a notification service and there
+  /// is no device token in this system at all.
+  Future<List<Reminder>> reminders() async {
+    final json = await _get('/reminders');
+    return [
+      for (final r in (json['reminders'] as List? ?? []))
+        Reminder.fromJson(r as Map<String, dynamic>),
+    ];
+  }
+
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>
       _send('PATCH', path, body);
 

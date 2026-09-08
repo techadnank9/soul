@@ -619,6 +619,17 @@ GET /weather    → services/weather/now.ts      where to look, and whether
                                                day on the person, so it
                                                stands until then and stands
                                                down after. Decision 233
+GET /reminders  → routes/reminders.ts          what they said they would do
+                                               and have not been rung about.
+                                               Only what is still ahead. The
+                                               phone books a local
+                                               notification for each one, so
+                                               there is no device token in
+                                               this system and nothing about
+                                               anybody goes to a
+                                               notification service.
+                                               DELETE /reminders/:id takes
+                                               one back. Decision 256
 GET /graph      → routes/graph.ts              the person as nodes and edges:
                                                open facts, people, patterns,
                                                decisions and outcomes. The
@@ -657,6 +668,9 @@ tag_entry        the tagger, and it books the three below
 cue_cards        a yes or no question about something they said is coming up
 people           the people named in one entry, from its own words
 extract_facts    what the entry says is so, closing what it contradicts
+extract_reminders
+                 anything they said they would do at a time they named, and
+                 nothing at all for almost every entry
 person_profile   what happens between the student and somebody, once that
                  person has come up twice
 pattern_sweep    the nightly candidate query, which books the verdicts
@@ -715,6 +729,7 @@ deterministic code or a background job.
 | `tagger` | Flow 4 | No | Patterns downstream are noise |
 | `facts` | Flow 4 | No | The Mirror is told something they did not say |
 | `embedding` | Flow 6 | No | The wrong earlier entries are read back |
+| `reminders` | Flow 4, booked by the tagger | No | A phone rings about something nobody said, or stays quiet about something they did |
 | `consolidate` | Flow 7 | No | The Mirror is told a pattern across weeks that the facts do not carry |
 
 Pattern detection is **not** on this list. It is a database query. That is

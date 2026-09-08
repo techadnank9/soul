@@ -9,6 +9,7 @@ export type JobType =
   | 'tag_entry'
   | 'embed_entry'
   | 'extract_facts'
+  | 'extract_reminders'
   | 'check_back'
   | 'pattern_sweep'
   | 'pattern_verdicts'

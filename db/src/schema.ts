@@ -68,6 +68,7 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'consolidate',
   'welcome',
   'weather_question',
+  'reminders',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
@@ -274,6 +275,58 @@ export const appEvents = pgTable(
   (t) => [
     index('app_events_created_idx').on(t.createdAt.desc()),
     index('app_events_student_created_idx').on(t.studentId, t.createdAt.desc()),
+  ],
+)
+
+/**
+ * Something they said they would do, at a time they named themselves.
+ *
+ * "Tomorrow at two I am meeting my brother, I want to talk to him about my
+ * future" is one row: the time is two o'clock tomorrow and what they said is
+ * that they want to talk to him about their future. At that hour the phone
+ * says it back to them in their own words and nothing else.
+ *
+ * Only ever written from a time the person named. Nothing here is inferred
+ * from a mood, a pattern or a habit, and the app never decides on its own
+ * that somebody should be reminded of something. That is the line between
+ * this and an app that nags.
+ *
+ * `dueAt` is an instant. The model is told what time it is where they are
+ * and answers in their zone, so two o'clock tomorrow means two o'clock to
+ * them rather than to the server.
+ *
+ * `said` is one sentence in their own words. It is what the notification
+ * shows and it is written by the model from the entry, never composed of
+ * anything the app added.
+ *
+ * The phone is what actually delivers it, from a local notification it
+ * schedules after reading these. `scheduledAt` is when a phone last said it
+ * had done that, so a row nothing ever picked up can be found.
+ */
+export const reminders = pgTable(
+  'reminders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+
+    /// The entry they said it in. Gone when the entry goes.
+    entryId: uuid('entry_id')
+      .notNull()
+      .references(() => entries.id, { onDelete: 'cascade' }),
+
+    dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+    said: text('said').notNull(),
+
+    /// Set when they take it back. The row stays, because a reminder they
+    /// cancelled is worth as much as one they kept.
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => [
+    index('reminders_due_idx').on(t.studentId, t.dueAt),
   ],
 )
 

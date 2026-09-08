@@ -97,6 +97,27 @@ class MirrorResult {
 /// an evening entry belongs to.
 /// What the user said they would do, once the day they named has passed
 /// without an answer.
+/// Something they said they would do, at a time they named.
+///
+/// The phone books a notification for it. Nothing here was decided by the
+/// app: every one of these is a time somebody said out loud.
+class Reminder {
+  const Reminder({required this.id, required this.dueAt, required this.said});
+
+  final String id;
+  final DateTime dueAt;
+
+  /// One sentence in their own words. It is the whole notification, read on
+  /// a locked screen with nothing around it.
+  final String said;
+
+  static Reminder fromJson(Map<String, dynamic> json) => Reminder(
+        id: json['id'] as String,
+        dueAt: DateTime.parse(json['dueAt'] as String).toLocal(),
+        said: json['said'] as String,
+      );
+}
+
 class Holding {
   const Holding({
     required this.decisionId,

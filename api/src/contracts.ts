@@ -485,6 +485,40 @@ export const safetyResult = z.object({
  */
 const NO_DASH = /^[^-‐-―−]*$/
 
+/**
+ * What somebody said they would do, at a time they named.
+ *
+ * `at` is their own local time with no zone on it, because the model is told
+ * what time it is where they are and answers in that. The service turns it
+ * into an instant using the zone on their row, so a phone that has since
+ * moved country still rings at the hour they meant.
+ *
+ * Almost every entry returns an empty list, which is the correct answer for
+ * somebody describing their day.
+ */
+export const remindersResult = z.object({
+  reminders: z
+    .array(
+      z.object({
+        at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/),
+        said: z.string().trim().min(1).max(200),
+      }),
+    )
+    .max(4),
+})
+export type RemindersResult = z.infer<typeof remindersResult>
+
+/**
+ * The reminders a phone has not scheduled yet. Only what is still ahead:
+ * one that has already rung is the notification's job, not this list's.
+ */
+export const reminderView = z.object({
+  id: z.string(),
+  dueAt: z.string(),
+  said: z.string(),
+})
+export type ReminderView = z.infer<typeof reminderView>
+
 export const factsResult = z.object({
   facts: z
     .array(

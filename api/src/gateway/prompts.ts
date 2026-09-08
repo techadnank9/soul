@@ -15,6 +15,7 @@ export type Purpose =
   | 'consolidate'
   | 'welcome'
   | 'weather_question'
+  | 'reminders'
 
 /**
  * Prompt text comes from the database, never from the binary.

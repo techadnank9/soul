@@ -8,6 +8,7 @@ import { generateCards } from '../services/cards/generate.js'
 import { extractPeople } from '../services/people/extract.js'
 import { writeProfile } from '../services/people/profile.js'
 import { embedEntry } from '../services/memory/embed.js'
+import { extractReminders } from '../services/reminders/extract.js'
 import { extractFacts } from '../services/memory/facts.js'
 import { consolidateAll } from '../services/memory/consolidate.js'
 import { sweep } from './pattern_sweep.js'
@@ -38,6 +39,7 @@ const HANDLED = [
   'tag_entry',
   'embed_entry',
   'extract_facts',
+  'extract_reminders',
   'check_back',
   'pattern_sweep',
   'pattern_verdicts',
@@ -45,6 +47,11 @@ const HANDLED = [
   'cue_cards',
   'people',
   'person_profile',
+  // Booked by routes/consent.ts the first time a district records consent
+  // for somebody, and missing from this list since it was written, so every
+  // one of them sat pending and no held entry was ever released. Decision
+  // 256.
+  'release_held',
 ]
 
 type Job = {
@@ -106,6 +113,13 @@ async function run(job: Job): Promise<void> {
       // nothing must produce nothing.
       const found = await extractFacts(payload.entryId!, studentOf(job))
       console.log(`${found} facts written`)
+      return
+    }
+    case 'extract_reminders': {
+      // Almost always zero. Most entries name no time, and an entry that
+      // names no time must produce nothing at all.
+      const booked = await extractReminders(payload.entryId!, studentOf(job))
+      console.log(`${booked} reminders written`)
       return
     }
     case 'release_held': {

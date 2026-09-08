@@ -167,6 +167,29 @@ const config: Record<Purpose, PurposeConfig> = {
     reasoning: 'minimal',
   },
 
+  /**
+   * Anything somebody said they would do at a time they named. Off the
+   * latency path, booked by the tagger, and empty for almost every entry.
+   *
+   * Temperature zero because there is a right answer: the time in the text
+   * or no time at all. Low reasoning because the failure here is not shallow
+   * thinking, it is inventing an appointment out of a wish, and the prompt
+   * is what holds that.
+   */
+  reminders: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-5.4-mini',
+      gemini: 'gemini-2.5-flash',
+      openrouter: 'openai/gpt-5.4-mini',
+    },
+    temperature: 0,
+    maxTokens: 2000,
+    timeoutMs: 60_000,
+    json: true,
+    reasoning: 'low',
+  },
+
   people: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
