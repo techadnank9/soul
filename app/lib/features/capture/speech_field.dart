@@ -103,7 +103,15 @@ class _SpeechFieldState extends State<SpeechField> {
         _busy = false;
       });
     } catch (error) {
+      // The recorder refusing sixteen kilohertz is the common one here, the
+      // same failure the capture screen hits. The connection is closed rather
+      // than left open behind a box that is not recording. Decision 262.
       _api.event('speech_failed', {'stage': 'field', 'error': error.runtimeType.toString()});
+      final live = _live;
+      _live = null;
+      await _audio?.cancel();
+      _audio = null;
+      await live?.close();
       if (!mounted) return;
       setState(() => _busy = false);
     }

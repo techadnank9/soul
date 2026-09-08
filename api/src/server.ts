@@ -106,6 +106,24 @@ app.onError((error, c) => {
   return c.json({ error: 'something went wrong' }, 500)
 })
 
-serve({ fetch: app.fetch, port: env.port }, (info) => {
+const server = serve({ fetch: app.fetch, port: env.port }, (info) => {
   console.log(`soul api listening on ${info.port}`)
+})
+
+/**
+ * A port already in use is somebody's second terminal, not an incident.
+ *
+ * It was reaching Sentry as a fatal from a laptop and sitting in the issue
+ * list next to the crashes that matter. Say it plainly and stop, without
+ * reporting it. Every other listen failure still goes to Sentry, because
+ * that one really is the service failing to start. Decision 262.
+ */
+server.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`port ${env.port} is already in use. Stop the other one first.`)
+    process.exit(1)
+  }
+  Sentry.captureException(error)
+  console.error(error)
+  process.exit(1)
 })

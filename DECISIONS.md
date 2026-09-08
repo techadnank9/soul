@@ -5348,3 +5348,41 @@ reviewed is not the thing being shipped.
 
 Reverses if: the account model changes so that first run can be finished
 without signing in, at which point this has nothing to do.
+
+### 262. Three crashes from Sentry, and what each one actually was
+Sep 2026, Claude
+
+Three fatals arrived from real testers. The auth token in the repository is an
+upload token with no read scope, so the stack traces could not be fetched and
+each was found by reading the code the title pointed at.
+
+**The microphone one, and it is the real bug.** `PlatformException(record,
+Failed to start recording, Format conversion is not possible)`. Every other
+call in `_start` on the capture screen is wrapped and this one was not, so a
+recorder that cannot give sixteen kilohertz mono threw straight past the
+screen: a fatal in the reports, the live connection left open, and the button
+stuck mid press with no way forward. It is wrapped now, the connection is
+closed, and the person is told the microphone is busy and that typing works.
+The same close was added to the box under a question.
+
+Why the phone refuses: something else holds the audio session. A call was up
+in one of the founder's own screenshots, and a headset that will not convert
+does it too. This is a state to handle rather than a thing to fix.
+
+**The null check one.** `Null check operator used on a null value`, pointed at
+`_HomeState._openSession`, which is the frame that builds the session subtree.
+The four `!` in that file were all in the session state: the line, the help
+payload and the entry id. Rather than guess which, the states are now matched
+on the value instead of on the enum, so a beat that says one with no line
+draws the failure screen. Every `!` in main.dart is gone and the whole class
+of it with them.
+
+**The port one, which was never a crash.** `listen EADDRINUSE :::8080` is a
+second terminal on a laptop, and it was going to Sentry as a fatal and
+sitting beside the two above. The listen error is handled now: a port clash
+says so and exits, and every other listen failure still reports, because that
+one is the service failing to start.
+
+Rejected: retrying the recorder at whatever rate the device offers. The
+transcriber is told sixteen kilohertz and a different rate is a stream it
+cannot read, so it would trade a clear failure for a silent one.

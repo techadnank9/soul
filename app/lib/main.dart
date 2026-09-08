@@ -434,9 +434,11 @@ class _SessionState extends State<Session> {
   }
 
   Future<void> _lookCloser() async {
+    final entryId = _entryId;
+    if (entryId == null) return;
     setState(() => _loadingMirror = true);
     try {
-      final mirror = await _api.mirror(_entryId!);
+      final mirror = await _api.mirror(entryId);
       if (!mounted) return;
       setState(() {
         _mirror = mirror;
@@ -462,10 +464,11 @@ class _SessionState extends State<Session> {
   }
 
   Future<void> _hold(String chosen) async {
-    if (chosen.isNotEmpty && _entryId != null) {
+    final entryId = _entryId;
+    if (chosen.isNotEmpty && entryId != null) {
       try {
         await _api.hold(
-          entryId: _entryId!,
+          entryId: entryId,
           chosen: chosen,
           offered: _mirror?.offered,
         );
@@ -479,11 +482,19 @@ class _SessionState extends State<Session> {
 
   @override
   Widget build(BuildContext context) {
+    // Read out before the switch, so the states that need them are matched on
+    // the value rather than on the enum and then asserted. A beat that says
+    // one with no line is a failure, and it now draws the failure screen
+    // instead of throwing on a null check in front of somebody who has just
+    // spoken. Decision 262.
+    final line = _line;
+    final help = _help;
+
     return switch (_beat) {
       _Beat.waiting => const BreathingWait(note: 'reading what you said'),
-      _Beat.one => BeatOneScreen(
+      _Beat.one when line != null => BeatOneScreen(
           transcript: widget.transcript,
-          line: _line!,
+          line: line,
           // Nothing measures this yet, so nothing is claimed.
           spokenSeconds: null,
           timeOfDay: TimeOfDay.now().format(context),
@@ -492,8 +503,10 @@ class _SessionState extends State<Session> {
           question: _mirror?.question,
           onDone: _finish,
         ),
-      _Beat.help => HelpScreen(help: _help!, onDone: widget.onFinished),
-      _Beat.failed => _Failed(
+      _Beat.help when help != null =>
+        HelpScreen(help: help, onDone: widget.onFinished),
+      // Failed, and every state that lost the thing it was going to draw.
+      _ => _Failed(
           onDone: widget.onFinished,
           stored: _stored,
           onRetry: _stored ? null : _submit,

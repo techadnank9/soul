@@ -203,13 +203,34 @@ class _CaptureScreenState extends State<CaptureScreen> {
     // Raw sixteen bit samples at sixteen kilohertz, mono, straight from the
     // microphone. Each chunk drives the waves, goes to the transcriber, and is
     // kept in memory for the tone judgement at the end.
-    final stream = await _recorder.startStream(
-      const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
-    );
+    // The one call in this method that was not wrapped, and the one that
+    // fails on a real phone. The recorder cannot always give sixteen
+    // kilohertz mono: a call is up, or the route is a headset that will not
+    // convert, and it throws "Format conversion is not possible". Unwrapped
+    // that left the screen with the button stuck mid press and a fatal in
+    // the crash reports. Decision 262.
+    final Stream<Uint8List> stream;
+    try {
+      stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+    } catch (error) {
+      _api.event('record_failed', {'error': error.runtimeType.toString()});
+      _live = null;
+      await live.close();
+      if (!mounted) return;
+      setState(() {
+        _finishing = false;
+        _connecting = false;
+        _failure = 'The microphone is busy. Close anything else using it, or '
+            'type it instead.';
+      });
+      return;
+    }
 
     _recordingSince = DateTime.now();
     _bytes = 0;
