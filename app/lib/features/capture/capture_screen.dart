@@ -82,6 +82,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
   String _committed = '';
   String _partial = '';
 
+  /// The box's own scroll, so the last thing said stays in view.
+  final _fieldScroll = ScrollController();
+
   /// Whether any of the text came from the mic, and how it sounded.
   bool _spoken = false;
   String? _toneId;
@@ -125,6 +128,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     _live?.close();
     _recorder.dispose();
     _controller.dispose();
+    _fieldScroll.dispose();
     super.dispose();
   }
 
@@ -297,6 +301,24 @@ class _CaptureScreenState extends State<CaptureScreen> {
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
     );
+    _toBottom();
+  }
+
+  /// Hold the newest words in view while somebody is still speaking.
+  ///
+  /// The box has no focus during a recording, and a field with no focus does
+  /// not follow its own caret. The words were landing under the bottom edge
+  /// and the screen sat still while somebody talked into it.
+  ///
+  /// After the frame, because the line being scrolled to does not exist until
+  /// the box has laid it out. Jump rather than animate: words arrive every
+  /// few hundred milliseconds and animations landing on top of each other
+  /// read as a shake.
+  void _toBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_fieldScroll.hasClients) return;
+      _fieldScroll.jumpTo(_fieldScroll.position.maxScrollExtent);
+    });
   }
 
   Future<void> _stop() async {
@@ -410,6 +432,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
         const SizedBox(height: 24),
         SoulField(
           controller: _controller,
+          scrollController: _fieldScroll,
+          // It grows to about half a screen and then scrolls inside itself
+          // rather than pushing the mic off the bottom. Somebody speaking
+          // for thirty seconds fills more than a box that only grows.
+          maxLines: 12,
           hint: 'Type it here, or tap the mic and talk',
         ),
         // The mic sits low, down where a thumb rests, with room around it.

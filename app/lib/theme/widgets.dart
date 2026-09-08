@@ -192,8 +192,14 @@ class ButtonRow extends StatelessWidget {
   }
 }
 
-/// The text field. Serif at 17 points, growing with the words rather than
-/// scrolling inside itself, so a user can see everything they wrote.
+/// The text field. Serif at 17 points, growing with the words.
+///
+/// It grows rather than scrolling inside itself, so somebody can see
+/// everything they wrote. Past `maxLines` it stops growing and scrolls,
+/// because a field taller than the screen is a field whose newest line is
+/// under the fold and whose owner is watching a page that has stopped
+/// moving. Pass a `scrollController` to hold the last line in view while
+/// words are arriving from a microphone.
 class SoulField extends StatelessWidget {
   const SoulField({
     super.key,
@@ -201,12 +207,18 @@ class SoulField extends StatelessWidget {
     this.focusNode,
     this.hint,
     this.autofocus = false,
+    this.maxLines,
+    this.scrollController,
   });
 
   final TextEditingController controller;
   final FocusNode? focusNode;
   final String? hint;
   final bool autofocus;
+
+  /// Where growing stops and scrolling starts. Null grows without limit.
+  final int? maxLines;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +229,8 @@ class SoulField extends StatelessWidget {
       style: SoulType.field,
       cursorColor: SoulColors.clay,
       minLines: 1,
-      maxLines: null,
+      maxLines: maxLines,
+      scrollController: scrollController,
       keyboardType: TextInputType.multiline,
       textInputAction: TextInputAction.newline,
       textCapitalization: TextCapitalization.sentences,

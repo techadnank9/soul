@@ -4891,3 +4891,54 @@ which makes the ring seeding a weighting argument rather than one answer.
 
 Reverses if: nobody looks at either column six months in, or the ring seeding
 turns out to promise a theme the entries never support.
+
+### 252. The first line stops summarising, on the newest model, and the box follows the voice
+Sep 2026, Adnan
+
+Decision: three things, from one screenshot of a real entry.
+
+**The first line was a summary.** Somebody said they were not feeling good,
+were tired, then walked, worked, met a friend and had dinner. The line back
+was that they were tired and then went for a walk, did some laptop work, met
+their friend and had dinner. Their own sentence with the pronouns turned
+around. `beat_one.v3.md` names that as the failure that matters, shows it
+using this exact entry, and gives five places to look for the thing they did
+not say. Its examples say what the move is rather than what the sentence is,
+because the first version of v3 handed the same example line back for every
+entry.
+
+**The Mirror wrote a sentence that is not English.** "This may have landed as
+not wanting to be alone with the tired." The prompt had hard coded that
+opener and the model spliced a noun phrase into it that will not hold. v3
+carries the broken line as an example, says the openers are a register rather
+than a form to complete, and asks for the line to be read back before it is
+returned.
+
+**The model.** beat one and the Mirror move from gpt-5 to gpt-5.6-sol, which
+is the newest the account can reach, and beat one goes from minimal reasoning
+to low. Not summarising takes a moment of thought: the summary is the first
+thing any model reaches for. On the three entries this was checked against it
+returned three specific lines and reused none of them. The other purposes are
+untouched, because these two are the ones a person reads.
+
+**The box did not follow the voice.** Two fields, the same cause. Neither has
+focus while somebody is speaking, and a field without focus does not follow
+its own caret, so words landed under the bottom edge and the screen sat still
+while somebody talked into it. Both now hold the last line in view after the
+frame. The one under a question grows to ten lines rather than four. The one
+on the capture screen used to grow without limit inside a page that never
+scrolled, which is the same problem wearing the opposite shape, so it now
+grows to twelve lines and scrolls inside itself after that.
+
+Why the product needs this: it sits between journaling and therapy. A journal
+keeps what somebody said. The reason to open this instead is the sentence
+they did not write themselves. A summary is the product failing at the only
+thing it is for, which is what task 7 has always said.
+
+Rejected: turning the temperature up, which buys variety rather than
+attention. Rewriting the openers as a list to pick from, which is the same
+template failure with more rows.
+
+Reverses if: beat one stops landing inside three seconds on the newer model,
+which nothing has measured yet, or the no summary rule starts producing lines
+so oblique that nobody recognises their own entry in them.

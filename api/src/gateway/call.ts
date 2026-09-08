@@ -63,25 +63,28 @@ const config: Record<Purpose, PurposeConfig> = {
   beat_one: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      openai: 'gpt-5',
+      // The newest model, on the two calls a person actually reads. The
+      // first line was coming back as a retelling of what they had just
+      // said, which is the exact failure task 7 is about, and a better
+      // prompt on a smaller model was not fixing it.
+      openai: 'gpt-5.6-sol',
       gemini: 'gemini-2.5-pro',
-      openrouter: 'openai/gpt-5',
+      openrouter: 'openai/gpt-5.6-sol',
     },
     temperature: 0.6,
     maxTokens: 2000,
     timeoutMs: 20_000,
     json: false,
-    // The full model, still thinking as little as it is allowed to. Task 7
-    // says a generic first line kills the product, so this is the one place
-    // worth spending on quality even though it is on the latency path.
-    reasoning: 'minimal',
+    // Low rather than minimal. Not summarising takes a moment of thought:
+    // the summary is the first thing any model reaches for.
+    reasoning: 'low',
   },
   mirror: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      openai: 'gpt-5',
+      openai: 'gpt-5.6-sol',
       gemini: 'gemini-2.5-pro',
-      openrouter: 'openai/gpt-5',
+      openrouter: 'openai/gpt-5.6-sol',
     },
     temperature: 0.7,
     maxTokens: 8000,

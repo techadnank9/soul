@@ -30,6 +30,12 @@ class SpeechField extends StatefulWidget {
 class _SpeechFieldState extends State<SpeechField> {
   final _recorder = AudioRecorder();
   final _api = SoulApi.fromEnvironment();
+
+  /// The box does not have focus while somebody is speaking, and a field
+  /// with no focus does not follow its own caret. Without this the words
+  /// land under the bottom edge and the speaker watches a box that has
+  /// stopped moving.
+  final _scroll = ScrollController();
   LiveSpeech? _live;
   StreamSubscription<Uint8List>? _audio;
   bool _recording = false;
@@ -43,6 +49,7 @@ class _SpeechFieldState extends State<SpeechField> {
     _audio?.cancel();
     _live?.close();
     _recorder.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -130,6 +137,20 @@ class _SpeechFieldState extends State<SpeechField> {
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
     );
+    _toBottom();
+  }
+
+  /// Hold the newest words in view.
+  ///
+  /// After the frame, because the box has not laid the new line out yet and
+  /// the extent to scroll to does not exist until it has. Jump rather than
+  /// animate: a new word arrives every few hundred milliseconds and an
+  /// animation started before the last one finished reads as a shake.
+  void _toBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    });
   }
 
   @override
@@ -147,8 +168,12 @@ class _SpeechFieldState extends State<SpeechField> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              scrollController: _scroll,
               minLines: 1,
-              maxLines: 4,
+              // Room for a paragraph rather than a sentence. Somebody
+              // speaking their answer fills four lines in about fifteen
+              // seconds and then cannot see any of what they have said.
+              maxLines: 10,
               style: const TextStyle(
                 fontFamily: SoulType.sans,
                 fontSize: 16,
