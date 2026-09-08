@@ -12,6 +12,7 @@ export type JobType =
   | 'extract_reminders'
   | 'check_back'
   | 'pattern_sweep'
+  | 'pattern_sweep_one'
   | 'pattern_verdicts'
   | 'consolidate_memory'
   | 'cue_cards'

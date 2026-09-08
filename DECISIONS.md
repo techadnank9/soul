@@ -5194,3 +5194,89 @@ them behind a card on home, which makes them skippable and therefore unasked.
 
 Reverses if: people start arriving at home annoyed, which would show up as
 sign ins that end on the first question rather than at home.
+
+### 258. The day rule is gone, and the sweep runs when an entry is tagged
+Sep 2026, Adnan
+
+Decision: a pattern needs three entries on the same theme and nothing else.
+The requirement that they fall on three distinct calendar days is removed,
+and the sweep now also runs for one person the moment their entry has been
+tagged rather than only at three in the morning.
+
+Why, in the founder's words: the more somebody writes, the more a pattern
+forms, and it should start showing some. The day rule made how fast anybody
+is told anything depend on how often they happen to write rather than on how
+much is actually repeating. Somebody writing twice a day still waited three
+days. Somebody writing weekly waited three weeks.
+
+And midnight is not a real boundary. Eleven at night and one in the morning
+are two days and one evening. Two separate arguments on the same afternoon
+are two occasions and the rule threw one away. It was a proxy for separate
+occasions and a bad one.
+
+What the rule was protecting against, three entries written in one sitting
+about one event, is real but rarer than what it cost, and the tagger already
+guards it: one event described three times produces one theme with three
+entries only if the person genuinely wrote three times about it, which is
+itself worth surfacing.
+
+A gap between entries, six or twelve hours, was offered and refused. The
+count is the measure.
+
+`pattern_sweep_one` is the same query scoped to one student, booked by the
+tagger alongside the facts and the reminders, so neither run can hold a
+looser definition of a pattern than the other. Decision 005 said in its own
+words that the threshold would be tuned and the mechanism kept, and that is
+what this is.
+
+Reverses if: candidates start arriving that a person reads as the app leaping
+to conclusions from one afternoon.
+
+---
+
+### 259. A pattern is counted on the coping, and the coping is a closed list
+Sep 2026, Claude
+
+Decision: the theme a pattern is grouped on is the tagger's `coping`, not its
+`trigger`, and `coping` is now one of ten fixed phrases rather than free
+text. Everything that reads a theme moves with it: the sweep, the verdicts,
+the patterns screen and the page behind a theme.
+
+Why, and this is the important part: **no pattern has ever formed from real
+writing.** Removing the day rule and running the sweep instantly changed
+nothing, which is how it was found. Three entries about going quiet, written
+one after another, came back from the tagger as "went quiet and said
+nothing", "said nothing again" and "let it go". The query groups by exact
+string, so that is three themes of one entry each and no candidate. Every
+pattern in the demo data groups only because `services/demo/seed.ts` writes
+the same strings by hand.
+
+The trigger is free text on purpose and should stay that way: it is written
+per entry, in the person's own register, and is shown under their entry. It
+is simply not a thing that can be counted.
+
+The coping is the right field to count. It is what keeps happening, it is
+what the product's own example of a pattern is made of, and CONTEXT.md's line
+about situations never traits is written as one: going quiet when you are not
+credited. Closing it to ten phrases keeps the counting in SQL, which is what
+decision 004 exists to protect. A claim stays a group by, so the exact
+entries behind it can always be shown.
+
+The ten are the demo seed's own vocabulary, extended. That file was written
+as though this list already existed, which is a fair sign of what the shape
+was meant to be.
+
+The tagger is told to return null rather than reach for the nearest word,
+because a wrong coping is counted as a pattern that is not there. Most
+entries about a feeling with nothing done about it are null.
+
+Verified: three entries in one sitting, on the same evening, produced the
+candidate "went quiet from 3 entries".
+
+Rejected: clustering trigger strings by embedding, which would make the
+threshold a similarity number nobody can audit and would take away the one
+thing decision 004 buys. Rejected: leaving the trigger as the theme and
+lowering the count, which does not help when every group has one row in it.
+
+Reverses if: the ten phrases turn out to flatten things somebody would have
+told apart, at which point the answer is more phrases rather than free text.

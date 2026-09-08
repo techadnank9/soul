@@ -134,6 +134,13 @@ student the exact entries behind a claim. Do not "improve" it into an LLM step.
 Which themes exist and which entries are behind them is still SQL and stays
 SQL.
 
+That is why the tagger's `coping` is a closed list and why a pattern is
+counted on it. Counting free text does not work: three entries that are
+plainly the same thing came back as "went quiet and said nothing", "said
+nothing again" and "let it go", which group into three themes of one. The
+closed list is what lets the counting stay a group by. There is no day rule
+any more either. Decisions 258 and 259.
+
 **The verdict on a theme is a model call, and that is not a hole in the rule
 above.** Finding the theme and judging it are two questions. The finding stays
 in SQL so the entries behind a claim can always be shown. The judging runs in

@@ -71,13 +71,13 @@ const TAGGED = sql`
     e.district_id,
     e.text,
     e.created_at,
-    t.trigger as theme
+    t.coping as theme
   from entries e
   join lateral (
-    select trigger
+    select coping
     from tags
     where entry_id = e.id
-      and trigger is not null
+      and coping is not null
       and confidence >= ${MIN_CONFIDENCE}
     order by created_at desc
     limit 1

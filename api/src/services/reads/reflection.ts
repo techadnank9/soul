@@ -67,16 +67,16 @@ export async function reflection(
       from entries e
       join students s on s.id = e.student_id
       join lateral (
-        select trigger, feeling
+        select coping, feeling
         from tags
         where entry_id = e.id
-          and trigger is not null
+          and coping is not null
           and confidence >= ${MIN_TAG_CONFIDENCE}
         order by created_at desc
         limit 1
       ) t on true
       where e.student_id = ${session.studentId}
-        and t.trigger = ${theme}
+        and t.coping = ${theme}
       order by e.created_at desc`
 
     // No entries means this student has no such theme. Not an empty page: a
@@ -105,17 +105,17 @@ export async function reflection(
         to_char(d.created_at at time zone 'UTC', ${ISO_INSTANT}) as "at"
       from decisions d
       join lateral (
-        select trigger
+        select coping
         from tags
         where entry_id = d.entry_id
-          and trigger is not null
+          and coping is not null
           and confidence >= ${MIN_TAG_CONFIDENCE}
         order by created_at desc
         limit 1
       ) t on true
       left join outcomes o on o.decision_id = d.id
       where d.student_id = ${session.studentId}
-        and t.trigger = ${theme}
+        and t.coping = ${theme}
       order by d.created_at desc`
 
     const verdict = verdicts[0]

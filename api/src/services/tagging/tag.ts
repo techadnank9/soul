@@ -76,4 +76,9 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   // Booked here rather than run inside the tagger, so an entry is never left
   // untagged because a time could not be read out of it.
   await enqueue('extract_reminders', { entryId }, session)
+
+  // And look for a pattern now that this entry's tags exist, rather than
+  // leaving it until the nightly sweep. The query is the same one and it is
+  // scoped to this person. Decision 258.
+  await enqueue('pattern_sweep_one', {}, session)
 }

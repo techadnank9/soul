@@ -42,6 +42,7 @@ const HANDLED = [
   'extract_reminders',
   'check_back',
   'pattern_sweep',
+  'pattern_sweep_one',
   'pattern_verdicts',
   'consolidate_memory',
   'cue_cards',
@@ -148,6 +149,15 @@ async function run(job: Job): Promise<void> {
       // week is the first sign the prompt has stopped working.
       const cards = await generateCards(payload.entryId!, studentOf(job))
       console.log(`${cards} cards written`)
+      return
+    }
+    case 'pattern_sweep_one': {
+      // The same query, for the person whose entry was just tagged. Off the
+      // request path and after the tags it reads exist, so a theme that has
+      // just become one is offered back tonight rather than tomorrow.
+      const found = await sweep(job.student_id ?? undefined)
+      console.log(`${found} candidates proposed for one person`)
+      if (found > 0) await scheduleVerdicts()
       return
     }
     case 'pattern_sweep': {

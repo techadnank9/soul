@@ -77,13 +77,13 @@ export async function patterns(session: Session): Promise<PatternsView> {
          * theme the tagger has already replaced beside the one that replaced
          * it.
          */
-        select e.id as entry_id, e.created_at, t.trigger as theme
+        select e.id as entry_id, e.created_at, t.coping as theme
         from entries e
         join lateral (
-          select trigger
+          select coping
           from tags
           where entry_id = e.id
-            and trigger is not null
+            and coping is not null
             and confidence >= ${MIN_TAG_CONFIDENCE}
           order by created_at desc
           limit 1

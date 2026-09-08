@@ -462,10 +462,42 @@ export type DayCount = {
 }
 
 /** What the tagger must return. Anything else is discarded. */
+/**
+ * What somebody did about it, from a closed list.
+ *
+ * This is the one field a pattern is counted on, and it is closed for that
+ * reason. Free text cannot be counted: three entries that are obviously the
+ * same thing to a person came back as "went quiet and said nothing", "said
+ * nothing again" and "let it go", which group by exact match into three
+ * themes of one entry each and therefore into no pattern at all. Every
+ * pattern in this product was waiting on a string collision that real
+ * entries never produce. Decision 259.
+ *
+ * A closed list keeps the counting in SQL, which is the thing decision 004
+ * exists to protect: we can always show the exact entries behind a claim
+ * because a claim is a group by, not a judgement.
+ *
+ * The words are what somebody reads at the head of a pattern, so they are
+ * written to read that way. They are the demo seed's own vocabulary, which
+ * was written as though this list already existed.
+ */
+export const copingWays = [
+  'went quiet',
+  'said it directly',
+  'avoided it',
+  'put it off',
+  'agreed anyway',
+  'asked for help',
+  'pushed back',
+  'made it smaller',
+  'carried on',
+  'did it anyway',
+] as const
+
 export const taggerResult = z.object({
   trigger: z.string().max(120).nullable(),
   feeling: z.string().max(120).nullable(),
-  coping: z.string().max(120).nullable(),
+  coping: z.enum(copingWays).nullable(),
   domain: z.string().max(120).nullable(),
   confidence: z.number().min(0).max(1),
 })

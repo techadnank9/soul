@@ -387,10 +387,18 @@ rule the tagger runs under.
 ## Flow 5: pattern candidates, nightly
 
 ```
-jobs/pattern_sweep.ts
+jobs/pattern_sweep.ts, nightly over everybody
+jobs/pattern_sweep_one, booked by the tagger, the same query for one person
   └─ services/patterns/findCandidates.ts
        ├─ SQL, not a model call:
-       │    same theme across ≥3 entries on ≥3 distinct days
+       │    the same coping across ≥3 entries, at any hour of any day
+       │    the theme is the coping, from the tagger's closed list, never
+       │    the trigger. The trigger is free text and no two entries ever
+       │    produce the same string, so grouping on it made every entry a
+       │    group of one and no pattern ever formed. Decision 259
+       │    no day rule. Midnight is not a real boundary and how fast
+       │    somebody is told anything should follow how much is repeating,
+       │    not how often they happen to write. Decision 258
        ├─ excludes anything in pattern_rejections
        └─ insert pattern_candidates with supporting_entry_ids
 
@@ -781,6 +789,11 @@ improves.
 7. The tagger never runs on the request path.
 8. Nothing is written to `confirmed_patterns` without a student confirmation and
    at least three supporting entry ids.
+
+   The three entries no longer have to fall on three separate days, and the
+   theme they share is the coping rather than the trigger. What the rule
+   protects is unchanged: a claim is still a group by that the exact entries
+   behind it can be shown for. Decisions 258 and 259.
 
    Note what this no longer covers. `pattern_verdicts` is written without any
    confirmation and says plainly whether a theme is worth keeping or worth
