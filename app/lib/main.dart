@@ -14,6 +14,7 @@ import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/onboarding/first_run.dart';
+import 'features/onboarding/intent_screen.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
@@ -160,8 +161,21 @@ class SignInAgain extends StatelessWidget {
       }
       await markFirstRunDone();
       if (!context.mounted) return;
+      // The two questions, on the way in rather than only on a first run.
+      // Somebody signing in on a second phone, or after a log out, has never
+      // been asked them, and what they are here for is the thing most likely
+      // to have changed since the last time they were. Decision 257.
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const Home()),
+        MaterialPageRoute(
+          builder: (_) => Builder(
+            builder: (page) => IntentFlow(
+              onDone: () => Navigator.of(page).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const Home()),
+                (_) => false,
+              ),
+            ),
+          ),
+        ),
         (_) => false,
       );
     }

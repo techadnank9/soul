@@ -170,6 +170,13 @@ out on the founder's call before the app went to testers. `POST /auth/demo`
 and `services/demo/seed.ts` are still on the server and nothing in the app
 calls them.
 
+Signing in from anywhere leads through the same two questions. First run
+asks them as its last two steps, and `SignInAgain` in main.dart asks them
+after a returning person signs in, through `IntentFlow`. That person has
+never seen first run on this phone and would otherwise never be asked at
+all. An answer already held arrives already chosen, so somebody who has not
+changed their mind presses continue twice. Decision 257.
+
 An account reached without signing in is a real account, made by
 `POST /auth/device` on first launch. `GET /profile` says whether anything
 but this phone can reach it, and when it cannot the profile offers sign in:

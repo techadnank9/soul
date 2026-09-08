@@ -5164,3 +5164,33 @@ into an alarm clock.
 Reverses if: people start naming times in order to get reminders, which would
 make this a to do list wearing a journal's clothes, or if the model starts
 finding appointments in entries that have none.
+
+### 257. The two questions are asked on every sign in, not only the first
+Sep 2026, Adnan
+
+Decision: signing in leads through what are you here to look at and what
+brought you here, from every direction. First run already asked them as its
+last two steps. `SignInAgain` now asks them too, through `IntentFlow`, before
+home.
+
+Why: somebody signing in on a second phone, or after a log out, skips first
+run entirely and was never asked at all. That is exactly the person whose
+answers the product does not have. And on the founder's call it is every sign
+in rather than only the first one: signing in is rare, and what somebody is
+here for is the thing most likely to have changed since they were last asked.
+
+An answer already held arrives already chosen, read from `GET /profile` in
+the background, so a person who has not changed their mind presses continue
+twice rather than answering again from nothing.
+
+Nothing in it can fail into a locked door. A read that does not land shows
+the questions empty, which is the same screen a new person sees, and the
+answers go out in the background on the way to home, so a phone with no
+connection still arrives.
+
+Rejected: asking only when both columns are empty, which is the polite
+version and misses the change the founder is asking about. Rejected: putting
+them behind a card on home, which makes them skippable and therefore unasked.
+
+Reverses if: people start arriving at home annoyed, which would show up as
+sign ins that end on the first question rather than at home.

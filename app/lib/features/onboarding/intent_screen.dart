@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../api/client.dart';
 import '../../theme/soul_theme.dart';
 import 'onboarding_kit.dart';
 import 'profile_fields.dart';
@@ -131,6 +132,93 @@ class IntentQuestion extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// The two questions, on their own, after signing in.
+///
+/// First run asks them as the last two steps of its own sequence. This is the
+/// same two for somebody who already has an account and has just signed in on
+/// this phone, which is a person first run never sees again.
+///
+/// They are asked on every sign in rather than only the first, on the
+/// founder's call. Signing in is rare, and what somebody is here for is the
+/// thing most likely to have changed since the last time they were asked. An
+/// answer already held arrives already chosen, so a person who has not
+/// changed their mind presses continue twice.
+///
+/// Nothing here can fail into a locked door. The answers are read in the
+/// background and the questions show with nothing chosen if that read does
+/// not land, and they are posted in the background on the way out, so a phone
+/// with no connection still reaches home.
+class IntentFlow extends StatefulWidget {
+  const IntentFlow({super.key, required this.onDone});
+
+  final VoidCallback onDone;
+
+  @override
+  State<IntentFlow> createState() => _IntentFlowState();
+}
+
+class _IntentFlowState extends State<IntentFlow> {
+  final _api = SoulApi.fromEnvironment();
+
+  int _at = 0;
+  String? _area;
+  String? _reason;
+
+  @override
+  void initState() {
+    super.initState();
+    _held();
+  }
+
+  /// What they said last time, so the answer they already gave is the one
+  /// already chosen. A read that fails leaves both questions empty, which is
+  /// the same screen somebody sees the first time.
+  Future<void> _held() async {
+    try {
+      final profile = await _api.profileHeld();
+      if (!mounted) return;
+      setState(() {
+        _area ??= profile['intentArea'] as String?;
+        _reason ??= profile['intentReason'] as String?;
+      });
+    } catch (_) {
+      // Nothing said. The questions are answerable either way.
+    }
+  }
+
+  void _finish() {
+    if (_area != null || _reason != null) {
+      _api
+          .profile({
+            if (_area != null) 'intentArea': _area,
+            if (_reason != null) 'intentReason': _reason,
+          })
+          .ignore();
+    }
+    widget.onDone();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IntentQuestion(
+      step: IntentStep.values[_at],
+      chosen: _at == 0 ? _area : _reason,
+      onChoose: (key) => setState(() {
+        if (_at == 0) {
+          _area = key;
+        } else {
+          _reason = key;
+        }
+      }),
+      onContinue: _at == 0 ? () => setState(() => _at = 1) : _finish,
+      // The first has signing in behind it rather than a screen. The second
+      // goes back to the first.
+      onBack: _at == 0 ? null : () => setState(() => _at = 0),
     );
   }
 }
