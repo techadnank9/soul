@@ -17,6 +17,7 @@ import 'features/onboarding/first_run.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
+import 'features/reflection/breathing_wait.dart';
 import 'theme/soul_theme.dart';
 import 'theme/widgets.dart';
 
@@ -465,7 +466,7 @@ class _SessionState extends State<Session> {
   @override
   Widget build(BuildContext context) {
     return switch (_beat) {
-      _Beat.waiting => const _Waiting(note: 'reading what you said'),
+      _Beat.waiting => const BreathingWait(note: 'reading what you said'),
       _Beat.one => BeatOneScreen(
           transcript: widget.transcript,
           line: _line!,
@@ -487,37 +488,6 @@ class _SessionState extends State<Session> {
   }
 }
 
-/// While the models are working. It says what is happening rather than
-/// spinning at nothing.
-class _Waiting extends StatelessWidget {
-  const _Waiting({required this.note});
-  final String note;
-
-  @override
-  Widget build(BuildContext context) {
-    return Screen(
-      body: [
-        const SizedBox(height: 120),
-        Center(
-          child: Column(
-            children: [
-              const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: SoulColors.clay,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Label(note),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 /// The entry was saved and nothing else happened. Said plainly.
 /// Two different things went wrong and they are not told the same way.

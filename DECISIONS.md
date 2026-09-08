@@ -5032,3 +5032,46 @@ opening this would rather say it.
 It is behind `voice_capture`, the same switch as the capture screen. A
 transcriber that is down should take the mic off both.
 
+
+### 255. The wait is a breath, and it never says breathe
+Sep 2026, Adnan
+
+Decision: the screen between sending and the line back is a circle that
+opens over four seconds and closes over five, at the pace of a breath, with
+the words that were already there under it. The spinner is gone.
+
+Why: the model now takes four to nine seconds and a spinner on an empty
+screen says the app is stuck. It is also the one moment in the product where
+somebody has just finished speaking and has nothing to do, which is worth
+handing back to them rather than covering over. The founder asked for
+something in the shape of what Headspace does.
+
+**It never tells anybody to breathe.** No count, no in and out, no
+instruction. Two rules meet here and both hold. There is no advice in this
+product outside the one sentence under a pattern, and a screen saying breathe
+is advice. And this is not therapy: a screen that decided somebody needed
+calming has made a judgement about them from nothing but the fact that they
+wrote something down. A circle moving at that pace is available to anybody
+who wants to follow it and is only a circle to anybody who does not, and
+those are the same screen.
+
+Four out and five back rather than evenly, because a real breath is longer
+leaving than arriving and a symmetric circle reads as a machine. Ten seconds
+a cycle, which is about one breath in the time the model usually takes. Three
+rings, each fractionally behind the one inside it, so it opens rather than
+inflates.
+
+A phone set to reduce motion gets the circle at rest and the same words. The
+animation is stopped rather than hidden, so nothing is running behind a still
+picture.
+
+Rejected: telling somebody what is happening in three steps, saved, checked,
+writing back. It is honest and it stays available, but it fills the moment
+with the app talking about itself. Rejected: streaming the line word by word,
+which is the only thing that would make the wait genuinely shorter rather
+than better spent. That is a change to the gateway and it deserves its own
+decision and its own quiz. This does not replace it.
+
+Reverses if: somebody reads the circle as being told to calm down, which is
+the failure to watch for, or if streaming lands and there is no wait left to
+fill.
