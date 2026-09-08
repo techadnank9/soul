@@ -65,17 +65,21 @@ async function postJson(url: string, key: string, body: unknown, signal: AbortSi
 }
 
 /**
- * The gpt-5 family accepts only the default temperature and rejects any other
- * value outright. Sending one fails the call, which on the safety path means
- * failing closed and showing every student the help screen. Omit it there and
- * let the model default.
+ * The reasoning models accept only the default temperature and reject any
+ * other value outright. Sending one fails the call, which on the safety path
+ * means failing closed and showing every student the help screen. Omit it
+ * there and let the model default.
+ *
+ * Every gpt-5 and gpt-6 model is one of these. Matching the family rather
+ * than the exact name is what lets a newer one be dropped into the config
+ * above without this file being touched, which is how gpt-6-astra arrived.
  */
 function acceptsTemperature(model: string): boolean {
   return !isReasoning(model)
 }
 
 function isReasoning(model: string): boolean {
-  return model.includes('gpt-5')
+  return /gpt-[56]/.test(model)
 }
 
 async function openaiShaped(

@@ -63,13 +63,13 @@ const config: Record<Purpose, PurposeConfig> = {
   beat_one: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      // The newest model, on the two calls a person actually reads. The
-      // first line was coming back as a retelling of what they had just
-      // said, which is the exact failure task 7 is about, and a better
-      // prompt on a smaller model was not fixing it.
-      openai: 'gpt-5.6-sol',
+      // The newest model the account can reach, on the two calls a person
+      // actually reads. The first line was coming back as a retelling of
+      // what they had just said, which is the exact failure task 7 is
+      // about, and a better prompt on a smaller model was not fixing it.
+      openai: 'gpt-6-astra',
       gemini: 'gemini-2.5-pro',
-      openrouter: 'openai/gpt-5.6-sol',
+      openrouter: 'openai/gpt-6-astra',
     },
     temperature: 0.6,
     maxTokens: 2000,
@@ -82,9 +82,9 @@ const config: Record<Purpose, PurposeConfig> = {
   mirror: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {
-      openai: 'gpt-5.6-sol',
+      openai: 'gpt-6-astra',
       gemini: 'gemini-2.5-pro',
-      openrouter: 'openai/gpt-5.6-sol',
+      openrouter: 'openai/gpt-6-astra',
     },
     temperature: 0.7,
     maxTokens: 8000,

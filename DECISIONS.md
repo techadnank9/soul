@@ -4914,9 +4914,16 @@ carries the broken line as an example, says the openers are a register rather
 than a form to complete, and asks for the line to be read back before it is
 returned.
 
-**The model.** beat one and the Mirror move from gpt-5 to gpt-5.6-sol, which
+**The model.** beat one and the Mirror move from gpt-5 to gpt-6-astra, which
 is the newest the account can reach, and beat one goes from minimal reasoning
-to low. Not summarising takes a moment of thought: the summary is the first
+to low. Astra rejects minimal outright, so low is the floor rather than a
+choice, and it rejects any temperature but the default, which is why
+`isReasoning` in providers.ts now matches the gpt-5 and gpt-6 families rather
+than the string gpt-5. Measured on three entries: three and a half to nine
+seconds for beat one, and eleven for the Mirror. The under three seconds
+target in task 6 is missed and this is the first time anything has measured
+it. The Mirror is asked for and shows that it is working. Beat one is not,
+and that is the open cost of this change. Not summarising takes a moment of thought: the summary is the first
 thing any model reaches for. On the three entries this was checked against it
 returned three specific lines and reused none of them. The other purposes are
 untouched, because these two are the ones a person reads.
