@@ -95,7 +95,7 @@ account id, their address, the name they gave and how many moments they
 have written, because a survey answer nobody can reply to is not worth
 collecting.
 This is not a product for children and the COPPA reasoning that used to sit
-here does not decide it. Decision 226.
+here does not decide it. Decision 245.
 
 **Anything that talks to somebody else's service sits behind a switch.** The
 app ships through TestFlight, so a build with a broken feature in it is live
@@ -104,7 +104,7 @@ four: the weather card, voice capture, the tone judgement and the Mirror.
 They are read once at launch and everything is on unless PostHog says
 otherwise, so no network, no key and no such flag all read as on. A switch
 that fails to the off position breaks the app the first time the flag
-service is down. Decision 228.
+service is down. Decision 247.
 
 ## The quiz protocol
 
@@ -167,7 +167,7 @@ answered.** No position, no weather reading, no network: it still asks
 something and it still opens capture with that question. A card that
 vanishes when somebody is in a basement reads as an app that broke. What it
 asks is written from one thing, chosen on the server, and checked before it
-is shown. Decisions 221 and 222.
+is shown. Decisions 240 and 241.
 
 ## How to run it
 
@@ -185,11 +185,11 @@ second one is how you check the gate without editing code. They are created by
 
 There are three ways in: Apple, an email code and a code by text. The last
 one goes through AWS End User Messaging and is dark until a toll free
-number is on the AWS account and it is out of the SMS sandbox. Decision 229.
+number is on the AWS account and it is out of the SMS sandbox. Decision 248.
 
 First run is a welcome, a how it works screen, four profile questions, the
-ten baseline questions, a spoken introduction, a landing, then sign in and
-home. Every question has to be answered. The profile questions have a
+ten baseline questions, a spoken introduction, a landing, sign in, two
+questions about what brought them here, then home. Every question has to be answered. The profile questions have a
 continue that is dim until there is an answer: a name field, a wheel for the
 age band, three gender rows, and for where a world map, then the country's
 states and cities to pick from, in `world_map.dart` and
@@ -197,7 +197,12 @@ states and cities to pick from, in `world_map.dart` and
 and the place as words. Each baseline
 question is a scene answered by a movement, in `baseline_scenes.dart`, that
 moves on by itself once something is chosen. First run ends on a landing
-that carries a line written from the answers, and then sign in. The profile
+that carries a line written from the answers, and then sign in. After sign in come two more, in `intent_screen.dart`: what part of life they
+came to look at, then why now. One choice each, both lists ending in an
+option that says nothing, and outside the progress bar because they are the
+first thing asked of somebody who has an account rather than more to get
+through to reach one. The area moves its own theme to the front of the week
+ring until their entries have named one. Decision 251. The profile
 is reached from the top right of home rather than from the bar, and shows
 every held field and can empty any of them. The flow is one sequence in
 `app/lib/features/onboarding/first_run.dart`, built from the pieces in
@@ -229,7 +234,7 @@ empty buffer and the app correctly reports that nothing came through.
 `app/release.sh` builds the signed archive and uploads it to TestFlight. It
 raises the build number in pubspec.yaml itself on every run and leaves the
 version where it is, at 0.2.0. One version in App Store Connect with a list
-of builds under it, rather than a version per upload. Decision 223.
+of builds under it, rather than a version per upload. Decision 242.
 
 Sentry holds what the testers hit. The token in the repo history is an
 upload token with no read scope, so issues are read in the Sentry web UI

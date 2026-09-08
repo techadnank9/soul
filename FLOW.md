@@ -41,10 +41,14 @@ no secret configured it refuses everybody.
 
 ## Flow 0: first run
 
-Once, on a device that has never been used. Nineteen screens in one sequence,
-walked with a progress bar over the fourteen questions, a back chevron and a
-slide between steps. `first_run.dart` owns that chrome and holds the answers;
-each screen is only its own question.
+Once, on a device that has never been used. Twenty one screens in one
+sequence, walked with a progress bar over the fourteen questions, a back
+chevron and a slide between steps. `first_run.dart` owns that chrome and
+holds the answers; each screen is only its own question.
+
+The bar covers the fourteen before sign in. The two after it are questions
+too and are deliberately outside it, because a bar over them would say there
+is still something to get through when there is not.
 
 Before any of it, the phone gets an account. `FirstRun` asks
 `POST /auth/device` the moment it opens, `auth/accounts.ts` makes a row in the
@@ -128,14 +132,34 @@ main.dart → onboarding/first_run.dart, FirstRun
   │        the bearer is the phone's own session, which is the account the
   │        Apple account attaches to. On a later phone the Apple account
   │        decides which account this is, whatever the bearer said
-  │     email appears only once Apple has failed. Decision 226
+  │     email and phone appear once Apple has failed, and also once its
+  │     sheet has been backed out of twice, because a sheet somebody
+  │     cannot get through reports a cancel like any other. Decisions 219
+  │     and 250
   │        POST /auth/email/start sends a six digit code through Resend
   │        the code is asked for on a screen of its own, EmailCodeScreen
   │        POST /auth/email/verify trades it for a session
   │     a development skip that is labelled as one, which makes a session
   │     first if the phone has none
   │
-  └─ 5. home
+  ├─ 5. intent_screen.dart, two questions, after the account exists
+  │     what part of life they came to look at, then why now. One choice
+  │     each, both lists ending in a true way to say nothing. They own
+  │     their chrome and the progress bar does not count them: they are
+  │     the first thing asked of somebody who has an account rather than
+  │     more to get through to reach one
+  │     POST /profile  → services/profile/save.ts   ← background, nobody waits
+  │        intentArea and intentReason, two more emptiable columns
+  │        the area moves its own theme to the front of opening_themes,
+  │        in the app's words and with the largest weight already there.
+  │        No model call: it rewrites the list the welcome call wrote.
+  │        Emptying the area in the profile tab takes it back out
+  │     first run is marked done at sign in rather than here, so a phone
+  │     that dies between the two lands on home next launch with two empty
+  │     fields rather than back at the welcome with fourteen questions
+  │     Decision 251
+  │
+  └─ 6. home
         the greeting, the seven days ending today, and a ring filled from
         the answers until there is a week of their own
 ```
@@ -156,8 +180,10 @@ it, so somebody with nothing written yet had no profile button and no way to
 reach sign in or log out at all.
 
 Every question in first run is mandatory. The skips were removed on the
-founder's call, so the name field, the four profile questions and all ten
-baseline questions have to be answered to reach home. The continue on the
+founder's call, so the name field, the four profile questions, all ten
+baseline questions and the two after sign in have to be answered to reach
+home. The last two each end in an option that says nothing, which is what
+mandatory has to mean on a question about why somebody is here. The continue on the
 profile questions is dim until there is an answer, and a baseline scene moves
 on only once something has been chosen. See decisions 211 and 212 for the
 screens and the contradiction this paragraph used to sit under.
@@ -430,13 +456,60 @@ here is on a request path.
 
 ## What the app reports
 
-The app has no analytics or crash reporting SDK and never will. Instead it
-posts small events to `POST /events`, `routes/events.ts`, which writes an
-`app_events` row and one log line. Names are fixed strings, the detail is a
-status code or a count, and nothing in it is what a person wrote or said.
-Reading the service logs during a session shows the whole path: account made,
-consent recorded, recording sent and how it ended, entry submitted and in
-which state. The server logs the outcome of every transcribe and entry too.
+Three places hear about a session, and one function feeds all of them.
+
+`SoulApi.event` in `app/lib/api/client.dart` is the only call site. It posts
+the name to `POST /events`, `routes/events.ts`, which writes an `app_events`
+row and one log line. It drops a Sentry breadcrumb with the same name. And it
+hands the same name to `data/analytics.dart`, which captures it to PostHog.
+One call site, so the table stays the record and the three can never drift.
+
+What goes out is a fixed event name and a status code or a count. Never entry
+text, never a transcript, never a position. Decision 245.
+
+**`app_events`, ours.** The row is the record. Reading it alongside the
+service logs shows the whole path of a session: account made, consent
+recorded, recording sent and how it ended, entry submitted and in which
+state. The server logs the outcome of every transcribe and entry too.
+
+**Sentry, errors and replay.** In the app, the API and the worker, on
+whenever a DSN is set, with the app's own events as breadcrumbs. Replay runs
+on every session while the app is being tested, with text masked, so it shows
+where somebody tapped and never what they wrote. `beforeSend` drops network
+errors, because every screen that makes a call already says the connection is
+gone and a phone with no signal was burying the real ones. Decision 243 is
+what the first testers hit and what was changed under them.
+
+**PostHog, product analytics.** Which screens are reached, where first run
+loses people, whether anybody comes back. Autocapture is off and screen names
+come from the navigator observer. Session replay is off there because Sentry
+already does it. A person is identified by their account uuid, and carries
+their address, the name they gave and how many moments they have written,
+because a survey answer nobody can reply to is not worth collecting. Log out
+calls reset. Off unless `POSTHOG_KEY` is given at build time, which
+release.sh passes and a build made by hand does not, so a simulator being
+poked at never lands in the numbers. Decision 245.
+
+PostHog also holds a copy of the database. A Postgres source reads the public
+schema through a select only role, `posthog_reader`, and copies twenty seven
+tables, entries and facts and people among them. `sessions` and `email_codes`
+are held back because they are credentials. Row level security does not reach
+a warehouse sync, so everything anybody has written exists in a second place
+owned by a vendor, and a deletion request has two places to satisfy. It was a
+founder decision taken against the advice in the log. Decision 246.
+
+**The switches.** `app/lib/data/flags.dart` holds four PostHog flags:
+`weather_card`, `voice_capture`, `tone_capture` and `mirror`. They are read
+once at launch and each turns off into a state the app already knows how to
+be. They fail on: no network, no key and no such flag all read as on, because
+a switch that fails to the off position empties the app the first time the
+flag service has an outage. Nothing about one being off is ever said to the
+user. Decision 247.
+
+The line this section used to open with, that the app has no analytics or
+crash SDK and never will, was written under COPPA reasoning that stopped
+applying when this became a product for anybody. Decisions 243 to 247
+reversed it deliberately.
 
 ## Cue cards, and putting one off
 
@@ -520,8 +593,8 @@ POST /weather/question
                                                Where they left off is the
                                                situation from the newest
                                                tagged entry, never the
-                                               feeling on it. Decisions 222
-                                               and 223
+                                               feeling on it. Decisions 238
+                                               and 241
 GET /weather    → services/weather/now.ts      where to look, and whether
                                                today has been answered. The
                                                weather itself is read on the

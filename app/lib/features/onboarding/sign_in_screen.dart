@@ -49,6 +49,11 @@ class _SignInScreenState extends State<SignInScreen> {
   /// the answer to something.
   bool _emailOffered = false;
 
+  /// How many times Apple's sheet has closed with nothing. Backing out once
+  /// is somebody changing their mind. Twice is the sheet not working for
+  /// them, whatever it reported, and the other two ways in appear.
+  int _backedOut = 0;
+
   /// The email path. An address, then a code, then in. It sits under Apple's
   /// button for anybody Apple's sheet does not work for, and it is a full
   /// sign in rather than a fallback: the address is the way back in.
@@ -211,16 +216,23 @@ class _SignInScreenState extends State<SignInScreen> {
       );
       await _finish(token, 'apple');
     } on SignInWithAppleAuthorizationException catch (error) {
-      // Backing out of Apple's sheet is a decision, not a fault. The screen
-      // goes back to how it was and says nothing about it.
+      // Backing out of Apple's sheet once is a decision, not a fault. The
+      // screen goes back to how it was and says nothing about it. Twice is
+      // read as the sheet not working for this person, and the email and
+      // phone boxes appear under the button.
       if (error.code != AuthorizationErrorCode.canceled) {
         _api.event('signin_apple_failed', {'code': error.code.name});
       }
       if (!mounted) return;
+      final cancelled = error.code == AuthorizationErrorCode.canceled;
       setState(() {
         _running = false;
-        _failed = error.code != AuthorizationErrorCode.canceled;
-        if (_failed) _emailOffered = true;
+        _failed = !cancelled;
+        if (cancelled) _backedOut += 1;
+        // A second cancel opens the other two ways in and says nothing about
+        // it. Nothing went wrong, so the line about it not going through
+        // stays off and the boxes are simply there.
+        if (_failed || _backedOut >= 2) _emailOffered = true;
       });
     } catch (error) {
       // Refused, offline, or the server said no. One line, and the button is

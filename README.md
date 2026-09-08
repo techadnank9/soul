@@ -175,8 +175,8 @@ npm run worker -w @soul/api # the queue: tagging, cue cards, sweeps, check backs
 
 A welcome, a screen that reveals the four things that happen every time and
 what the app is not, four profile questions, the ten baseline questions, a
-spoken introduction, a landing that hands back what was given, then sign in
-and home, empty. One sequence with a progress bar over the questions, a back
+spoken introduction, a landing that hands back what was given, sign in, two
+questions about what brought them here, then home, empty. One sequence with a progress bar over the questions, a back
 chevron and a slide between steps. Every question has to be answered: the
 profile questions have a continue that is dim until there is an answer, and
 each baseline question is a scene answered by a movement, a light dragged to
@@ -191,6 +191,12 @@ their exact coordinates stored, and one who taps a country then picks a state
 and a city, with a search at each step. The country and state decide which of
 sixteen regions is stored, and the city, state and country are kept as words. Either way the timezone is derived on the server and never sent by
 the client.
+
+The last two come after signing in rather than before it. What part of life
+they are here to look at, then why now, one choice each and both lists ending
+in a way to say nothing. The area puts its own theme at the front of the week
+ring until their own entries have named one, and emptying it in the profile
+takes it back out.
 
 A fourth tab shows everything held, changeable and emptiable, next to a plain
 statement of what is not held. Decisions 055 to 061 have the reasoning, and 061

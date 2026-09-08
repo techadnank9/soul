@@ -7,6 +7,7 @@ import '../capture/capture_screen.dart';
 import 'baseline.dart';
 import 'baseline_screen.dart';
 import 'how_it_works_screen.dart';
+import 'intent_screen.dart';
 import 'intro_screen.dart';
 import 'onboarding_kit.dart';
 import 'profile_screen.dart';
@@ -47,7 +48,7 @@ class FirstRun extends StatefulWidget {
   State<FirstRun> createState() => _FirstRunState();
 }
 
-enum _Kind { welcome, how, profile, baseline, introduction, ready, signIn }
+enum _Kind { welcome, how, profile, baseline, introduction, ready, signIn, intent }
 
 class _Step {
   const _Step(this.kind, [this.index = 0]);
@@ -60,11 +61,18 @@ class _Step {
 
   /// The screens that draw their own chevron and top edge. The flow's
   /// chrome stays out of their way.
-  bool get ownsChrome => kind == _Kind.introduction || kind == _Kind.signIn;
+  bool get ownsChrome =>
+      kind == _Kind.introduction ||
+      kind == _Kind.signIn ||
+      kind == _Kind.intent;
 
-  /// The welcome has nothing to go back to, and the landing comes after an
-  /// introduction that has already been sent.
-  bool get allowsBack => kind != _Kind.welcome && kind != _Kind.ready;
+  /// The welcome has nothing to go back to, the landing comes after an
+  /// introduction that has already been sent, and the first of the two
+  /// questions after sign in has an account behind it rather than a screen.
+  bool get allowsBack =>
+      kind != _Kind.welcome &&
+      kind != _Kind.ready &&
+      !(kind == _Kind.intent && index == 0);
 
   String get name => switch (kind) {
         _Kind.welcome => 'intro',
@@ -74,6 +82,7 @@ class _Step {
         _Kind.introduction => 'capture',
         _Kind.ready => 'ready',
         _Kind.signIn => 'sign_in',
+        _Kind.intent => index == 0 ? 'intent_area' : 'intent_reason',
       };
 }
 
@@ -85,6 +94,10 @@ final _steps = <_Step>[
   const _Step(_Kind.introduction),
   const _Step(_Kind.ready),
   const _Step(_Kind.signIn),
+  // After sign in, because they are the first thing asked of somebody who
+  // has an account rather than one more thing on the way to one.
+  const _Step(_Kind.intent, 0),
+  const _Step(_Kind.intent, 1),
 ];
 
 class _FirstRunState extends State<FirstRun> {
@@ -95,6 +108,11 @@ class _FirstRunState extends State<FirstRun> {
 
   Profile _profile = const Profile();
   final _answers = List<int?>.filled(baseline.length, null);
+
+  /// The two questions after sign in. What part of life they came to look
+  /// at, and why now.
+  String? _intentArea;
+  String? _intentReason;
 
   /// The where question asks the phone once. Coming back to it does not ask
   /// again, because a person who said no should not be asked twice by the
@@ -211,9 +229,32 @@ class _FirstRunState extends State<FirstRun> {
     _next();
   }
 
-  Future<void> _toHome() async {
+  /// First run is over the moment somebody is signed in, not two questions
+  /// later.
+  ///
+  /// The two after this are worth asking and are not worth asking twice. A
+  /// phone that dies between here and home lands on home next launch without
+  /// them, which is a profile with two empty fields in it. Marking it later
+  /// would put that person back at the welcome and ask all fourteen again,
+  /// which is the worse of the two.
+  Future<void> _signedIn() async {
     await markFirstRunDone();
     if (!mounted) return;
+    _next();
+  }
+
+  /// Sent in the background as the last question is left, like the profile
+  /// answers before them. Nobody waits on an answer that is a baseline for
+  /// later rather than a result for now.
+  void _toHome() {
+    if (_intentArea != null || _intentReason != null) {
+      _api
+          .profile({
+            if (_intentArea != null) 'intentArea': _intentArea,
+            if (_intentReason != null) 'intentReason': _intentReason,
+          })
+          .ignore();
+    }
     widget.onFinished(_profile.displayName);
   }
 
@@ -267,7 +308,22 @@ class _FirstRunState extends State<FirstRun> {
       // screen to close back to, and the way past it is to sign in. The
       // close button belongs to the other way in, from the first screen,
       // where there is something to go back to.
-      _Kind.signIn => SignInScreen(onSignedIn: _toHome),
+      _Kind.signIn => SignInScreen(onSignedIn: _signedIn),
+      // The two after sign in. The first has an account behind it rather
+      // than a screen, so it has no way back.
+      _Kind.intent => IntentQuestion(
+          step: IntentStep.values[step.index],
+          chosen: step.index == 0 ? _intentArea : _intentReason,
+          onChoose: (key) => setState(() {
+            if (step.index == 0) {
+              _intentArea = key;
+            } else {
+              _intentReason = key;
+            }
+          }),
+          onContinue: step.index == 0 ? _next : _toHome,
+          onBack: step.index == 0 ? null : _previous,
+        ),
     };
   }
 

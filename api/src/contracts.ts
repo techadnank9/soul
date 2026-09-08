@@ -324,6 +324,53 @@ export type PatternsView = z.infer<typeof patternsView>
  * The timezone is not in this contract. It is derived from the region on the
  * server, never sent by the client.
  */
+/**
+ * What a person says they came for, asked on the two screens between signing
+ * in and home.
+ *
+ * The area is a part of life and the reason is why now. They are stored as
+ * keys rather than as the words on the screen, so the wording can be changed
+ * without rewriting rows, and the words themselves live in the app beside
+ * every other question.
+ *
+ * Not sure yet and no reason in particular are answers. A question everybody
+ * has to answer needs a true way to say nothing, or the answer it collects is
+ * whichever row was least wrong.
+ */
+export const intentAreaKeys = [
+  'school_or_work',
+  'people_close',
+  'sleep_and_food',
+  'my_time',
+  'avoiding',
+  'not_sure',
+] as const
+
+export const intentReasonKeys = [
+  'keeps_happening',
+  'still_in_it',
+  'want_to_see',
+  'no_reason',
+] as const
+
+/**
+ * The theme the week ring shows first for each area, in the app's own words
+ * rather than the model's.
+ *
+ * The ring is filled by the themes the welcome call named from the baseline
+ * answers, and until somebody has written enough for the tagger to name one
+ * of their own this puts what they said they came for at the front of it.
+ * Not sure yet adds nothing, because a ring is not the place to say so.
+ */
+export const intentAreaTheme: Record<string, string | null> = {
+  school_or_work: 'School or work',
+  people_close: 'People close to me',
+  sleep_and_food: 'Sleep and food',
+  my_time: 'My time',
+  avoiding: 'What I avoid',
+  not_sure: null,
+}
+
 export const saveProfile = z.object({
   displayName: z.string().trim().min(1).max(40).nullable().optional(),
   place: z.string().trim().min(1).max(120).nullable().optional(),
@@ -344,6 +391,12 @@ export const saveProfile = z.object({
    */
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
+
+  /**
+   * What they came for. Both are emptiable like every other field here.
+   */
+  intentArea: z.enum(intentAreaKeys).nullable().optional(),
+  intentReason: z.enum(intentReasonKeys).nullable().optional(),
 })
 export type SaveProfile = z.infer<typeof saveProfile>
 

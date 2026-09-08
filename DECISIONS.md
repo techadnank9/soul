@@ -4545,7 +4545,7 @@ puts one back whatever arrives. And it wrote the temperature as a numeral
 with a degree sign, so numbers and units are out entirely: if the cold is
 worth saying, it says cold.
 
-## 220. The home card keeps the last three device positions in the keychain
+### 239. The home card keeps the last three device positions in the keychain
 
 A phone indoors, in a lift, or holding on to a fix for a few seconds answers
 nothing, and the weather card was falling all the way back to the region
@@ -4565,7 +4565,7 @@ Reverses the part of decision 061 that said the phone's live position is
 never written anywhere. Written on the device, still never written to the
 row.
 
-## 221. The card is always shown, and what keeps returning is not
+### 240. The card is always shown, and what keeps returning is not
 
 Two rules that pull in opposite directions and are both about the same
 thing: a screen should only offer what it can actually deliver.
@@ -4579,7 +4579,7 @@ What keeps returning is shown only once the week has themes from real
 entries. Sent to an empty patterns screen it is a promise the app cannot
 keep, and the four answers from first run are not reflection.
 
-## 222. The card question is written from the day, not from the weather
+### 241. The card question is written from the day, not from the weather
 
 The card started as a weather card. It is the first thing somebody reads
 when they open the app, and a question built only on the sky reads like a
@@ -4608,7 +4608,7 @@ these three files reads the name.
 
 prompts/weather_question.v4.md.
 
-## 223. One version in TestFlight, and the build number goes up
+### 242. One version in TestFlight, and the build number goes up
 
 Thirteen versions, each holding one build, is a menu to scroll rather than
 a thing to test. The version is pinned at 0.2.0 in pubspec.yaml and
@@ -4616,7 +4616,7 @@ release.sh raises the build number by one on every run. 0.2.0 because App
 Store Connect will not take a version below the newest one it already has,
 and 0.1.15 was the last.
 
-## 224. What Sentry reported from the first testers, and what was done
+### 243. What Sentry reported from the first testers, and what was done
 
 A route pushed from inside didUpdateWidget in days_screen locked the
 navigator, which threw '!_debugLocked' and then 'setState called during
@@ -4640,7 +4640,7 @@ compute now, the way the location picker beside it already did.
 The waves list was fixed length, six hundred events of it. That one was
 already fixed in f255542 and the reports are from a build before it.
 
-## 225. No skips, and no account that cannot be reached again
+### 244. No skips, and no account that cannot be reached again
 
 The two development skips are gone: the demo on the welcome screen and the
 skip on the sign in screen. The way past first run is to sign in.
@@ -4660,7 +4660,7 @@ on this phone only and offers sign in, which attaches the address to the
 account that is already there rather than making a new one, so what was
 written stays.
 
-## 226. PostHog for product analytics, through the event we already send
+### 245. PostHog for product analytics, through the event we already send
 
 The repository said never an analytics SDK, on COPPA reasoning that stopped
 applying when this became a product for anybody. Sentry already went in for
@@ -4689,7 +4689,7 @@ Log out calls reset.
 Off unless `POSTHOG_KEY` is given at build time, and off in debug, so a
 simulator being worked on is never in the numbers.
 
-## 227. The whole database is synced to PostHog's warehouse
+### 246. The whole database is synced to PostHog's warehouse
 
 A Postgres source in PostHog reads the public schema and copies it. Twenty
 seven tables including entries, tags, facts, people, voice tones and
@@ -4716,7 +4716,7 @@ changes. The superuser string in `.env` is not what PostHog holds. The role
 carries bypassrls, because a role with no policies would otherwise read
 nothing, which is the sync saying out loud that it reads everything.
 
-## 228. Four kill switches, and they fail on rather than off
+### 247. Four kill switches, and they fail on rather than off
 
 The app ships through TestFlight. A build with a broken feature in it is
 live until Apple has processed the next one, which is hours at best, and
@@ -4740,7 +4740,7 @@ ever said to the user.
 Verified by switching `weather_card` off in PostHog and relaunching: the
 card was gone and the rest of home was untouched.
 
-## 229. Sign in by text, through AWS rather than a verification product
+### 248. Sign in by text, through AWS rather than a verification product
 
 A third way in, beside Apple and email. It is the one a person has when
 they will not give an address, and the one that works on a phone that is
@@ -4790,3 +4790,104 @@ Notify configuration, or a number and its verification. Until then the
 route answers 503 and the screen says text sign in is not available, which
 is what it already does for email without a Resend key.
 
+
+### 249. The decision log has one numbering run again
+Sep 2026, Adnan and Claude
+
+Decision: the ten newest entries, written as `## 220` through `## 229` while
+the file already held `### 220` through `### 238`, are renumbered 239 through
+248 and put back to the `###` heading the format section asks for. Every
+reference to them in CLAUDE.md, FLOW.md and `api/src/routes/profile.ts` moved
+with them. No entry's text was touched.
+
+Why: two entries answering to 228 meant a citation named two different
+decisions and the reader had to guess which. The newest ten moved rather than
+the older ten, because they are the ones with the fewest references pointing
+at them and because the older run is what the numbers were before.
+
+One citation was wrong rather than ambiguous and is corrected here.
+FLOW.md said email appearing once Apple has failed was decision 226, which
+under neither run is that decision. It is 219.
+
+Rejected: leaving the collision and disambiguating in prose, which asks every
+future reader to hold a rule about heading levels in their head.
+
+Reverses if: nothing. The file is worth keeping to one sequence.
+
+### 250. A second cancel on Apple's sheet opens the other two ways in
+Sep 2026, Adnan
+
+Decision: the email and phone boxes appear when Apple's sheet returns any
+error, as before, and now also when it has been backed out of twice. The
+first cancel still says nothing and leaves the screen as it was.
+
+Why: decision 219 says the second way in appears when the first does not
+work, and cancel was read as somebody changing their mind rather than as the
+first not working. It is both. A sheet that opens and closes with nothing,
+because the account is not set up on the phone or because iOS dismissed it,
+comes back as `AuthorizationErrorCode.canceled` and is indistinguishable from
+a deliberate back out. Under the old rule that person could never reach email
+at all, on the one screen there is no way past.
+
+Two rather than one, so the screen stays bare for somebody who genuinely
+changed their mind, and the boxes arrive the moment a pattern says the sheet
+is the problem. Nothing is said about it and the line about it not going
+through stays off, because on a cancel nothing did go wrong.
+
+Rejected: dropping the cancel condition entirely, which puts three ways in on
+the screen the first time anybody hesitates and undoes what 219 is for.
+
+Reverses if: the funnel shows people opening the sheet twice on purpose,
+which would make two the wrong number rather than the rule wrong.
+
+### 251. Two questions after sign in, about what brought somebody here
+Sep 2026, Adnan
+
+Decision: first run gains two screens between sign in and home. What part of
+life they are here to look at, one of six, and what brought them here, one of
+four. One choice each, stored as `students.intent_area` and
+`students.intent_reason`, shown and emptiable in the profile tab.
+
+Why: fourteen questions establish what somebody is like and none of them ask
+what they came for. It is the one thing a person arrives already knowing, and
+until now the product never asked it.
+
+After sign in rather than among the other questions, on the founder's call.
+They are the first thing asked of somebody who has an account rather than
+more to get through on the way to one, and the progress bar deliberately does
+not count them.
+
+Both lists end in an answer that says nothing: not sure yet, and no reason in
+particular. Every question in first run is mandatory, so a question about why
+somebody is here has to carry a true way to decline or the column fills with
+whichever row was least wrong.
+
+What reads them: the area moves one theme to the front of `opening_themes`,
+in the app's own words and carrying the largest weight already in the list, so
+the ring on day one opens on what they said they came for. It is a rewrite of
+the list the welcome call already wrote, not a model call and not a new
+column, and emptying the area in the profile tab takes the theme back out. A
+person whose own entries have named a theme is untouched, because the ring
+stops reading that list the moment there is a real one.
+
+The welcome line is not touched. It is written when the ten baseline answers
+land, well before these two screens, and the same sentence is stored and shown
+again on home. Writing it a second time with these answers in it would mean
+home shows a different sentence from the one the landing showed two screens
+earlier. Considered and declined.
+
+First run is marked done at sign in rather than after these two. A phone that
+dies between the two lands on home next launch with two empty fields, which
+the profile tab can fill. Marking it after would put that person back at the
+welcome to answer fourteen questions again.
+
+The migration is hand written, `0027_intent.sql`, with a journal entry and no
+snapshot, the way `0021` and `0022` were. A generate against this schema will
+want a snapshot before it produces a clean diff.
+
+Rejected: a free text box, which asks somebody to write before they have
+written anything and gives a column nothing can read. Multiple selection,
+which makes the ring seeding a weighting argument rather than one answer.
+
+Reverses if: nobody looks at either column six months in, or the ring seeding
+turns out to promise a theme the entries never support.

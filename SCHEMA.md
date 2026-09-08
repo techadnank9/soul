@@ -84,6 +84,16 @@ and on home until there is a week of their own. The themes are three or four
 `{ name, weight }` pairs that fill the week ring until the tagger has named
 something from their own entries, and are never shown beside real themes.
 
+`intent_area` and `intent_reason` are the two questions asked between signing
+in and home: the part of life they came to look at, and why now. Both are
+keys from a fixed set the app holds rather than the words on the screen, both
+are nullable, and both can be changed or emptied from the profile tab. The
+area also moves its own theme to the front of `opening_themes`, so what
+somebody said they came for is the first slice of the ring until their own
+entries have named one, and emptying the area takes it back out. Nothing else
+reads them and neither is ever read back as a description of a person.
+Decision 251.
+
 `email` is present once a user has signed in with one, lowercased, unique.
 The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random

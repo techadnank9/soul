@@ -203,6 +203,20 @@ export const students = pgTable(
     openingThemes: jsonb('opening_themes'),
 
     /**
+     * What they said they came for, asked on the two screens between signing
+     * in and home.
+     *
+     * intentArea is the part of life they want to look at and intentReason is
+     * why now. Both are one of a fixed set of keys the app holds, both are
+     * nullable because the profile tab can empty either, and neither is ever
+     * read back to them as a description of who they are. The area puts its
+     * own theme at the front of the week ring until their entries have named
+     * one, which is the only thing in the product that reads it today.
+     */
+    intentArea: text('intent_area'),
+    intentReason: text('intent_reason'),
+
+    /**
      * The day the weather card was last answered, in their own calendar.
      * The card is on home every day until something is said to it, and
      * gone for the rest of that day once something is.

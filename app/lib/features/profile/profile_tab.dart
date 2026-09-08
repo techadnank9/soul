@@ -6,6 +6,7 @@ import '../../data/device_weather.dart';
 import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import '../onboarding/intent_screen.dart';
 import '../onboarding/profile_fields.dart';
 import '../onboarding/sign_in_screen.dart';
 import 'add_phone_screen.dart';
@@ -218,6 +219,33 @@ class _ProfileTabState extends State<ProfileTab> {
                 label: 'Gender',
                 value: labelFor(genders, _held?['gender'] as String?),
                 onTap: () => _pick(context, 'gender', 'What is your gender?', genders),
+                editing: _editing,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Rule(),
+              ),
+              // The two asked after signing in. They are answers about a
+              // moment rather than facts about a person, so they can be
+              // changed and emptied like everything else here. Emptying the
+              // area takes its theme back out of the week ring.
+              _Row(
+                label: 'Looking at',
+                value: labelFor(intentAreas, _held?['intentArea'] as String?),
+                onTap: () => _pick(context, 'intentArea',
+                    'What are you here to look at?', intentAreas),
+                editing: _editing,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Rule(),
+              ),
+              _Row(
+                label: 'Came here',
+                value:
+                    labelFor(intentReasons, _held?['intentReason'] as String?),
+                onTap: () => _pick(context, 'intentReason',
+                    'What brought you here?', intentReasons),
                 editing: _editing,
               ),
               const Padding(

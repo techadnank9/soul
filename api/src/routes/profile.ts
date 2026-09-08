@@ -39,6 +39,8 @@ profile.get('/profile', async (c) => {
       email: students.email,
       phone: students.phone,
       appleUserId: students.appleUserId,
+      intentArea: students.intentArea,
+      intentReason: students.intentReason,
     })
     .from(students)
     .where(eq(students.id, session.studentId))
@@ -67,7 +69,7 @@ profile.get('/profile', async (c) => {
     signedIn: Boolean(row?.email || row?.phone || row?.appleUserId),
     // The address itself, so the client can hand it to the funnels. A
     // response from a tester has to be a person somebody can write back to,
-    // and a uuid is not one. Decision 226.
+    // and a uuid is not one. Decision 245.
     email: row?.email ?? null,
     phone: row?.phone ?? null,
     displayName: row?.displayName ?? null,
@@ -76,6 +78,10 @@ profile.get('/profile', async (c) => {
     region: row?.region ?? null,
     place: row?.place ?? null,
     timezone: row?.timezone ?? null,
+    // What they said they came for. Held like every other field, shown in
+    // the profile tab and emptiable there.
+    intentArea: row?.intentArea ?? null,
+    intentReason: row?.intentReason ?? null,
     // Shown back to the student, because a product holding a child's exact
     // position and not showing it to them is the worse version of this.
     latitude: row?.latitude ?? null,

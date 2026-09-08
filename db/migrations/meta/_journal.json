@@ -190,6 +190,13 @@
       "when": 1788732986742,
       "tag": "0026_pink_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789084800000,
+      "tag": "0027_intent",
+      "breakpoints": true
     }
   ]
 }
