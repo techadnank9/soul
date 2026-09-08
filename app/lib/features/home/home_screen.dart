@@ -10,6 +10,7 @@ import '../../data/device_weather.dart';
 import '../../api/models.dart';
 import '../day/day_screen.dart';
 import '../../theme/soul_theme.dart';
+import 'feedback_sheet.dart';
 import '../../theme/widgets.dart';
 import '../outcome/outcome_screen.dart';
 
@@ -310,14 +311,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Screen(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
-      body: _failed
-          ? _notLoaded()
-          : week == null
-              ? _waiting()
-              // Day one, and every later week with nothing in it yet.
-              : week.moments == 0
-                  ? _dayOne()
-                  : _populated(week),
+      body: [
+        if (_failed)
+          ..._notLoaded()
+        else if (week == null)
+          ..._waiting()
+        // Day one, and every later week with nothing in it yet.
+        else if (week.moments == 0)
+          ..._dayOne()
+        else
+          ..._populated(week),
+        // Under everything, on every state of this screen including the one
+        // that would not load, because a screen that failed is exactly when
+        // somebody has something to say. Not while the week is still coming:
+        // there is nothing to have an opinion about yet.
+        if (week != null || _failed) ..._tellUs(),
+      ],
       // The invitation is the one thing worth offering while the week is still
       // coming, and it is the only way out of a week that would not load.
       footer: widget.showFooter
@@ -410,6 +419,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         const Text(
           'This fills in as you go. One moment is enough to start.',
           style: SoulType.secondary,
+        ),
+      ];
+
+  /// The way to tell us the app is wrong.
+  ///
+  /// Quiet, at the bottom, under whatever the week turned out to be. Loud
+  /// would be an app asking to be rated, which is the opposite of what this
+  /// product is for. Findable, because the alternative is somebody deciding
+  /// on their own that nobody is listening.
+  List<Widget> _tellUs() => [
+        const SizedBox(height: 36),
+        Center(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              widget.api.event('feedback_opened', {'surface': 'home'});
+              openFeedback(context, surface: 'home');
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Text(
+                'Tell us what is not working',
+                style: SoulType.secondary.copyWith(
+                  color: SoulColors.text3,
+                  decoration: TextDecoration.underline,
+                  decorationColor: SoulColors.text3,
+                ),
+              ),
+            ),
+          ),
         ),
       ];
 

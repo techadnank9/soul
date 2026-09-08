@@ -465,7 +465,8 @@ hands the same name to `data/analytics.dart`, which captures it to PostHog.
 One call site, so the table stays the record and the three can never drift.
 
 What goes out is a fixed event name and a status code or a count. Never entry
-text, never a transcript, never a position. Decision 245.
+text, never a transcript, never a position. Decision 245. Feedback about the
+app is the one exception and it has a path of its own, below.
 
 **`app_events`, ours.** The row is the record. Reading it alongside the
 service logs shows the whole path of a session: account made, consent
@@ -497,6 +498,16 @@ are held back because they are credentials. Row level security does not reach
 a warehouse sync, so everything anybody has written exists in a second place
 owned by a vendor, and a deletion request has two places to satisfy. It was a
 founder decision taken against the advice in the log. Decision 246.
+
+**Feedback.** The one thing a person writes that is addressed to us rather
+than to themselves, and therefore the one thing that goes to the funnels as
+words. `SoulApi.feedback` captures `feedback_given` with the text and posts
+`POST /feedback`, `routes/feedback.ts`, which writes a `feedback` row. No
+model call, no classifier and no consent gate: nothing is generated from it
+and nothing is asserted about anybody. It waits on the answer rather than
+firing and forgetting, because somebody who wrote to us is owed a yes or a
+no. The way in is a quiet line at the bottom of home, on every state of it
+including the one that would not load. Decision 253.
 
 **The switches.** `app/lib/data/flags.dart` holds four PostHog flags:
 `weather_card`, `voice_capture`, `tone_capture` and `mirror`. They are read

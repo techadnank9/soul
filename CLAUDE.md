@@ -96,6 +96,9 @@ have written, because a survey answer nobody can reply to is not worth
 collecting.
 This is not a product for children and the COPPA reasoning that used to sit
 here does not decide it. Decision 245.
+The one exception is feedback about the app, which a person writes to us on
+purpose. It goes to the funnels as words and into our own `feedback` table,
+through `SoulApi.feedback` and nowhere else. Decision 253.
 
 **Anything that talks to somebody else's service sits behind a switch.** The
 app ships through TestFlight, so a build with a broken feature in it is live

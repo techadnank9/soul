@@ -278,6 +278,38 @@ export const appEvents = pgTable(
 )
 
 /**
+ * What somebody said about the app itself.
+ *
+ * Not a reflection and not an entry. It is addressed to us rather than to
+ * themselves, which is why it is the one thing a person writes that goes to
+ * the funnels as text: an opinion nobody can read is an opinion nobody can
+ * act on. Everything a person writes about their own life stays out of
+ * there, as it always has.
+ *
+ * Kept in our own table as well, because a vendor is not a record.
+ */
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    text: text('text').notNull(),
+
+    /// Which screen it was sent from, so a complaint about a screen can be
+    /// found without asking which one they meant.
+    surface: text('surface'),
+    appVersion: text('app_version'),
+    createdAt: now(),
+  },
+  (t) => [
+    index('feedback_created_idx').on(t.createdAt.desc()),
+    index('feedback_student_created_idx').on(t.studentId, t.createdAt.desc()),
+  ],
+)
+
+/**
  * Sign in codes sent by email.
  *
  * Only the hash of the code is stored, the same way session tokens are. A row

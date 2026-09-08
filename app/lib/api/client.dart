@@ -183,6 +183,28 @@ class SoulApi {
     );
   }
 
+  /// What somebody said about the app itself.
+  ///
+  /// The one thing a person writes here that is addressed to us rather than
+  /// to themselves, and the one thing that goes to the funnels as words. An
+  /// opinion nobody can read is an opinion nobody can act on. Everything
+  /// they write about their own life stays out of there, as it always has.
+  ///
+  /// Both places from one call, the way `event` does it, so the table and
+  /// the funnels cannot drift. The table is the record: PostHog is where it
+  /// is read alongside what that person actually did.
+  ///
+  /// It waits, unlike an event. Somebody who took the trouble to write this
+  /// is owed a yes or a no rather than a screen that closes and hopes.
+  Future<void> feedback(String text, {required String surface}) async {
+    capture('feedback_given', {
+      'text': text,
+      'chars': text.length,
+      'surface': surface,
+    });
+    await _post('/feedback', {'text': text, 'surface': surface});
+  }
+
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>
       _send('PATCH', path, body);
 

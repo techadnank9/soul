@@ -4949,3 +4949,47 @@ template failure with more rows.
 Reverses if: beat one stops landing inside three seconds on the newer model,
 which nothing has measured yet, or the no summary rule starts producing lines
 so oblique that nobody recognises their own entry in them.
+
+### 253. Feedback goes to PostHog as words, and to a table of our own
+Sep 2026, Adnan
+
+Decision: a quiet line at the bottom of home, "Tell us what is not working",
+opening one box and a send. What is written goes two places from one call in
+`SoulApi.feedback`: a `feedback` row in our own database, and a
+`feedback_given` capture in PostHog carrying the text itself.
+
+Why the founder asked for both: PostHog is where an opinion sits next to what
+that person actually did, which is what makes it worth reading. A table is a
+record, and a vendor is not one. Both, from one call site, so they cannot
+drift, the way `SoulApi.event` already works for names and counts.
+
+**This is an exception to a rule that otherwise holds everywhere.** Nothing a
+person writes in this app goes to a third party as words. Decision 245 says
+so and this does not weaken it. Feedback is not a reflection: it is addressed
+to us rather than to themselves, they wrote it knowing that, and the whole
+point of it is being read by somebody. An entry, a transcript, a fact and a
+pattern all stay out of the funnels exactly as before. If this is ever cited
+as a precedent for sending anything else, it is being cited wrongly.
+
+The path is deliberately bare. No safety classifier, no consent gate and no
+model call, because nothing is generated from it and nothing is asserted
+about anybody. It is a row and a log line, and the log line carries the
+length rather than the words.
+
+Unlike an event it waits for the answer. Somebody who took the trouble to
+write this is owed a yes or a no, and what they wrote stays in the box when
+it fails so trying again is a second press rather than typing it out twice.
+
+On home rather than in the profile, because the moment somebody has an
+opinion about the app is the moment they have just used it. On every state of
+that screen including the one that would not load, which is exactly when
+there is something to say. Quiet, and never a rating, a star or a prompt that
+appears on its own: an app that asks to be rated is the opposite of what this
+product is.
+
+Rejected: a PostHog survey, which would put the question in the vendor's
+hands and leave us no row. A rating out of five, which collects a number
+nobody can act on.
+
+Reverses if: it fills with nothing, or with the same thing a hundred times,
+in which case the question rather than the box is wrong.

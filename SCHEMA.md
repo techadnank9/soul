@@ -99,6 +99,17 @@ The only thing ever sent to it is a sign in code. Accounts people make for
 themselves live in the Self signup district and school, with a random
 `external_ref`, and look like every other row.
 
+## feedback
+`id`, `student_id`, `school_id`, `district_id`, `text`, `surface`,
+`app_version`, `created_at`
+
+What somebody said about the app itself, written from the line at the bottom
+of home. Not an entry: it is addressed to us rather than to themselves, which
+is why it is the one thing a person writes that also goes to PostHog as
+words. `surface` is a fixed name from the client saying which screen they
+were on. Nothing reads this table in the product and nothing is generated
+from it. Decision 253.
+
 ## app_events
 `id`, `student_id`, `school_id`, `district_id`, `name`, `detail`,
 `app_version`, `created_at`
