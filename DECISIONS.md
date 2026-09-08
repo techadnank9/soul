@@ -5310,3 +5310,41 @@ one is a feature that does not work yet, and a flag that fails on would draw
 it for everybody the first time PostHog is unreachable.
 
 Reverses if: the number lands, which is the point.
+
+### 261. One address signs in with a fixed code, for app review
+Sep 2026, Adnan
+
+Decision: `SOUL_REVIEW_EMAIL` and `SOUL_REVIEW_CODE`. When both are set on a
+host, that one address takes the fixed code instead of a sent one, and
+`npm run seed:review -w @soul/api` makes the account and fills it with the
+demo week. Everything else about the account is ordinary.
+
+Why: app review has to reach past first run, first run ends in sign in and
+the skips were removed on purpose, and a reviewer cannot receive a six digit
+code sent to an inbox they do not own. Without this there is no way for Apple
+to see the product at all.
+
+It is a way in and it is written down as one rather than hidden. What keeps
+it honest:
+
+  it does not exist unless the host was given both variables, so it is not
+  on a laptop or in a test run by default
+  one address, compared exactly and lowercased, never a pattern or a domain
+  the code is per host and changes without a release
+  it skips the codes table and then joins the ordinary path, so which account
+  the address lands on is decided by the same code every other person runs
+  the account is a normal row in the self signup district under the same row
+  level security, so what a reviewer sees is what the product does
+  unsetting either variable closes it
+
+The seeded week is the demo week the test student already gets, so a reviewer
+lands on a home with something in it. An empty day one home is truthful and
+tells somebody reviewing an app nothing about what it is.
+
+Rejected: leaving sign in required in App Store Connect with no credentials
+and explaining in the notes, which is a reviewer stuck on a screen. Rejected:
+a build with the skip put back for review only, which means the thing being
+reviewed is not the thing being shipped.
+
+Reverses if: the account model changes so that first run can be finished
+without signing in, at which point this has nothing to do.

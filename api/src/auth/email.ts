@@ -4,6 +4,7 @@ import { db, emailCodes, students } from '../db.js'
 import type { Session } from '../session.js'
 import { auditLinked, createAccount, issueSession, type SignedIn } from './accounts.js'
 import { sendSignInCode } from './resend.js'
+import { env } from '../env.js'
 
 /**
  * Signing in with an email code.
@@ -27,7 +28,25 @@ function hashCode(email: string, code: string): string {
   return createHash('sha256').update(`${email}:${code}`).digest('hex')
 }
 
+/**
+ * Whether this is the address app review signs in with.
+ *
+ * Exact, lowercased, and false unless both variables are set, so on a host
+ * that has not been given them there is no such address and this whole path
+ * does not exist. Decision 261.
+ */
+function isReviewer(email: string): boolean {
+  const address = env.reviewEmail()
+  const code = env.reviewCode()
+  if (!address || !code) return false
+  return email.trim().toLowerCase() === address
+}
+
 export async function startEmailSignIn(email: string): Promise<void> {
+  // Nothing is sent and nothing is written. The code for this address is
+  // fixed, so there is no code to make and no inbox to send it to.
+  if (isReviewer(email)) return
+
   const since = new Date(Date.now() - 60 * 60 * 1000)
   const recent = await db
     .select({ n: raw<number>`count(*)::int` })
@@ -51,6 +70,15 @@ export async function verifyEmailSignIn(
   code: string,
   current: Session | null,
 ): Promise<SignedIn> {
+  // The reviewer's address, with the code this host was given. It skips the
+  // codes table entirely and then joins the ordinary path below, so the
+  // account it lands on is a normal account and everything after this line
+  // is what any other person gets.
+  if (isReviewer(email)) {
+    if (code !== env.reviewCode()) throw new EmailRefused('wrong code')
+    return signInAs(email, current)
+  }
+
   const rows = await db
     .select({ id: emailCodes.id, codeHash: emailCodes.codeHash, attempts: emailCodes.attempts })
     .from(emailCodes)
@@ -78,6 +106,17 @@ export async function verifyEmailSignIn(
 
   await db.update(emailCodes).set({ consumedAt: new Date() }).where(eq(emailCodes.id, row.id))
 
+  return signInAs(email, current)
+}
+
+/**
+ * The address is proven. Now decide which account it is.
+ *
+ * Lifted out of verifyEmailSignIn unchanged so the reviewer's path and the
+ * ordinary one land on exactly the same rules rather than on two copies of
+ * them.
+ */
+async function signInAs(email: string, current: Session | null): Promise<SignedIn> {
   const known = await db
     .select({ id: students.id, schoolId: students.schoolId, districtId: students.districtId })
     .from(students)

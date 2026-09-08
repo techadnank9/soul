@@ -12,7 +12,8 @@
     "test": "vitest run",
     "seed:fixtures": "tsx --env-file-if-exists=../.env src/scripts/seed_fixtures.ts",
     "seed:demo": "tsx --env-file-if-exists=../.env src/scripts/seed_demo.ts",
-    "import:legacy": "tsx --env-file-if-exists=../.env src/scripts/import_legacy.ts"
+    "import:legacy": "tsx --env-file-if-exists=../.env src/scripts/import_legacy.ts",
+    "seed:review": "tsx --env-file-if-exists=../.env src/scripts/seed_review.ts"
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1127.0",

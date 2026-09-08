@@ -33,6 +33,14 @@ services:
         sync: false
       - key: RESEND_FROM
         sync: false
+      # App review signs in with this address and this code, because a
+      # reviewer cannot receive a code sent to an inbox they do not own and
+      # first run cannot be skipped. Off unless both are set. Unset them when
+      # the review is over. Decision 261.
+      - key: SOUL_REVIEW_EMAIL
+        sync: false
+      - key: SOUL_REVIEW_CODE
+        sync: false
 
   - type: worker
     name: soul-worker

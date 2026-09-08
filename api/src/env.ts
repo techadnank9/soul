@@ -37,6 +37,25 @@ export const env = {
   allowRosterTokens: (): boolean => process.env.SOUL_ROSTER_TOKENS === 'allow',
 
   /**
+   * The one address Apple's reviewer signs in with, and the code that works
+   * for it.
+   *
+   * App review has to get into the app, first run cannot be skipped, and a
+   * reviewer cannot receive a six digit code sent to an address they do not
+   * own. So this address, and only this address, takes a fixed code instead
+   * of a sent one.
+   *
+   * It is a way in, stated plainly. What keeps it honest: it is off unless
+   * both variables are set, so it does not exist on any host that has not
+   * asked for it; it is one address compared exactly, not a pattern; the code
+   * is set per environment and can be changed without a release; nothing else
+   * about the account is special, so what a reviewer sees is what the product
+   * does. Unset both after a review to close it. Decision 261.
+   */
+  reviewEmail: (): string | undefined => optional('SOUL_REVIEW_EMAIL')?.trim().toLowerCase(),
+  reviewCode: (): string | undefined => optional('SOUL_REVIEW_CODE'),
+
+  /**
    * The shared secret a scheduler presents to drain the job queue. Unset means
    * the drain endpoint refuses everybody, which is the right default for a
    * machine to machine route.
