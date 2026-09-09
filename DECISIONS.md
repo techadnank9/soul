@@ -5386,3 +5386,50 @@ one is the service failing to start.
 Rejected: retrying the recorder at whatever rate the device offers. The
 transcriber is told sixteen kilohertz and a different rate is a stream it
 cannot read, so it would trade a clear failure for a silent one.
+
+---
+
+### 263. Two more from Sentry: a send that ran twice, and a facts reply that was empty
+Sep 2026, Claude
+
+Decision: two fixes, one on each side, from FLUTTER-R and FLUTTER-Y.
+
+**The send.** FLUTTER-R, three times on two phones, was a null check in
+`_openSession` on the way into `Navigator.of`. The capture screen's `_send`
+had no guard. It waits up to a second for the tone judgement, and a second
+tap on Send inside that second ran the whole thing again: the first call
+replaced the capture route with the session, the second called
+`onSubmitted` with the capture screen's context, which by then had no
+navigator above it. `_send` now sets `_finishing`, which is the flag the
+button already reads, returns if it is already set, and checks `mounted`
+after each wait. `_openSession` checks `context.mounted` before it
+navigates, so a screen that was closed during the wait sends nothing
+rather than crashing. The entry is not lost either way: the first send
+carried it.
+
+**The facts.** FLUTTER-Y was the nightly facts extraction failing with
+every provider: OpenAI said reply was not json, and Gemini and OpenRouter
+have no keys on Render. The reply from gpt-5 was empty. Reasoning tokens
+count against `max_completion_tokens`, four thousand was enough for the
+answer and not always for the thinking before it, and when the budget runs
+out the body comes back blank with finish_reason length. Three changes.
+The OpenAI provider now reports finish_reason. The gateway checks a reply
+before parsing it, empty, cut off, or not the JSON asked for, and tries
+that provider once more before moving on, since a model that answers well
+nine times in ten should not fail a job on the tenth, and the fallback
+providers are not always there. The facts budget is twelve thousand. The
+failure line now says which of the three it was and shows the first eighty
+characters of a wrong reply, so the next Sentry event names its cause.
+
+Left alone, on purpose: Gemini and OpenRouter keys on Render. That is
+configuration in the Render dashboard, not code, and Adnan decides which
+providers a district agreement names. Until they are set, OpenAI is the
+only provider on the service and the retry above is what stands in for
+the fallback chain.
+
+Rejected: a longer wait for the tone, which would widen the window the
+double tap lived in. Parsing a truncated JSON body leniently, since a
+fact cut off mid sentence is a wrong fact.
+
+Reverses if: the retry doubles cost on a purpose that fails for a reason
+a retry cannot fix, at which point it becomes per purpose.

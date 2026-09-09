@@ -279,6 +279,10 @@ class _HomeState extends State<Home> {
     String? toneId,
     bool fromWeather = false,
   }) {
+    // The capture screen hands over on its own context. If that screen is
+    // already gone, closed or replaced, there is no route to swap and the
+    // entry is not opened from a context that cannot navigate.
+    if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (session) => Session(

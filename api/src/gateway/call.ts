@@ -8,6 +8,7 @@ import {
   openaiEmbedding,
   type ProviderName,
   type ProviderCall,
+  type ProviderReply,
 } from './providers.js'
 
 /**
@@ -279,7 +280,10 @@ const config: Record<Purpose, PurposeConfig> = {
       openrouter: 'openai/gpt-5',
     },
     temperature: 0,
-    maxTokens: 4000,
+    // Reasoning tokens count against this. Four thousand was enough for the
+    // answer and not always for the thinking before it, and a run out of
+    // budget comes back as an empty body: FLUTTER-Y in Sentry.
+    maxTokens: 12000,
     timeoutMs: 120_000,
     json: true,
     reasoning: 'medium',
@@ -337,6 +341,32 @@ function keyFor(provider: ProviderName): string | undefined {
 }
 
 export class GatewayError extends Error {}
+
+/**
+ * Whether a reply is worth parsing. Empty is not, cut off is not, and a
+ * JSON request answered with something that does not parse is not.
+ */
+function acceptable(reply: ProviderReply, wantsJson: boolean): boolean {
+  if (reply.finishReason === 'length') return false
+  const text = unfence(reply.text)
+  if (!text.trim()) return false
+  if (!wantsJson) return true
+  try {
+    JSON.parse(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** The failure, named, so the Sentry line says which of the three it was. */
+function describe(reply: ProviderReply): string {
+  if (reply.finishReason === 'length') {
+    return `reply was cut off at the token limit after ${reply.outputTokens ?? '?'} tokens`
+  }
+  if (!unfence(reply.text).trim()) return 'reply was empty'
+  return `reply was not json: ${unfence(reply.text).slice(0, 80).replace(/\s+/g, ' ')}`
+}
 
 /**
  * parseStructured rejects rather than storing free prose.
@@ -413,9 +443,23 @@ export async function call<T>(
         ...(input.audio ? { audio: input.audio } : {}),
       }
 
-      const reply = await providers[provider](key, request)
+      let reply = await providers[provider](key, request)
+
+      // A reply that is empty, cut off, or not the JSON asked for is tried
+      // once more on the same provider before the next one is asked. The
+      // fallback providers are not always configured, and a single bad
+      // reply from a model that answers well nine times in ten should not
+      // fail a job outright. The second attempt is the last on this
+      // provider.
+      if (!acceptable(reply, Boolean(input.schema))) {
+        failures.push(`${provider}: ${describe(reply)}, tried again`)
+        reply = await providers[provider](key, request)
+      }
       const latencyMs = Date.now() - startedAt
 
+      if (!acceptable(reply, Boolean(input.schema))) {
+        throw new GatewayError(describe(reply))
+      }
       const value = input.schema
         ? parseStructured(input.schema, reply.text)
         : (reply.text.trim() as unknown as T)

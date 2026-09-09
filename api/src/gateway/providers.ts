@@ -43,6 +43,8 @@ function base64(bytes: Uint8Array): string {
 }
 
 export type ProviderReply = {
+  /** Why the provider stopped, in its own words, when it says. */
+  finishReason?: string
   text: string
   inputTokens?: number
   outputTokens?: number
@@ -122,10 +124,14 @@ async function openaiShaped(
     call.signal,
   )
 
+  const choice = data?.choices?.[0]
   return {
-    text: data?.choices?.[0]?.message?.content ?? '',
+    text: choice?.message?.content ?? '',
     inputTokens: data?.usage?.prompt_tokens,
     outputTokens: data?.usage?.completion_tokens,
+    // A reasoning model that spends its whole budget thinking answers with
+    // nothing, and length is how the provider says so.
+    finishReason: choice?.finish_reason,
   }
 }
 

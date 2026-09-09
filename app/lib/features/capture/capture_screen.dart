@@ -406,10 +406,18 @@ class _CaptureScreenState extends State<CaptureScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     if (_recording) await _stop();
+    if (!mounted) return;
+    // Once. A second tap while the tone was being waited on sent the entry
+    // twice, and the second send opened a session from a screen that the
+    // first had already replaced, which was a fatal in Sentry.
+    if (_finishing) return;
+    setState(() => _finishing = true);
     // A tone still on its way gets one more second, then goes without.
     if (_judging != null) {
       await _judging!.timeout(const Duration(seconds: 1), onTimeout: () {});
     }
+    // Closed during that second: there is nobody to hand the entry to.
+    if (!mounted) return;
     widget.onSubmitted(text, spoken: _spoken, toneId: _toneId);
   }
 
