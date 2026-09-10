@@ -1,7 +1,7 @@
 import { checkConsent } from '../../consent/gate.js'
 import { classify } from '../../safety/classify.js'
 import { helpScreen } from '../../safety/help.js'
-import { storeEntry, markProcessed } from '../../entries/store.js'
+import { storeEntry, markProcessed, markIntroduction } from '../../entries/store.js'
 import { beatOne } from '../../generate/beatOne.js'
 import { enqueue } from '../../jobs/enqueue.js'
 import { linkTone, loadTone } from '../tone/store.js'
@@ -31,6 +31,11 @@ export async function submit(
   const consented = await checkConsent(session, 'third_party_processing')
 
   const entryId = await storeEntry(session, input)
+
+  // The introduction at first run. A pointer on the student row, written
+  // before consent is checked because it says which entry is theirs to be
+  // read back from the profile and nothing about whether it leaves.
+  if (input.introduction) await markIntroduction(session, entryId)
 
   // The card on home asked something today and this is the answer, so it
   // stands down until tomorrow. Written before consent is checked, because

@@ -15,6 +15,7 @@ import {
   index,
   uniqueIndex,
   vector,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -223,6 +224,19 @@ export const students = pgTable(
      * gone for the rest of that day once something is.
      */
     weatherAnsweredOn: date('weather_answered_on'),
+
+    /**
+     * The entry they introduced themselves with, spoken at first run.
+     *
+     * A pointer and nothing more: the words live in entries like any other
+     * moment and are held to the same rules. Null until one is marked, and
+     * back to null if that entry is ever removed, because a profile pointing
+     * at nothing is worse than one pointing nowhere.
+     */
+    introductionEntryId: uuid('introduction_entry_id').references(
+      (): AnyPgColumn => entries.id,
+      { onDelete: 'set null' },
+    ),
 
     /**
      * Exact coordinates, when the student shared their location.

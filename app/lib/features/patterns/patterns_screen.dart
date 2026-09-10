@@ -24,9 +24,18 @@ import 'reflection_screen.dart';
 /// and neither reads as the telling off. Red was never in this palette and is
 /// not being added to it for this.
 class PatternsScreen extends StatefulWidget {
-  const PatternsScreen({super.key, required this.api, this.revision = 0});
+  const PatternsScreen({
+    super.key,
+    required this.api,
+    this.revision = 0,
+    this.onCapture,
+  });
 
   final SoulApi api;
+
+  /// Opens capture. The empty state offers it, because the only way this
+  /// screen fills is by somebody saying what happened.
+  final VoidCallback? onCapture;
 
   /// Changes when an entry lands. A new entry can be the one that makes a
   /// candidate, so this screen goes and asks again rather than holding what it
@@ -130,10 +139,27 @@ class _PatternsScreenState extends State<PatternsScreen> {
     // be worth a sentence, so this is the ordinary state for a long time. It
     // says the one plain thing rather than showing three empty frames.
     if (good.isEmpty && bad.isEmpty && patterns.forming.isEmpty) {
-      return const Screen(
+      return Screen(
         body: [
-          SizedBox(height: 40),
-          Text('Nothing has repeated yet', style: SoulType.heading),
+          const SizedBox(height: 40),
+          const Text('Nothing has repeated yet', style: SoulType.heading),
+          const SizedBox(height: 14),
+          const Text(
+            'This is where the things that keep happening show up. When you '
+            'have handled something the same way in three moments, it '
+            'appears here as still forming, with the moments behind it. Once '
+            'there is enough to say whether it is doing you good or costing '
+            'you, one sentence says which.',
+            style: SoulType.secondary,
+          ),
+          const SizedBox(height: 12),
+          Label(_from(patterns.reflections)),
+          const SizedBox(height: 26),
+          SoulButton(
+            'Say what just happened',
+            kind: SoulButtonKind.filled,
+            onPressed: widget.onCapture,
+          ),
         ],
       );
     }

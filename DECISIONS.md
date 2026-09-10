@@ -5433,3 +5433,163 @@ fact cut off mid sentence is a wrong fact.
 
 Reverses if: the retry doubles cost on a purpose that fails for a reason
 a retry cannot fix, at which point it becomes per purpose.
+
+---
+
+### 264. The reflection never goes empty, and the introduction gets its line back
+Sep 2026, Claude, on Adnan's calls from the 10 September feedback
+
+Decision: the card after an entry always has a question in it. When the
+Mirror throws, `lookCloser` returns `{ state: 'fallback', question }` with a
+fixed question instead of failing the route, and the app draws the same
+card after thirty seconds of waiting whether or not the request has come
+back. The fixed question is `Is there anything you might do about this, or
+nothing for now?` It lives in the prompts table as `mirror` version
+`fallback.v1`, an inactive row read by version. Reading by active is the
+trap `help.ts` fell into: one active row per purpose, and that row is the
+classifier, so a help row could never be found. A code constant stands in
+when the row cannot be read, on both sides. One `Look closer again` is
+offered under a fallback card. A late real answer replaces the fallback only
+if the person has not touched the pills or typed.
+
+Why: the reviewer's "build up and then nothing" was this screen. It is the
+one place the app can say something on day one, and it had a hole in it
+whenever a provider was slow. The question is the app's own, asked in the
+Mirror's own last step, so it passes the voice rules without a model.
+
+The introduction spoken at first run now shows its one line on the landing
+screen, in the room already held there. It is stored as the entry it always
+was and additionally pointed at by `students.introduction_entry_id`, the
+one schema change in this batch, additive and nullable, set by `submit.ts`
+right after `storeEntry` and before consent or safety run, so the call
+order is unchanged and a held introduction is still the introduction. The
+FLOW.md pointer to decision 063 for the hidden line was wrong; 063 is the
+sessions table. This entry is the decision.
+
+Rejected: a second beat one call to write a substitute reflection, since a
+failed provider is the reason we are here. Editing an introduction in
+place, since its text is behind tags, facts and embeddings; Say it again
+records a new one and moves the pointer.
+
+Reverses if: the fixed question reads as canned to real people, in which
+case it becomes a small set chosen by time of day, still from the table.
+
+---
+
+### 265. The week's number and its ring are the same entries
+Sep 2026, Claude
+
+Decision: `GET /week` counts each entry once, by its newest tag row that
+has a feeling at or above the confidence floor, the way `patterns.ts` and
+`day.ts` already read, and returns `unsorted`, the moments the four shown
+themes do not cover. The app draws it as a grey slice in the track colour,
+last in the key, labelled `not sorted yet`. The number above the ring stays
+the count of the seven days; the arcs plus the grey add up to it. The
+tagger checks for a row of its own version before calling the model, so a
+retried job finishes its enqueues without a second row.
+
+Why: five moments over a ring whose key summed to two was a chart that did
+not add up, on the one screen every claim is meant to trace to entries.
+The number and the ring were two queries drawn as one, and the comment in
+`week.ts` said they could not disagree.
+
+Rejected: counting only tagged entries, which lies the other way. A unique
+index on tags, which is a migration that fails on the rows already there.
+
+Reverses if: a large grey arc reads as a fault rather than a fact, in which
+case the label says why rather than the slice going.
+
+---
+
+### 266. A wrong person can be folded into the right one
+Sep 2026, Claude, on Adnan's call
+
+Decision: `POST /people/:id/merge` with `{ into }` moves every entry link
+from one person to another inside one transaction, recounts mentions and
+first and last seen, carries relation and reach where the kept row had
+none, clears the profile and books its rewrite, deletes the gone row and
+writes an audit row. Renaming a person to a name that already exists, case
+insensitive to match the extractor, is the same merge and returns the
+survivor. The person screen has `Same person as someone else` under
+`Remove them`, a sheet of the others, and a dialog that says what moves.
+`prompts/people.v2.md` adds one rule, that a thing with a name is not a
+person, and one bad example, the chapter I wrote.
+
+Why: the people list is the one thing that fills on day one, it fills from
+a model with no check in code, and until now the only correction was
+delete. "chapter I wrote" as a person is the prompt's mistake; two
+spellings of one friend is the extractor's, and merge is the fix for the
+second. Remove stays the fix for the first.
+
+Rejected: a "not a person" flag the extractor learns from, which is a
+second table and a second prompt for a case Remove already covers.
+
+Reverses if: merges are used to hide people rather than to join spellings,
+which the audit rows will show.
+
+---
+
+### 267. The profile tab shows what was given, and it can be changed
+Sep 2026, Claude, on Adnan's call
+
+Decision: two cards under the profile. `what you answered` lists the ten
+baseline questions with the chosen option, read from the new
+`GET /baseline`, each changeable through the same picker the other rows
+use, written back through the existing `POST /baseline` one answer at a
+time. `what you told us` shows the introduction and offers `Say it again`,
+which records a new one through the whole loop and moves the pointer.
+Nothing is summarised and nothing is re run when an answer changes: the
+opening line was written for a moment that has passed.
+
+Why: fourteen answers and an introduction went in and none of it came out
+anywhere. The reviewer went looking for exactly this. Plain facts, no
+traits, is the founder's line and the one Soul does not cross.
+
+Reverses if: people change answers often enough that the opening line on
+home reads as stale, in which case the client calls `welcomeLine` again
+after a change.
+
+---
+
+### 268. A settled scene still takes a movement, and there is no button
+Sep 2026, Claude, on Adnan's call
+
+Decision: the host of the baseline scenes owns one cancellable timer of
+1200 ms from the moment a scene settles. A movement on the control inside
+that window reopens the answer and holds the advance; the next settle
+restarts it; the advance fires once. A question seen again shows its answer
+settled with no timer running, and any movement changes it and moves on the
+same way. The Continue and Change my answer buttons from decision 230 are
+gone. Scenes report the instant they settle and keep taking input; the
+timing lives in one place. The up and down scene draws a groove with four
+stops so the thing to drag is visible; the four ball scenes share one
+handle; the labels under the beam and the ember sit in two staggered rows
+so none wraps to four lines; the hints share one grammar. Haptics on these
+screens are selection clicks only.
+
+Why: the tester moved the ball back and nothing happened, then found a
+button. The founder's call is that a control that can be dragged there can
+be dragged back, and a button after a movement is a form again.
+
+Reverses if: testers still miss the window, in which case it lengthens or
+the advance waits for a touch to end.
+
+---
+
+### 269. Haptics mark meaning, and the one that means something is "this came up before"
+Sep 2026, Claude, from the founder's note
+
+Decision: two levels. A selection click is the detent of a control and is
+used in the scenes only. An impact is reserved for the moment the app says
+something came up before: when the Mirror returns a candidate, the card
+shows `this came up before` above the proposal, fires one light impact, and
+offers `It fits` and `Not the same`, answered through the existing patterns
+route, after which the label reads `noted`. The pattern prompt screen that
+was built for this and never wired is now drawn inline here.
+
+Why: ten impacts in a row during onboarding is ordinary navigation marked
+as meaning, which is the opposite of the founder's rule. And a recurrence
+that the app names and cannot be answered is an assertion, which decision
+004 forbids; the answer is what makes it a proposal.
+
+Reverses if: the impact fires so rarely that nobody learns what it means.

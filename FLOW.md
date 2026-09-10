@@ -95,19 +95,22 @@ main.dart → onboarding/first_run.dart, FirstRun
   │     the ten questions, unchanged, one per screen, each answered by a
   │     movement from baseline_scenes.dart: a light dragged to a corner, an
   │     answer sunk in a pond, a wall pushed over, a sun raised. No
-  │     continue: a scene settles once chosen and the next follows
-  │     a question seen a second time carries two buttons instead, because
-  │     a settled scene takes no further movement: continue with what is
-  │     there, or change it, which rebuilds the scene under a new key with
-  │     nothing settled in it. Decision 230
+  │     continue and no other button: a scene settles once chosen and the
+  │     next follows 1200 ms later. Inside that window the control still
+  │     takes a movement, which reopens the answer and holds the advance;
+  │     the host owns the one timer and fires the advance once. A question
+  │     seen a second time shows its answer settled and waits; a movement
+  │     changes it and it moves on the same way. Decision 268
   │     POST /baseline  → routes/consent.ts         ← background, nobody waits
   │
   ├─ 3. capture_screen.dart, the introduction
   │     tell us about yourself, spoken or typed
-  │     POST /entries, the whole loop: consent, safety, beat one
-  │     the line it generates is never shown. This entry is how the app
-  │     learns who it is talking to, not a moment to reflect on, and a
-  │     flagged one shows nothing either. See decision 063
+  │     POST /entries with introduction true, the whole loop: consent,
+  │     safety, beat one. submit.ts points students.introduction_entry_id
+  │     at the entry right after it is stored, before anything else runs
+  │     the line it generates is shown once, on the landing that follows,
+  │     in the room held for it. A flagged or failed one shows nothing.
+  │     Decision 264
   │
   ├─ 3b. ready_screen.dart
   │     what was given, handed back as chips, and nothing scored
@@ -309,8 +312,18 @@ api/src/routes/entries.ts
        │     gateway.call('mirror', ...)
        │     parseStructured() → zod schema, REJECT on failure, never store prose
        │
-       └─ 3. returns tension, underneath, question
+       └─ 3. returns { state: 'reflected', tension, underneath, question, ... }
+             or, when any of the above throws, { state: 'fallback', question }
+             with the fixed question from the prompts row mirror fallback.v1,
+             read by version and never by active; a code constant stands in
+             if the row cannot be read. surfaceCandidate runs only on
+             reflected. The route never answers 5xx for a gateway failure.
+             Decision 264
 ```
+
+The app waits thirty seconds for that answer, then draws the fallback card
+itself and keeps the request running; a late reflected answer replaces the
+card only if the person has not touched it. One retry is offered.
 
 `buildContext` is a pure function: student and entry in, prompt string out.
 Everything about memory quality lives there. It is the first place to look when
@@ -594,6 +607,12 @@ GET /week       → services/reads/week.ts        the ring, the count, seven day
                                                themesFromAnswers, so the ring
                                                is full on day one and the key
                                                under it carries no counts
+                                               each entry counts once, by its
+                                               newest tag with a feeling, and
+                                               unsorted is the moments the
+                                               shown themes do not cover, so
+                                               the key adds up to the number.
+                                               Decision 265
 GET /days       → services/reads/days.ts       every day with something in it
 GET /day/:date  → services/reads/day.ts        one day, and its cue cards
 GET /patterns   → services/reads/patterns.ts   good, bad, and still forming
@@ -602,6 +621,12 @@ GET /reflection → services/reads/reflection.ts one theme, and the entries
 GET /people     → services/people/read.ts      who they write about
 GET /people/:id → services/people/read.ts      one person, and where they
                                                come up
+POST /people/:id/merge
+                → services/people/merge.ts     fold one person into another;
+                                               a rename onto an existing name
+                                               does the same. Decision 266
+GET /baseline   → routes/consent.ts            the ten answers held, for the
+                                               profile tab. Decision 267
 POST /weather/question
                 → services/weather/question.ts the one question on the card
                                                at the top of home. The
@@ -821,5 +846,6 @@ improves.
 13. A card is only ever about something the student named themselves, and a
     person only ever exists because they named them. Neither is invented, and
     an empty answer is the common one.
-14. Anything the app holds about a person can be edited and deleted by the
-    student who wrote it. The entries stay theirs either way.
+14. Anything the app holds about a person can be edited, merged into another
+    and deleted by the student who wrote it. The entries stay theirs either
+    way.

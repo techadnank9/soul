@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { db, entries } from '../db.js'
+import { db, entries, students } from '../db.js'
 import type { Session } from '../session.js'
 import type { SubmitEntry } from '../contracts.js'
 
@@ -29,4 +29,12 @@ export async function storeEntry(
 
 export async function markProcessed(entryId: string): Promise<void> {
   await db.update(entries).set({ processed: true }).where(eq(entries.id, entryId))
+}
+
+/** Point the student row at the entry they introduced themselves with. */
+export async function markIntroduction(session: Session, entryId: string): Promise<void> {
+  await db
+    .update(students)
+    .set({ introductionEntryId: entryId })
+    .where(eq(students.id, session.studentId))
 }

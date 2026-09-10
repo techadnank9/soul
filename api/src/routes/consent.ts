@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { eq, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { db, students, auditLog, baselineAnswers } from '../db.js'
 import { enqueue } from '../jobs/enqueue.js'
 import type { Session } from '../session.js'
+import type { BaselineHeld } from '../contracts.js'
 
 /**
  * Consent is a recorded event with a version, not a flag.
@@ -81,6 +82,9 @@ consent.post('/consent', async (c) => {
  * Idempotent on question, so a student who goes back and changes an answer
  * updates it rather than leaving two.
  */
+/** The set the app asks today. GET reads this one; POST stores whichever the app names. */
+const BASELINE_SET_VERSION = 'set-b-v1'
+
 const baselineBody = z.object({
   setVersion: z.string().min(1).max(40),
   answers: z
@@ -123,4 +127,25 @@ consent.post('/baseline', async (c) => {
     })
 
   return c.json({ ok: true, stored: answers.length })
+})
+
+/** The answers held for the current set, so a second device does not ask again. */
+consent.get('/baseline', async (c) => {
+  const session = c.get('session')
+  const rows = await db
+    .select({
+      questionIndex: baselineAnswers.questionIndex,
+      choiceIndex: baselineAnswers.choiceIndex,
+    })
+    .from(baselineAnswers)
+    .where(
+      and(
+        eq(baselineAnswers.studentId, session.studentId),
+        eq(baselineAnswers.setVersion, BASELINE_SET_VERSION),
+      ),
+    )
+    .orderBy(asc(baselineAnswers.questionIndex))
+
+  const held: BaselineHeld = { setVersion: BASELINE_SET_VERSION, answers: rows }
+  return c.json(held)
 })

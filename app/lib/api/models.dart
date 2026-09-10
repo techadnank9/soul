@@ -62,26 +62,42 @@ final class Held extends SubmitResult {
 
 class MirrorResult {
   const MirrorResult({
-    required this.tension,
-    required this.underneath,
     required this.question,
+    this.fallback = false,
+    this.tension,
+    this.underneath,
     this.offered,
     this.candidateId,
     this.proposal,
   });
 
-  final String tension;
-  final String underneath;
+  /// The question the server asks when it could not read closer, or the
+  /// one the app asks when the server did not answer in time. Only the
+  /// question is set; there is nothing underneath it and nothing offered.
+  final bool fallback;
+
+  final String? tension;
+  final String? underneath;
   final String question;
   final String? offered;
   final String? candidateId;
   final String? proposal;
 
+  /// Whether this reading brought a pattern to confirm.
+  bool get cameUpBefore => candidateId != null && proposal != null;
+
   static MirrorResult fromJson(Map<String, dynamic> json) {
+    // A missing state is a reflected reading, from before the field existed.
+    if (json['state'] == 'fallback') {
+      return MirrorResult(
+        question: json['question'] as String,
+        fallback: true,
+      );
+    }
     final candidate = json['patternCandidate'] as Map<String, dynamic>?;
     return MirrorResult(
-      tension: json['tension'] as String,
-      underneath: json['underneath'] as String,
+      tension: json['tension'] as String?,
+      underneath: json['underneath'] as String?,
       question: json['question'] as String,
       offered: json['offered'] as String?,
       candidateId: candidate?['candidateId'] as String?,
@@ -143,11 +159,17 @@ class WeekView {
     required this.days,
     this.opening,
     this.themesFromAnswers = false,
+    this.unsorted = 0,
     this.holding,
   });
 
   /// Entries written this week.
   final int moments;
+
+  /// Moments not under any of the shown themes: the tagger has not reached
+  /// them, or it found nothing to file them under. Zero when the themes came
+  /// from the answers.
+  final int unsorted;
 
   /// At most four, highest first. Empty until the tagger has named something,
   /// which is the ordinary state of a week that has only just started.
@@ -172,6 +194,7 @@ class WeekView {
   static WeekView fromJson(Map<String, dynamic> json) => WeekView(
         opening: json['opening'] as String?,
         themesFromAnswers: json['themesFromAnswers'] as bool? ?? false,
+        unsorted: json['unsorted'] as int? ?? 0,
         moments: json['moments'] as int,
         themes: [
           for (final theme in json['themes'] as List)
@@ -561,6 +584,27 @@ class ReflectionView {
           for (final decision in json['decisions'] as List)
             ReflectionDecision.fromJson(decision as Map<String, dynamic>),
         ],
+      );
+}
+
+/// The baseline answers the server holds, by question index.
+class BaselineHeld {
+  const BaselineHeld({required this.setVersion, required this.answers});
+
+  final String setVersion;
+
+  /// questionIndex to choiceIndex. A question never answered is absent.
+  final Map<int, int> answers;
+
+  static BaselineHeld fromJson(Map<String, dynamic> json) => BaselineHeld(
+        setVersion: json['setVersion'] as String? ?? '',
+        answers: {
+          for (final a in (json['answers'] as List? ?? const []))
+            if (a is Map &&
+                a['questionIndex'] is int &&
+                a['choiceIndex'] is int)
+              a['questionIndex'] as int: a['choiceIndex'] as int,
+        },
       );
 }
 

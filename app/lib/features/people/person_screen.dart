@@ -79,16 +79,149 @@ class _PersonScreenState extends State<PersonScreen> {
     if (given == null || !mounted) return;
 
     try {
-      await widget.api.editPerson(
+      final id = await widget.api.editPerson(
         widget.personId,
         name: field == 'name' ? given : null,
         relation: field == 'relation' ? given : null,
         reach: field == 'reach' ? given : null,
       );
+      // A name already on the list folds this person into that one, and
+      // this page is then about somebody who no longer exists. Back to the
+      // list, which reads again.
+      if (id != widget.personId) {
+        if (mounted) widget.onBack();
+        return;
+      }
     } catch (_) {
       // Nothing said. The reload underneath shows what is actually stored.
     }
     if (mounted) await _load();
+  }
+
+  /// This person is somebody already on the list under another name.
+  ///
+  /// The sheet lists everyone else, and a dialog says what folding does
+  /// before it does it. Everything moves under the other one and the words
+  /// themselves are not touched.
+  Future<void> _merge() async {
+    final name = _person?.name ?? 'them';
+    List<PersonRow> others;
+    try {
+      others = [
+        for (final p in await widget.api.people())
+          if (p.id != widget.personId) p,
+      ];
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+
+    final other = await showModalBottomSheet<PersonRow>(
+      context: context,
+      backgroundColor: SoulColors.bg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheet) => SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheet).height * 0.7,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 24, 22, 14),
+                child: Text(
+                  'Who are they?',
+                  style: SoulType.heading.copyWith(fontSize: 22),
+                ),
+              ),
+              if (others.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(22, 0, 22, 8),
+                  child: Text('Nobody else is listed yet.',
+                      style: SoulType.secondary),
+                ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
+                  itemCount: others.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => SoulCard(
+                    onTap: () => Navigator.of(sheet).pop(others[i]),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(others[i].name, style: SoulType.lead),
+                        if (others[i].relation != null &&
+                            others[i].relation!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(others[i].relation!, style: SoulType.muted),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
+                child: SoulButton(
+                  'Not here',
+                  kind: SoulButtonKind.ghost,
+                  onPressed: () => Navigator.of(sheet).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (other == null || !mounted) return;
+
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        backgroundColor: SoulColors.bg,
+        title: Text('Fold $name into ${other.name}?',
+            style: SoulType.heading.copyWith(fontSize: 22)),
+        content: Text(
+          'Everything written about $name moves under ${other.name}. '
+          'Nothing you wrote changes.',
+          style: SoulType.secondary,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(false),
+            child: const Text('Keep them apart',
+                style: TextStyle(
+                    fontFamily: SoulType.sans, color: SoulColors.text2)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(true),
+            child: const Text('Fold in',
+                style: TextStyle(
+                    fontFamily: SoulType.sans, color: SoulColors.clay)),
+          ),
+        ],
+      ),
+    );
+
+    if (sure != true || !mounted) return;
+
+    try {
+      await widget.api.mergePerson(widget.personId, into: other.id);
+      if (mounted) widget.onBack();
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
   }
 
   Future<void> _forget() async {
@@ -245,6 +378,8 @@ class _PersonScreenState extends State<PersonScreen> {
           ],
           const SizedBox(height: 14),
           SoulButton('Remove them', onPressed: _forget),
+          const SizedBox(height: 8),
+          SoulButton('Same person as someone else', onPressed: _merge),
           const SizedBox(height: 60),
         ],
       ],

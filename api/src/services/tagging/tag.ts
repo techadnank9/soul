@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db, entries, tags } from '../../db.js'
 import { call } from '../../gateway/call.js'
 import { enqueue } from '../../jobs/enqueue.js'
@@ -29,33 +29,45 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   const entry = rows[0]
   if (!entry) return
 
-  // A spoken entry is described with how it sounded. The words still come
-  // first and the prompt says the voice may sharpen the feeling or lower the
-  // confidence, never replace what was said.
-  const tone = await loadTone(entryId, session)
-  const user = tone
-    ? `${entry.text}\n\nHow they sounded, from their voice:\n${renderTone(tone)}`
-    : entry.text
+  // A retried job must not tag the entry twice. If this version of the
+  // tagger has already written a row for the entry, the model call and the
+  // insert are skipped, and everything booked below still runs so the
+  // downstream work finishes.
+  const already = await db
+    .select({ id: tags.id })
+    .from(tags)
+    .where(and(eq(tags.entryId, entryId), eq(tags.taggerVersion, TAGGER_VERSION)))
+    .limit(1)
 
-  const result = await call('tagger', {
-    user,
-    schema: taggerResult,
-    session,
-    entryId,
-  })
+  if (already.length === 0) {
+    // A spoken entry is described with how it sounded. The words still come
+    // first and the prompt says the voice may sharpen the feeling or lower the
+    // confidence, never replace what was said.
+    const tone = await loadTone(entryId, session)
+    const user = tone
+      ? `${entry.text}\n\nHow they sounded, from their voice:\n${renderTone(tone)}`
+      : entry.text
 
-  await db.insert(tags).values({
-    entryId,
-    studentId: session.studentId,
-    schoolId: session.schoolId,
-    districtId: session.districtId,
-    trigger: result.value.trigger,
-    feeling: result.value.feeling,
-    coping: result.value.coping,
-    domain: result.value.domain,
-    confidence: result.value.confidence,
-    taggerVersion: TAGGER_VERSION,
-  })
+    const result = await call('tagger', {
+      user,
+      schema: taggerResult,
+      session,
+      entryId,
+    })
+
+    await db.insert(tags).values({
+      entryId,
+      studentId: session.studentId,
+      schoolId: session.schoolId,
+      districtId: session.districtId,
+      trigger: result.value.trigger,
+      feeling: result.value.feeling,
+      coping: result.value.coping,
+      domain: result.value.domain,
+      confidence: result.value.confidence,
+      taggerVersion: TAGGER_VERSION,
+    })
+  }
 
   // Cue cards go last and in their own job, so a card is never the reason an
   // entry ends up untagged. The tags are what the rest of the system is built

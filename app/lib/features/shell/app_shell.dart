@@ -130,7 +130,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             revision: widget.revision,
             onCapture: () => widget.onCapture(),
           ),
-          PatternsScreen(api: _api, revision: widget.revision),
+          PatternsScreen(
+            api: _api,
+            revision: widget.revision,
+            onCapture: () => widget.onCapture(),
+          ),
           PeopleScreen(api: _api, revision: widget.revision),
         ],
       ),

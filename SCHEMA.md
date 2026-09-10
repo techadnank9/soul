@@ -43,7 +43,11 @@ Skipped questions have no row. Absence is the record of a skip.
 `id`, `school_id`, `district_id`, `external_ref`, `year_group`,
 `apple_user_id`, `display_name`, `age_band`, `gender`, `region`, `timezone`,
 `latitude`, `longitude`, `profile_recorded_at`, `consent_recorded_at`,
-`consent_version`, `notify_opt_in`, `created_at`
+`consent_version`, `notify_opt_in`, `introduction_entry_id`, `created_at`
+
+`introduction_entry_id` points at the entry spoken at first run, or the one
+recorded later from the profile tab with Say it again. Null for every
+account that predates it. Set null when that entry goes.
 
 No surnames, no birthdates. `external_ref` is the rostering identifier. Keep
 identifying information in the rostering system, not here.
@@ -188,6 +192,11 @@ The sentence the student chose to carry forward, in their words.
 Written by the async tagger. Never shown to the student directly. Values
 describe situations, never traits. Low confidence tags must not support a
 pattern claim.
+
+An entry can hold more than one row, from a job that ran twice. Every reader
+takes the newest row per entry, and the tagger skips the model call when a
+row for its version already exists. There is no unique on purpose: adding one
+would fail on the rows already there.
 
 ## voice_tones
 `id`, `entry_id`, `student_id`, `school_id`, `district_id`, `emotion`,

@@ -4,7 +4,7 @@ import { call } from '../gateway/call.js'
 import { loadContext, renderContext } from '../memory/buildContext.js'
 import { renderTone } from '../services/tone/render.js'
 import { loadTone, type Tone } from '../services/tone/store.js'
-import { mirrorResult, type MirrorResult } from '../contracts.js'
+import { mirrorReflection, type MirrorReflection } from '../contracts.js'
 import type { Session } from '../session.js'
 
 /**
@@ -33,7 +33,7 @@ export function buildMirrorPrompt(
 export async function mirror(
   entryId: string,
   session: Session,
-): Promise<MirrorResult> {
+): Promise<MirrorReflection> {
   /**
    * Scoped to the student, not just to the id.
    *
@@ -63,7 +63,7 @@ export async function mirror(
 
   const result = await call('mirror', {
     user: buildMirrorPrompt(history, entry.text, tone),
-    schema: mirrorResult,
+    schema: mirrorReflection,
     session,
     entryId,
   })

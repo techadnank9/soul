@@ -17,6 +17,7 @@ class ReadyScreen extends StatelessWidget {
     required this.profile,
     required this.onContinue,
     this.line,
+    this.introLine,
   });
 
   final Profile profile;
@@ -25,6 +26,11 @@ class ReadyScreen extends StatelessWidget {
   /// Written from the answers just given, asked for when the baseline
   /// ended. Absent until it lands, and absent for good if it never does.
   final Future<String>? line;
+
+  /// The one line written back on the introduction just given. It is on
+  /// its way while this screen is read, so its room is held from the start
+  /// and it fades in when it lands. Null, or a null result, shows nothing.
+  final Future<String?>? introLine;
 
   List<String> get _chips => [
         if (profile.displayName != null) profile.displayName!,
@@ -54,27 +60,14 @@ class ReadyScreen extends StatelessWidget {
           // Room for three lines is held from the start, so nothing below
           // moves when the line arrives, and it may take more if it needs
           // them rather than being cut off.
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 84),
-            child: FutureBuilder<String>(
-              future: line,
-              builder: (context, snapshot) {
-                final text = snapshot.data;
-                return AnimatedOpacity(
-                  duration: const Duration(milliseconds: 400),
-                  opacity: text == null ? 0 : 1,
-                  child: Text(
-                    text ?? '',
-                    style: const TextStyle(
-                      fontFamily: SoulType.serif,
-                      fontSize: 19,
-                      height: 1.4,
-                      color: SoulColors.text,
-                    ),
-                  ),
-                );
-              },
-            ),
+          _LateLine(
+            future: introLine,
+            minHeight: 56,
+          ),
+          const SizedBox(height: 14),
+          _LateLine(
+            future: line,
+            minHeight: 84,
           ),
           const SizedBox(height: 14),
           // Ours, not the model's, so it is here whatever happened above it
@@ -126,6 +119,42 @@ class ReadyScreen extends StatelessWidget {
             child: PrimaryCta('Continue', onPressed: onContinue),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A serif line that is still being written when the screen opens. Its room
+/// is held from the start and it fades in when it lands, so nothing below it
+/// moves. A null result leaves the room and shows nothing in it.
+class _LateLine extends StatelessWidget {
+  const _LateLine({required this.future, required this.minHeight});
+
+  final Future<String?>? future;
+  final double minHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
+      child: FutureBuilder<String?>(
+        future: future,
+        builder: (context, snapshot) {
+          final text = snapshot.data;
+          return AnimatedOpacity(
+            duration: const Duration(milliseconds: 400),
+            opacity: text == null ? 0 : 1,
+            child: Text(
+              text ?? '',
+              style: const TextStyle(
+                fontFamily: SoulType.serif,
+                fontSize: 19,
+                height: 1.4,
+                color: SoulColors.text,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

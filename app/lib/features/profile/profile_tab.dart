@@ -6,6 +6,8 @@ import '../../data/device_weather.dart';
 import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import '../capture/capture_screen.dart';
+import '../onboarding/baseline.dart';
 import '../onboarding/intent_screen.dart';
 import '../onboarding/profile_fields.dart';
 import '../onboarding/sign_in_screen.dart';
@@ -40,6 +42,11 @@ class _ProfileTabState extends State<ProfileTab> {
   Map<String, dynamic>? _held;
   bool _failed = false;
 
+  /// The baseline answers, by question index. Empty until read, and empty
+  /// when the read fails, in which case every row says not answered and
+  /// can still be changed.
+  Map<int, int> _answers = const {};
+
   /// Shown under the rows when something did not work. Never an error code,
   /// and never left on the screen after the thing works.
   String? _note;
@@ -62,6 +69,80 @@ class _ProfileTabState extends State<ProfileTab> {
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     }
+    try {
+      final baseline = await widget.api.baselineHeld();
+      if (mounted) setState(() => _answers = baseline.answers);
+    } catch (_) {
+      // The rows say not answered until a read works.
+    }
+  }
+
+  /// The spoken introduction from first run, read leniently: the field is
+  /// new on the server and an older reply simply has none.
+  String? get _introduction {
+    final raw = _held?['introduction'];
+    if (raw is! Map) return null;
+    final text = raw['text'];
+    if (text is! String || text.trim().isEmpty) return null;
+    return text;
+  }
+
+  /// One baseline answer changed. Sent on its own, as a sparse list with
+  /// only that question set, and shown straight away.
+  Future<void> _answer(int index, int choice) async {
+    setState(() => _answers = {..._answers, index: choice});
+    final sparse = List<int?>.filled(baseline.length, null)..[index] = choice;
+    try {
+      await widget.api.baseline(baselineVersion, sparse);
+    } catch (_) {
+      // Nothing said. The next load shows what is actually stored.
+    }
+    await _load();
+  }
+
+  /// Which of the four they pick. No way to empty one from here: these were
+  /// each answered at first run and an unanswered one reads as not answered
+  /// until it is.
+  Future<void> _pickAnswer(BuildContext context, int index) async {
+    final question = baseline[index];
+    final chosen = await _choose(context, question.text, [
+      for (var i = 0; i < question.options.length; i++)
+        Choice(i.toString(), question.options[i]),
+    ]);
+    if (chosen == null) return;
+    final choice = int.tryParse(chosen);
+    if (choice == null) return;
+    await _answer(index, choice);
+  }
+
+  /// Say it again. What they say goes in as an entry marked as the
+  /// introduction and nothing from the result is shown here.
+  Future<void> _sayAgain(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => CaptureScreen(
+          opener: 'again',
+          prompt: 'Tell us about yourself.',
+          note: 'Speak or type. What you are like, what you spend your time '
+              'on, what is on your mind lately.',
+          onClose: () => Navigator.of(page).pop(),
+          onSubmitted: (text, {required spoken, toneId}) async {
+            try {
+              await widget.api.submit(
+                text: text,
+                spoken: spoken,
+                toneId: toneId,
+                introduction: true,
+              );
+            } catch (_) {
+              // Nothing said. The reload underneath shows what is held.
+            }
+            if (page.mounted) Navigator.of(page).pop();
+          },
+        ),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   /// Optimistic. The row shows the new answer straight away, because a user
@@ -286,6 +367,56 @@ class _ProfileTabState extends State<ProfileTab> {
           Text(_note!, style: SoulType.muted),
         ],
         const SizedBox(height: 20),
+        // The ten questions from first run. The question is long and the
+        // answer is a phrase, so each row stacks them rather than sharing a
+        // line.
+        const Label('what you answered'),
+        const SizedBox(height: 10),
+        SoulCard(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Column(
+            children: [
+              for (var i = 0; i < baseline.length; i++) ...[
+                if (i > 0)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Rule(),
+                  ),
+                _Answer(
+                  question: baseline[i].text,
+                  value: _answers[i] == null ||
+                          _answers[i]! < 0 ||
+                          _answers[i]! >= baseline[i].options.length
+                      ? null
+                      : baseline[i].options[_answers[i]!],
+                  onTap: () => _pickAnswer(context, i),
+                  editing: _editing,
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Label('what you told us'),
+        const SizedBox(height: 10),
+        SoulCard(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_introduction != null)
+                Quote(_introduction!)
+              else
+                Text('not given',
+                    style: SoulType.lead.copyWith(color: SoulColors.text3)),
+              const SizedBox(height: 14),
+              SoulButton(
+                'Say it again',
+                onPressed: () => _sayAgain(context),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         // An account this phone reached without signing in is one log out
         // away from being unreachable, and everything written on it goes
@@ -455,7 +586,20 @@ class _ProfileTabState extends State<ProfileTab> {
     String question,
     List<Choice> among,
   ) async {
-    final chosen = await showModalBottomSheet<String>(
+    final chosen = await _choose(context, question, among, emptiable: true);
+    if (chosen == null) return;
+    await _change(field, chosen.isEmpty ? null : chosen);
+  }
+
+  /// The sheet the pickers share. Returns the chosen key, an empty string
+  /// for leave it empty when that is offered, and null when dismissed.
+  Future<String?> _choose(
+    BuildContext context,
+    String question,
+    List<Choice> among, {
+    bool emptiable = false,
+  }) {
+    return showModalBottomSheet<String>(
       context: context,
       backgroundColor: SoulColors.bg,
       isScrollControlled: true,
@@ -490,24 +634,76 @@ class _ProfileTabState extends State<ProfileTab> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
-                child: SoulButton(
-                  'Leave it empty',
-                  kind: SoulButtonKind.ghost,
-                  // An empty string comes back as a cleared answer. Null means
-                  // the sheet was dismissed and nothing changes.
-                  onPressed: () => Navigator.of(sheet).pop(''),
-                ),
-              ),
+              if (emptiable)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
+                  child: SoulButton(
+                    'Leave it empty',
+                    kind: SoulButtonKind.ghost,
+                    // An empty string comes back as a cleared answer. Null
+                    // means the sheet was dismissed and nothing changes.
+                    onPressed: () => Navigator.of(sheet).pop(''),
+                  ),
+                )
+              else
+                const SizedBox(height: 12),
             ],
           ),
         ),
       ),
     );
+  }
+}
 
-    if (chosen == null) return;
-    await _change(field, chosen.isEmpty ? null : chosen);
+/// One baseline question and what they picked. The question sits above the
+/// answer because neither fits beside the other.
+class _Answer extends StatelessWidget {
+  const _Answer({
+    required this.question,
+    required this.value,
+    required this.onTap,
+    required this.editing,
+  });
+
+  final String question;
+  final String? value;
+  final VoidCallback onTap;
+  final bool editing;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: editing ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(question),
+                  const SizedBox(height: 4),
+                  Text(
+                    value ?? 'not answered',
+                    style: value == null
+                        ? SoulType.lead.copyWith(color: SoulColors.text3)
+                        : SoulType.lead,
+                  ),
+                ],
+              ),
+            ),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: editing ? 1 : 0,
+              child: const Icon(Icons.chevron_right,
+                  size: 20, color: SoulColors.text3),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

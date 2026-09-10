@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/client.dart';
+import '../../api/models.dart';
 import '../../data/session_store.dart';
 import '../../theme/soul_theme.dart';
 import '../capture/capture_screen.dart';
@@ -216,15 +217,31 @@ class _FirstRunState extends State<FirstRun> {
   /// more screen. Nothing is shown for a flagged introduction either, on
   /// the founder's call. The classifier still runs, blocking, on the
   /// server, and the safety_flags row is still written.
+  ///
+  /// The one line written back is carried to the landing all the same, as
+  /// the first thing on it. It is null for a flagged introduction, a held
+  /// one, an empty line and a request that failed, and the landing shows
+  /// nothing in its place.
+  Future<String?>? _introLine;
+
   void _submitIntroduction(String text, {required bool spoken, String? toneId}) {
-    _api.submit(text: text, spoken: spoken, toneId: toneId).then(
-      (result) => _api.event('introduction_stored', {
-        'state': result.runtimeType.toString(),
-        'spoken': spoken,
-      }),
-      onError: (Object error) => _api.event('introduction_failed', {
-        'status': error is SoulApiException ? error.status : null,
-      }),
+    _introLine = _api.submit(text: text, spoken: spoken, toneId: toneId).then<String?>(
+      (result) {
+        _api.event('introduction_stored', {
+          'state': result.runtimeType.toString(),
+          'spoken': spoken,
+        });
+        return switch (result) {
+          Reflected(:final line) when line.isNotEmpty => line,
+          _ => null,
+        };
+      },
+      onError: (Object error) {
+        _api.event('introduction_failed', {
+          'status': error is SoulApiException ? error.status : null,
+        });
+        return null;
+      },
     );
     _next();
   }
@@ -301,7 +318,12 @@ class _FirstRunState extends State<FirstRun> {
           onSubmitted: (text, {required spoken, toneId}) =>
               _submitIntroduction(text, spoken: spoken, toneId: toneId),
         ),
-      _Kind.ready => ReadyScreen(profile: _profile, line: _welcome, onContinue: _next),
+      _Kind.ready => ReadyScreen(
+          profile: _profile,
+          line: _welcome,
+          introLine: _introLine,
+          onContinue: _next,
+        ),
       // Last. Signing in comes after there is something to keep, not before
       // the person has seen what this is.
       // No way out at the end of first run. There is nothing behind this

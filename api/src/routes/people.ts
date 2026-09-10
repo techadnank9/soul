@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { listPeople, readPerson, editPerson, forgetPerson } from '../services/people/read.js'
+import { mergePeople } from '../services/people/merge.js'
 import type { Session } from '../session.js'
 
 /**
@@ -51,10 +52,36 @@ peopleRoutes.patch('/people/:id', async (c) => {
   const parsed = edit.safeParse(body)
   if (!parsed.success) return c.json({ error: 'invalid person' }, 400)
 
-  const changed = await editPerson(c.get('session'), id.data, parsed.data)
-  if (!changed) return c.json({ error: 'no such person' }, 404)
+  // A rename onto a name they already have merges the two, so the id that
+  // comes back can differ from the one in the path.
+  const survivor = await editPerson(c.get('session'), id.data, parsed.data)
+  if (!survivor) return c.json({ error: 'no such person' }, 404)
 
-  return c.json({ ok: true })
+  return c.json({ ok: true, id: survivor })
+})
+
+const merge = z.object({ into: z.string().uuid() })
+
+/** The person in the path goes. The one in the body stays. */
+peopleRoutes.post('/people/:id/merge', async (c) => {
+  const id = personId.safeParse(c.req.param('id'))
+  if (!id.success) return c.json({ error: 'invalid person' }, 400)
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'invalid body' }, 400)
+  }
+
+  const parsed = merge.safeParse(body)
+  if (!parsed.success) return c.json({ error: 'invalid person' }, 400)
+  if (parsed.data.into === id.data) return c.json({ error: 'same person' }, 400)
+
+  const kept = await mergePeople(c.get('session'), parsed.data.into, id.data)
+  if (!kept) return c.json({ error: 'no such person' }, 404)
+
+  return c.json({ ok: true, id: kept })
 })
 
 peopleRoutes.delete('/people/:id', async (c) => {

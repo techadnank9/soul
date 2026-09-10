@@ -489,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   List<Widget> _populated(WeekView week) {
-    final slices = _slices(week.themes);
+    final slices = _slices(week);
     final today = todayOnDevice();
 
     return [
@@ -640,7 +640,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             // the baseline said, which is the one thing the app does know
             // about somebody who has only just arrived. Their own week
             // replaces it as soon as it has something in it.
-            if (slices.isEmpty) ...[
+            if (week.themes.isEmpty) ...[
               const SizedBox(height: 16),
               if (week.opening != null) ...[
                 Text(
@@ -722,7 +722,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // Only once entries have put something in it. Sent to an empty
       // patterns screen, what keeps returning is a promise the app cannot
       // keep yet, and the answers from first run are not reflection.
-      if (slices.isNotEmpty && !week.themesFromAnswers) ...[
+      if (week.themes.isNotEmpty && !week.themesFromAnswers) ...[
       const SizedBox(height: 14),
       SoulCard(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -785,9 +785,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// colours in a fixed order is what makes the ring readable. Nothing in the
   /// contract ties a feeling to a colour, and a colour chosen here only ever
   /// says which arc is which line of the key.
+  ///
+  /// The moments under none of the shown themes come last, in the track's
+  /// own grey, so the ring adds up to the number above it and the key says
+  /// where the rest went.
   static List<({String name, int count, Color colour})> _slices(
-    List<WeekTheme> themes,
+    WeekView week,
   ) {
+    final themes = week.themes;
     const palette = [
       SoulColors.clay,
       SoulColors.amber,
@@ -798,6 +803,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return [
       for (var i = 0; i < themes.length && i < palette.length; i++)
         (name: themes[i].name, count: themes[i].count, colour: palette[i]),
+      if (week.unsorted > 0)
+        (name: 'not sorted yet', count: week.unsorted, colour: SoulColors.s3),
     ];
   }
 }

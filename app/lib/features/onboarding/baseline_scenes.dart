@@ -15,6 +15,20 @@ import '../../theme/soul_theme.dart';
 /// None of them praises the person for choosing, and none of them says
 /// what an answer means.
 ///
+/// The contract with the host is three calls and no delays:
+///
+/// A scene calls [Scene.onSelect] with the option index at the instant it
+/// settles, with no delay of its own. The host decides how long to hold
+/// before moving on.
+///
+/// A scene never stops taking input. A movement that begins after the
+/// scene has settled calls [Scene.onReopen] once, at touch down, so the
+/// host can drop its hold. A scene that called onReopen must end in
+/// onSelect: with the new index if the movement chose something, and with
+/// the old index if it was let go without changing anything.
+///
+/// Touching the settled answer again is a settle too, and reports it again.
+///
 /// A scene is handed the answer already given, if there is one, so coming
 /// back to a question shows it settled rather than blank.
 
@@ -25,11 +39,13 @@ abstract class Scene extends StatefulWidget {
     required this.options,
     required this.answer,
     required this.onSelect,
+    required this.onReopen,
   });
 
   final List<String> options;
   final int? answer;
   final ValueChanged<int> onSelect;
+  final VoidCallback onReopen;
 }
 
 /// The one line under a scene that says what to do, or what was chosen.
@@ -64,6 +80,113 @@ class SceneHint extends StatelessWidget {
 
 bool _still(BuildContext context) => MediaQuery.disableAnimationsOf(context);
 
+/// The handle the four dragged scenes share: a lit sphere, the same
+/// highlight on the same clay, so the light in the field, the ball on the
+/// beam, the orb on the track and the ember on the line read as one thing
+/// moved four ways. [lift] raises the shadow as the handle is carried, and
+/// [halo] adds the soft glow around it.
+class _Handle extends StatelessWidget {
+  const _Handle({required this.size, this.base = SoulColors.clay, this.halo = false, this.lift = 0});
+
+  final double size;
+  final Color base;
+  final bool halo;
+  final double lift;
+
+  @override
+  Widget build(BuildContext context) {
+    final core = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          colors: [const Color(0xFFFFC49A), base],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: base.withValues(alpha: 0.3 + lift * 0.35),
+            blurRadius: 12 + lift * 22,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+    );
+    if (!halo) return core;
+    return Container(
+      width: size * 1.5,
+      height: size * 1.5,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [base.withValues(alpha: 0.45), Colors.transparent]),
+      ),
+      child: core,
+    );
+  }
+}
+
+/// The four labels under a strip, one per stop, on two rows so a long one
+/// has half the width to itself instead of a quarter. Even stops sit on
+/// the top row, odd stops on the bottom, and a thin tick runs from each
+/// stop down to its row. Every label is a target.
+class _StopLabels extends StatelessWidget {
+  const _StopLabels({required this.options, required this.shown, required this.onTap});
+
+  final List<String> options;
+  final int? shown;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final w = box.maxWidth;
+      return SizedBox(
+        height: 64,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (var i = 0; i < 4; i++)
+              Positioned(
+                left: (w * i / 3 - 0.5).clamp(0.0, w - 1),
+                top: -8,
+                width: 1,
+                height: i.isEven ? 8 : 40,
+                child: const ColoredBox(color: SoulColors.border2),
+              ),
+            for (var i = 0; i < 4; i++)
+              Positioned(
+                left: (w * i / 3 - w / 4).clamp(0.0, w / 2),
+                width: w / 2 - 12,
+                top: i.isEven ? 0 : 32,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(i),
+                  child: Text(
+                    options[i],
+                    textAlign: i == 0
+                        ? TextAlign.left
+                        : i == 3
+                            ? TextAlign.right
+                            : TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: SoulType.sans,
+                      fontSize: 12,
+                      height: 1.25,
+                      fontWeight: shown == i ? FontWeight.w600 : FontWeight.w500,
+                      color: shown == i ? SoulColors.text : SoulColors.text3,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 1. The field. A light dragged toward one of four corners.
 // ---------------------------------------------------------------------------
@@ -74,6 +197,7 @@ class FieldScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -97,7 +221,7 @@ class _FieldSceneState extends State<FieldScene> {
   String get _hint {
     if (_committed != null) return widget.options[_committed!];
     if (_dragging && _nearest >= 0) return widget.options[_nearest];
-    return 'Drag the light toward what feels true';
+    return 'Drag the light to where it is true';
   }
 
   int _nearestTo(Offset unit) {
@@ -114,15 +238,14 @@ class _FieldSceneState extends State<FieldScene> {
   }
 
   void _commit(int i, Offset target) {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.selectionClick();
     setState(() {
       _committed = i;
+      _nearest = i;
       _dragging = false;
       _orb = target;
     });
-    Future<void>.delayed(const Duration(milliseconds: 450), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -142,8 +265,13 @@ class _FieldSceneState extends State<FieldScene> {
             }
             final reach = math.min(1.0, _orb.distance / Offset(maxX, maxY).distance);
 
+            Offset cornerAt(int i) => Offset(_corners[i].dx * maxX, _corners[i].dy * maxY);
+
             void update(Offset local) {
-              if (_committed != null) return;
+              if (_committed != null) {
+                _committed = null;
+                widget.onReopen();
+              }
               final dx = (local.dx - cx).clamp(-maxX, maxX);
               final dy = (local.dy - cy).clamp(-maxY, maxY);
               final next = _nearestTo(Offset(dx / maxX, dy / maxY));
@@ -155,15 +283,17 @@ class _FieldSceneState extends State<FieldScene> {
               });
             }
 
+            void settle() {
+              if (!_dragging) return;
+              _commit(_nearest, cornerAt(_nearest));
+            }
+
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onPanStart: (d) => update(d.localPosition),
               onPanUpdate: (d) => update(d.localPosition),
-              onPanEnd: (_) {
-                if (_committed != null || !_dragging) return;
-                final i = _nearest;
-                _commit(i, Offset(_corners[i].dx * maxX, _corners[i].dy * maxY));
-              },
+              onPanEnd: (_) => settle(),
+              onPanCancel: settle,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -181,11 +311,7 @@ class _FieldSceneState extends State<FieldScene> {
                       height: 48,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          if (_committed != null) return;
-                          _nearest = i;
-                          _commit(i, Offset(_corners[i].dx * maxX, _corners[i].dy * maxY));
-                        },
+                        onTap: () => _commit(i, cornerAt(i)),
                         child: Center(
                           child: AnimatedScale(
                             scale: (_committed == i || (_committed == null && _dragging && _nearest == i)) ? 1.08 : 1,
@@ -213,25 +339,9 @@ class _FieldSceneState extends State<FieldScene> {
                     left: cx + _orb.dx - 30,
                     top: cy + _orb.dy - 30,
                     child: IgnorePointer(
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const RadialGradient(
-                            center: Alignment(-0.3, -0.4),
-                            colors: [Color(0xFFFFC49A), SoulColors.clay],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: SoulColors.clay.withValues(alpha: 0.3 + reach * 0.35),
-                              blurRadius: 12 + reach * 22,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        transform: Matrix4.diagonal3Values(1.0 + reach * 0.35, 1.0 + reach * 0.35, 1),
-                        transformAlignment: Alignment.center,
+                      child: Transform.scale(
+                        scale: 1.0 + reach * 0.35,
+                        child: _Handle(size: 60, lift: reach),
                       ),
                     ),
                   ),
@@ -257,6 +367,7 @@ class PondScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -295,13 +406,13 @@ class _PondSceneState extends State<PondScene> with SingleTickerProviderStateMix
     });
   }
 
+  /// Sinks [i]. Whatever was under before comes back up on its own, since
+  /// only one line is ever below the surface.
   void _commit(int i, Offset at) {
-    HapticFeedback.lightImpact();
+    HapticFeedback.selectionClick();
     _ripple(at);
     setState(() => _committed = i);
-    Future<void>.delayed(const Duration(milliseconds: 850), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -316,7 +427,6 @@ class _PondSceneState extends State<PondScene> with SingleTickerProviderStateMix
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onPanUpdate: (d) {
-                if (_committed != null) return;
                 final now = DateTime.now();
                 if (now.difference(_lastRipple).inMilliseconds < 140) return;
                 _lastRipple = now;
@@ -350,10 +460,8 @@ class _PondSceneState extends State<PondScene> with SingleTickerProviderStateMix
                                 height: 48,
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
-                                  onTap: () {
-                                    if (_committed != null) return;
-                                    _commit(i, Offset(_spots[i].dx * size.width, _spots[i].dy * size.height));
-                                  },
+                                  onTap: () =>
+                                      _commit(i, Offset(_spots[i].dx * size.width, _spots[i].dy * size.height)),
                                   child: AnimatedOpacity(
                                     duration: const Duration(milliseconds: 600),
                                     opacity: _committed == i ? 0 : (_committed != null ? 0.25 : 0.92),
@@ -388,7 +496,7 @@ class _PondSceneState extends State<PondScene> with SingleTickerProviderStateMix
         ),
         const SizedBox(height: 8),
         SceneHint(
-          _committed == null ? 'Tap the one that is true, and let it sink' : widget.options[_committed!],
+          _committed == null ? 'Tap the line that is true' : widget.options[_committed!],
           chosen: _committed != null,
         ),
       ],
@@ -445,6 +553,7 @@ class StonesScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -457,22 +566,38 @@ class _StonesSceneState extends State<StonesScene> {
   int? _toppled;
   bool _toppleRight = true;
 
+  /// Whether the drag in progress began on a wall other than the fallen
+  /// one, which is the case that told the host to wait.
+  bool _reopened = false;
+
   @override
   void initState() {
     super.initState();
     _toppled = widget.answer;
   }
 
+  /// Topples [i]. A wall that was down before stands back up on its own,
+  /// since only one is ever over.
   void _topple(int i, {required bool right}) {
-    HapticFeedback.heavyImpact();
+    HapticFeedback.selectionClick();
     setState(() {
       _toppled = i;
       _toppleRight = right;
       _dragging = null;
+      _dragX = 0;
+      _reopened = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 700), () {
-      if (mounted) widget.onSelect(i);
+    widget.onSelect(i);
+  }
+
+  void _abort() {
+    final reopened = _reopened;
+    setState(() {
+      _dragging = null;
+      _dragX = 0;
+      _reopened = false;
     });
+    if (reopened && _toppled != null) widget.onSelect(_toppled!);
   }
 
   @override
@@ -493,7 +618,7 @@ class _StonesSceneState extends State<StonesScene> {
         ),
         const SizedBox(height: 4),
         SceneHint(
-          _toppled == null ? 'Push a wall aside' : widget.options[_toppled!],
+          _toppled == null ? 'Tap the wall that is true' : widget.options[_toppled!],
           chosen: _toppled != null,
         ),
       ],
@@ -513,32 +638,31 @@ class _StonesSceneState extends State<StonesScene> {
       children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (_toppled != null) return;
-            _topple(i, right: true);
-          },
+          onTap: () => _topple(i, right: true),
           onHorizontalDragStart: (_) {
-            if (_toppled != null) return;
+            final reopen = _toppled != null && _toppled != i;
             setState(() {
               _dragging = i;
               _dragX = 0;
+              _reopened = reopen;
             });
+            if (reopen) widget.onReopen();
           },
           onHorizontalDragUpdate: (d) {
-            if (_toppled != null || _dragging != i) return;
+            if (_dragging != i) return;
             setState(() => _dragX += d.delta.dx);
           },
           onHorizontalDragEnd: (d) {
-            if (_toppled != null || _dragging != i) return;
+            if (_dragging != i) return;
             final fling = d.primaryVelocity ?? 0;
             if (_dragX.abs() > 40 || fling.abs() > 300) {
               _topple(i, right: _dragX > 0 || (_dragX == 0 && fling > 0));
             } else {
-              setState(() {
-                _dragging = null;
-                _dragX = 0;
-              });
+              _abort();
             }
+          },
+          onHorizontalDragCancel: () {
+            if (_dragging == i) _abort();
           },
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 450),
@@ -617,6 +741,7 @@ class BeamScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -638,17 +763,14 @@ class _BeamSceneState extends State<BeamScene> {
     if (_committed != null) _p = _committed! / 3;
   }
 
-  void _snap() {
-    final i = _live;
-    HapticFeedback.mediumImpact();
+  void _snapTo(int i) {
+    HapticFeedback.selectionClick();
     setState(() {
       _p = i / 3;
       _committed = i;
       _dragging = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 550), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -663,123 +785,96 @@ class _BeamSceneState extends State<BeamScene> {
         const SizedBox(height: 18),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 26),
-          child: SizedBox(
-            height: 90,
-            child: LayoutBuilder(builder: (context, box) {
-              final w = box.maxWidth;
-              void update(double x) {
-                if (_committed != null) return;
-                final next = ((x / w).clamp(0.0, 1.0) * 3).round();
-                if (next != _lastLive) {
-                  HapticFeedback.selectionClick();
-                  _lastLive = next;
-                }
-                setState(() {
-                  _dragging = true;
-                  _p = (x / w).clamp(0.0, 1.0);
-                });
-              }
+          child: Column(
+            children: [
+              SizedBox(
+                height: 90,
+                child: LayoutBuilder(builder: (context, box) {
+                  final w = box.maxWidth;
+                  void update(double x) {
+                    if (_committed != null) {
+                      _committed = null;
+                      widget.onReopen();
+                    }
+                    final next = ((x / w).clamp(0.0, 1.0) * 3).round();
+                    if (next != _lastLive) {
+                      HapticFeedback.selectionClick();
+                      _lastLive = next;
+                    }
+                    setState(() {
+                      _dragging = true;
+                      _p = (x / w).clamp(0.0, 1.0);
+                    });
+                  }
 
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: (d) => update(d.localPosition.dx),
-                onHorizontalDragUpdate: (d) => update(d.localPosition.dx),
-                onHorizontalDragEnd: (_) {
-                  if (_committed == null && _dragging) _snap();
-                },
-                onTapUp: (d) {
-                  if (_committed != null) return;
-                  _p = (d.localPosition.dx / w).clamp(0.0, 1.0);
-                  _dragging = true;
-                  _snap();
-                },
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 44,
-                      child: AnimatedRotation(
-                        duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
-                        curve: Curves.easeOutBack,
-                        turns: (_p - 0.5) * 2 * 15 / 360,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: SoulColors.border2,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            for (var i = 0; i < 4; i++)
-                              Positioned(
-                                left: w * i / 3 - 3,
-                                top: 19,
-                                child: Container(
-                                  width: 6,
+                  void settle() {
+                    if (_dragging) _snapTo(_live);
+                  }
+
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onHorizontalDragStart: (d) => update(d.localPosition.dx),
+                    onHorizontalDragUpdate: (d) => update(d.localPosition.dx),
+                    onHorizontalDragEnd: (_) => settle(),
+                    onHorizontalDragCancel: settle,
+                    onTapUp: (d) => _snapTo(((d.localPosition.dx / w).clamp(0.0, 1.0) * 3).round()),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 44,
+                          child: AnimatedRotation(
+                            duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
+                            curve: Curves.easeOutBack,
+                            turns: (_p - 0.5) * 2 * 15 / 360,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
                                   height: 6,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: SoulColors.border2,
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(3),
                                   ),
                                 ),
-                              ),
-                            AnimatedPositioned(
-                              duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
-                              curve: Curves.easeOutBack,
-                              left: (w * _p - 14).clamp(0.0, w - 28),
-                              top: 8,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: SoulColors.clay,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: SoulColors.clay.withValues(alpha: 0.35),
-                                      blurRadius: _dragging ? 10 : 5,
-                                      offset: const Offset(0, 3),
+                                for (var i = 0; i < 4; i++)
+                                  Positioned(
+                                    left: (w * i / 3 - 4).clamp(0.0, w - 8),
+                                    top: 18,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: SoulColors.border2,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
-                                  ],
+                                  ),
+                                AnimatedPositioned(
+                                  duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
+                                  curve: Curves.easeOutBack,
+                                  left: (w * _p - 14).clamp(0.0, w - 28),
+                                  top: 8,
+                                  child: _Handle(size: 28, lift: _dragging ? 1 : 0),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        CustomPaint(
+                          size: const Size(20, 14),
+                          painter: _TrianglePainter(SoulColors.text2),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    CustomPaint(
-                      size: const Size(20, 14),
-                      painter: _TrianglePainter(SoulColors.text2),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < 4; i++)
-              Expanded(
-                child: Text(
-                  widget.options[i],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: SoulType.sans,
-                    fontSize: 11,
-                    height: 1.25,
-                    fontWeight: FontWeight.w500,
-                    color: shown == i ? SoulColors.text : SoulColors.text3,
-                  ),
-                ),
+                  );
+                }),
               ),
-          ],
+              const SizedBox(height: 8),
+              _StopLabels(options: widget.options, shown: shown, onTap: _snapTo),
+            ],
+          ),
         ),
       ],
     );
@@ -814,6 +909,7 @@ class WeightScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -846,21 +942,14 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
     super.dispose();
   }
 
-  void _snap() {
-    final i = _live;
-    if (_p < 0.5) {
-      HapticFeedback.lightImpact();
-    } else {
-      HapticFeedback.heavyImpact();
-    }
+  void _snapTo(int i) {
+    HapticFeedback.selectionClick();
     setState(() {
       _p = i / 3;
       _committed = i;
       _dragging = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -904,9 +993,14 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
             final bottom = box.maxHeight - 54;
             final trackX = 84.0;
 
+            double at(double y) => ((y - top) / (bottom - top)).clamp(0.0, 1.0);
+
             void update(double y) {
-              if (_committed != null) return;
-              final p = ((y - top) / (bottom - top)).clamp(0.0, 1.0);
+              if (_committed != null) {
+                _committed = null;
+                widget.onReopen();
+              }
+              final p = at(y);
               final next = (p * 3).round();
               if (next != _lastLive) {
                 HapticFeedback.selectionClick();
@@ -918,19 +1012,17 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
               });
             }
 
+            void settle() {
+              if (_dragging) _snapTo(_live);
+            }
+
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onVerticalDragStart: (d) => update(d.localPosition.dy),
               onVerticalDragUpdate: (d) => update(d.localPosition.dy),
-              onVerticalDragEnd: (_) {
-                if (_committed == null && _dragging) _snap();
-              },
-              onTapUp: (d) {
-                if (_committed != null) return;
-                _p = ((d.localPosition.dy - top) / (bottom - top)).clamp(0.0, 1.0);
-                _dragging = true;
-                _snap();
-              },
+              onVerticalDragEnd: (_) => settle(),
+              onVerticalDragCancel: settle,
+              onTapUp: (d) => _snapTo((at(d.localPosition.dy) * 3).round()),
               child: AnimatedBuilder(
                 animation: _bob,
                 builder: (context, _) {
@@ -939,16 +1031,37 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
                   final y = top + (bottom - top) * _p + bob;
                   return Stack(
                     children: [
+                      // The track is a groove, wide enough to be seen as a
+                      // thing the orb runs in, with a stop on it for each
+                      // resting place. Both take the room's ink so they
+                      // stay visible as it dims.
                       Positioned(
-                        left: trackX,
+                        left: trackX - 5,
                         top: top,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
-                          width: 1,
+                          width: 10,
                           height: bottom - top,
-                          color: inkSoft.withValues(alpha: 0.5),
+                          decoration: BoxDecoration(
+                            color: inkSoft.withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
+                      for (var i = 0; i < 4; i++)
+                        Positioned(
+                          left: trackX - 4,
+                          top: top + (bottom - top) * i / 3 - 4,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: inkSoft.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
                       Positioned(
                         left: 0,
                         right: 0,
@@ -987,43 +1100,32 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
                           right: 20,
                           top: top + (bottom - top) * i / 3 - 16,
                           height: 32,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 150),
-                              style: TextStyle(
-                                fontFamily: SoulType.sans,
-                                fontSize: shown == i ? 14 : 12,
-                                height: 1.2,
-                                fontWeight: shown == i ? FontWeight.w600 : FontWeight.w400,
-                                color: shown == i ? ink : inkSoft,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _snapTo(i),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 150),
+                                style: TextStyle(
+                                  fontFamily: SoulType.sans,
+                                  fontSize: shown == i ? 14 : 12,
+                                  height: 1.2,
+                                  fontWeight: shown == i ? FontWeight.w600 : FontWeight.w400,
+                                  color: shown == i ? ink : inkSoft,
+                                ),
+                                child: Text(widget.options[i]),
                               ),
-                              child: Text(widget.options[i]),
                             ),
                           ),
                         ),
                       AnimatedPositioned(
                         duration: _dragging ? Duration.zero : const Duration(milliseconds: 420),
                         curve: _p < 0.5 ? Curves.easeOutBack : Curves.bounceOut,
-                        left: trackX - 24,
-                        top: y - 24,
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              center: const Alignment(-0.3, -0.4),
-                              colors: [const Color(0xFFFFC49A), Color.lerp(SoulColors.clay, SoulColors.clayDark, _p)!],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: SoulColors.clay.withValues(alpha: 0.25 + (1 - _p) * 0.3),
-                                blurRadius: 10 + (1 - _p) * 18,
-                                offset: Offset(0, 4 + _p * 6),
-                              ),
-                            ],
-                          ),
+                        left: trackX - 36,
+                        top: y - 36,
+                        child: IgnorePointer(
+                          child: _Handle(size: 48, halo: true, lift: 1 - _p),
                         ),
                       ),
                     ],
@@ -1035,7 +1137,7 @@ class _WeightSceneState extends State<WeightScene> with SingleTickerProviderStat
         ),
         const SizedBox(height: 8),
         SceneHint(
-          shown == null ? 'Drag the orb to where it sits' : widget.options[shown],
+          shown == null ? 'Drag the orb to where it is true' : widget.options[shown],
           chosen: _committed != null,
         ),
       ],
@@ -1053,6 +1155,7 @@ class DeckScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -1073,13 +1176,12 @@ class _DeckSceneState extends State<DeckScene> {
     _committed = widget.answer;
   }
 
+  /// Picks up [i]. A card picked up before is laid back down on its own,
+  /// since only one is ever held.
   void _choose(int i) {
-    if (_committed != null) return;
-    HapticFeedback.mediumImpact();
+    HapticFeedback.selectionClick();
     setState(() => _committed = i);
-    Future<void>.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -1107,7 +1209,7 @@ class _DeckSceneState extends State<DeckScene> {
           }),
         ),
         SceneHint(
-          _committed == null ? 'Pick the one that sounds like you' : widget.options[_committed!],
+          _committed == null ? 'Tap the card that is true, or swipe' : widget.options[_committed!],
           chosen: _committed != null,
         ),
       ],
@@ -1179,6 +1281,7 @@ class SunriseScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -1203,15 +1306,13 @@ class _SunriseSceneState extends State<SunriseScene> {
   }
 
   void _commit(int i) {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.selectionClick();
     setState(() {
       _committed = i;
       _p = 1 - i / (_count - 1);
       _dragging = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -1220,8 +1321,8 @@ class _SunriseSceneState extends State<SunriseScene> {
     final shown = _committed ?? (_dragging ? _live : null);
     // The sky used to carry two words down its left edge for its ends. They
     // named a different scale from the one the options run on, so the eye
-    // read one thing and chose from another. The options below say where
-    // each height lands, which is the only naming this needs.
+    // read one thing and chose from another. The rows below say where each
+    // height lands, which is the only naming this needs.
     return Column(
       children: [
         Row(
@@ -1234,22 +1335,27 @@ class _SunriseSceneState extends State<SunriseScene> {
                 child: LayoutBuilder(builder: (context, box) {
                   final h = box.maxHeight;
                   void update(double y) {
-                    if (_committed != null) return;
+                    if (_committed != null) {
+                      _committed = null;
+                      widget.onReopen();
+                    }
                     setState(() {
                       _dragging = true;
                       _p = (1 - y / h).clamp(0.0, 1.0);
                     });
                   }
 
+                  void settle() {
+                    if (_dragging) _commit(_live);
+                  }
+
                   return GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onVerticalDragStart: (d) => update(d.localPosition.dy),
                     onVerticalDragUpdate: (d) => update(d.localPosition.dy),
-                    onVerticalDragEnd: (_) {
-                      if (_committed == null && _dragging) _commit(_live);
-                    },
+                    onVerticalDragEnd: (_) => settle(),
+                    onVerticalDragCancel: settle,
                     onTapUp: (d) {
-                      if (_committed != null) return;
                       _p = (1 - d.localPosition.dy / h).clamp(0.0, 1.0);
                       _commit(_live);
                     },
@@ -1283,29 +1389,14 @@ class _SunriseSceneState extends State<SunriseScene> {
             ),
           ],
         ),
-        // Quiet, and only until the sun has been moved. Nothing on the sky
-        // says it can be dragged, and a person who does not try will tap a
-        // row and never find out it was theirs to move.
-        AnimatedOpacity(
-          duration: const Duration(milliseconds: 220),
-          opacity: shown == null ? 1 : 0,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 6),
-            child: Text(
-              'Drag the sun, or pick a line',
-              textAlign: TextAlign.center,
-              style: SoulType.muted.copyWith(fontSize: 12),
-            ),
-          ),
+        SceneHint(
+          shown == null ? 'Drag the sun to where it is true' : widget.options[shown],
+          chosen: _committed != null,
         ),
-        const SizedBox(height: 4),
         for (var i = 0; i < _count; i++) ...[
           if (i > 0) const SizedBox(height: 8),
           GestureDetector(
-            onTap: () {
-              if (_committed != null) return;
-              _commit(i);
-            },
+            onTap: () => _commit(i),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               width: double.infinity,
@@ -1343,6 +1434,7 @@ class SentenceScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
     required this.lead,
   });
 
@@ -1360,22 +1452,37 @@ class _SentenceSceneState extends State<SentenceScene> {
   Offset _drag = Offset.zero;
   int? _committed;
 
+  /// Whether the drag in progress began on an ending other than the one in
+  /// the blank, which is the case that told the host to wait.
+  bool _reopened = false;
+
   @override
   void initState() {
     super.initState();
     _committed = widget.answer;
   }
 
+  /// Puts [i] in the blank. Whatever was there before drifts back out on
+  /// its own, since only one ending is ever in the sentence.
   void _commit(int i) {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.selectionClick();
     setState(() {
       _dragging = null;
       _drag = Offset.zero;
       _committed = i;
+      _reopened = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) widget.onSelect(i);
+    widget.onSelect(i);
+  }
+
+  void _abort() {
+    final reopened = _reopened;
+    setState(() {
+      _dragging = null;
+      _drag = Offset.zero;
+      _reopened = false;
     });
+    if (reopened && _committed != null) widget.onSelect(_committed!);
   }
 
   /// The ending, made to sit inside the sentence. A leading I is dropped
@@ -1439,31 +1546,30 @@ class _SentenceSceneState extends State<SentenceScene> {
                     height: 48,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        if (_committed != null) return;
-                        _commit(i);
-                      },
+                      onTap: () => _commit(i),
                       onPanStart: (_) {
-                        if (_committed != null) return;
+                        final reopen = _committed != null && _committed != i;
                         setState(() {
                           _dragging = i;
                           _drag = Offset.zero;
+                          _reopened = reopen;
                         });
+                        if (reopen) widget.onReopen();
                       },
                       onPanUpdate: (d) {
-                        if (_committed != null || _dragging != i) return;
+                        if (_dragging != i) return;
                         setState(() => _drag += d.delta);
                       },
                       onPanEnd: (_) {
-                        if (_committed != null || _dragging != i) return;
+                        if (_dragging != i) return;
                         if (_drag.dy < -60) {
                           _commit(i);
                         } else {
-                          setState(() {
-                            _dragging = null;
-                            _drag = Offset.zero;
-                          });
+                          _abort();
                         }
+                      },
+                      onPanCancel: () {
+                        if (_dragging == i) _abort();
                       },
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 400),
@@ -1492,7 +1598,7 @@ class _SentenceSceneState extends State<SentenceScene> {
           }),
         ),
         SceneHint(
-          _committed == null ? 'Tap an ending, or lift it into the blank' : 'That is the sentence',
+          _committed == null ? 'Tap the ending that is true' : 'That is the sentence',
           chosen: _committed != null,
         ),
       ],
@@ -1510,6 +1616,7 @@ class WarmthScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
   });
 
   @override
@@ -1531,17 +1638,14 @@ class _WarmthSceneState extends State<WarmthScene> {
     if (_committed != null) _p = _committed! / 3;
   }
 
-  void _snap() {
-    final i = _live;
-    HapticFeedback.mediumImpact();
+  void _snapTo(int i) {
+    HapticFeedback.selectionClick();
     setState(() {
       _p = i / 3;
       _committed = i;
       _dragging = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 550), () {
-      if (mounted) widget.onSelect(i);
-    });
+    widget.onSelect(i);
   }
 
   @override
@@ -1551,116 +1655,86 @@ class _WarmthSceneState extends State<WarmthScene> {
     return Column(
       children: [
         SceneHint(
-          shown == null ? 'Slide the ember to where it is warm' : widget.options[shown],
+          shown == null ? 'Slide the ember to where it is true' : widget.options[shown],
           chosen: _committed != null,
         ),
         const SizedBox(height: 22),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SizedBox(
-            height: 48,
-            child: LayoutBuilder(builder: (context, box) {
-              final w = box.maxWidth;
-              void update(double x) {
-                if (_committed != null) return;
-                final p = (x / w).clamp(0.0, 1.0);
-                final next = (p * 3).round();
-                if (next != _lastLive) {
-                  HapticFeedback.selectionClick();
-                  _lastLive = next;
-                }
-                setState(() {
-                  _dragging = true;
-                  _p = p;
-                });
-              }
+          child: Column(
+            children: [
+              SizedBox(
+                height: 56,
+                child: LayoutBuilder(builder: (context, box) {
+                  final w = box.maxWidth;
+                  void update(double x) {
+                    if (_committed != null) {
+                      _committed = null;
+                      widget.onReopen();
+                    }
+                    final p = (x / w).clamp(0.0, 1.0);
+                    final next = (p * 3).round();
+                    if (next != _lastLive) {
+                      HapticFeedback.selectionClick();
+                      _lastLive = next;
+                    }
+                    setState(() {
+                      _dragging = true;
+                      _p = p;
+                    });
+                  }
 
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: (d) => update(d.localPosition.dx),
-                onHorizontalDragUpdate: (d) => update(d.localPosition.dx),
-                onHorizontalDragEnd: (_) {
-                  if (_committed == null && _dragging) _snap();
-                },
-                onTapUp: (d) {
-                  if (_committed != null) return;
-                  _p = (d.localPosition.dx / w).clamp(0.0, 1.0);
-                  _dragging = true;
-                  _snap();
-                },
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [SoulColors.border2, SoulColors.clay.withValues(alpha: 0.7)],
-                        ),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    for (var i = 0; i < 4; i++)
-                      Positioned(
-                        left: (w * i / 3 - 4).clamp(0.0, w - 8),
-                        child: Container(
-                          width: 8,
+                  void settle() {
+                    if (_dragging) _snapTo(_live);
+                  }
+
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onHorizontalDragStart: (d) => update(d.localPosition.dx),
+                    onHorizontalDragUpdate: (d) => update(d.localPosition.dx),
+                    onHorizontalDragEnd: (_) => settle(),
+                    onHorizontalDragCancel: settle,
+                    onTapUp: (d) => _snapTo(((d.localPosition.dx / w).clamp(0.0, 1.0) * 3).round()),
+                    child: Stack(
+                      alignment: Alignment.centerLeft,
+                      children: [
+                        Container(
                           height: 8,
-                          decoration: const BoxDecoration(color: SoulColors.s1, shape: BoxShape.circle),
-                        ),
-                      ),
-                    AnimatedPositioned(
-                      duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
-                      curve: Curves.easeOutBack,
-                      left: (w * _p - 22).clamp(-4.0, w - 40),
-                      child: AnimatedScale(
-                        duration: const Duration(milliseconds: 150),
-                        scale: _dragging ? 1.12 : 1,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(colors: [ember.withValues(alpha: 0.45), Colors.transparent]),
+                            gradient: LinearGradient(
+                              colors: [SoulColors.border2, SoulColors.clay.withValues(alpha: 0.7)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: ember,
-                              boxShadow: [BoxShadow(color: ember.withValues(alpha: 0.4 * _p), blurRadius: 14)],
+                        ),
+                        for (var i = 0; i < 4; i++)
+                          Positioned(
+                            left: (w * i / 3 - 4).clamp(0.0, w - 8),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(color: SoulColors.s1, shape: BoxShape.circle),
                             ),
                           ),
+                        AnimatedPositioned(
+                          duration: _dragging ? Duration.zero : const Duration(milliseconds: 350),
+                          curve: Curves.easeOutBack,
+                          left: (w * _p - 24).clamp(-4.0, w - 44),
+                          child: AnimatedScale(
+                            duration: const Duration(milliseconds: 150),
+                            scale: _dragging ? 1.12 : 1,
+                            child: _Handle(size: 32, base: ember, halo: true, lift: _p),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < 4; i++)
-              Expanded(
-                child: Text(
-                  widget.options[i],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: SoulType.sans,
-                    fontSize: 11,
-                    height: 1.25,
-                    fontWeight: FontWeight.w500,
-                    color: shown == i ? SoulColors.text : SoulColors.text3,
-                  ),
-                ),
+                  );
+                }),
               ),
-          ],
+              const SizedBox(height: 8),
+              _StopLabels(options: widget.options, shown: shown, onTap: _snapTo),
+            ],
+          ),
         ),
       ],
     );
@@ -1677,6 +1751,7 @@ class BloomScene extends Scene {
     required super.options,
     required super.answer,
     required super.onSelect,
+    required super.onReopen,
     required this.colours,
   });
 
@@ -1691,6 +1766,11 @@ class _BloomSceneState extends State<BloomScene> {
   bool _grown = false;
   bool _open = false;
 
+  /// Counts commits. Each delayed stage carries the count it was started
+  /// under and lands only if nothing has been chosen since, so a flower
+  /// closed by a later tap cannot be opened by an earlier one.
+  int _gen = 0;
+
   @override
   void initState() {
     super.initState();
@@ -1701,17 +1781,25 @@ class _BloomSceneState extends State<BloomScene> {
     }
   }
 
+  /// Grows [i]. A flower open before closes on its own, its stem back to
+  /// nothing and its seed back to small, since only one is ever grown.
+  /// The same seed touched again reports again and stays as it is.
   void _commit(int i) {
-    HapticFeedback.lightImpact();
-    setState(() => _committed = i);
-    Future<void>.delayed(const Duration(milliseconds: 40), () {
-      if (mounted) setState(() => _grown = true);
+    HapticFeedback.selectionClick();
+    if (_committed == i) {
+      widget.onSelect(i);
+      return;
+    }
+    _gen++;
+    final g = _gen;
+    setState(() {
+      _committed = i;
+      _grown = true;
+      _open = false;
     });
-    Future<void>.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) setState(() => _open = true);
-    });
-    Future<void>.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) widget.onSelect(i);
+    widget.onSelect(i);
+    Future<void>.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && g == _gen) setState(() => _open = true);
     });
   }
 
@@ -1729,7 +1817,7 @@ class _BloomSceneState extends State<BloomScene> {
           ),
         ),
         SceneHint(
-          _committed == null ? 'Tap the seed that is yours' : widget.options[_committed!],
+          _committed == null ? 'Tap the seed that is true' : widget.options[_committed!],
           chosen: _committed != null,
         ),
       ],
@@ -1743,10 +1831,7 @@ class _BloomSceneState extends State<BloomScene> {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (_committed != null) return;
-        _commit(i);
-      },
+      onTap: () => _commit(i),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 400),
         opacity: _committed != null && !chosen ? 0.3 : 1,
@@ -1760,18 +1845,18 @@ class _BloomSceneState extends State<BloomScene> {
                 clipBehavior: Clip.none,
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 900),
+                    duration: const Duration(milliseconds: 500),
                     curve: Curves.easeInOut,
                     width: 4,
                     height: stem,
                     decoration: BoxDecoration(color: SoulColors.moss, borderRadius: BorderRadius.circular(2)),
                   ),
                   AnimatedPositioned(
-                    duration: const Duration(milliseconds: 900),
+                    duration: const Duration(milliseconds: 500),
                     curve: Curves.easeInOut,
                     bottom: stem - 4,
                     child: AnimatedScale(
-                      duration: const Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 350),
                       curve: Curves.easeOutBack,
                       scale: chosen && _open ? 1 : (chosen ? 0.7 : 0.45),
                       child: chosen && _open

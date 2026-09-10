@@ -353,6 +353,7 @@ class SoulApi {
     int? durationMs,
     String? toneId,
     bool fromWeather = false,
+    bool introduction = false,
   }) async {
     final json = await _post('/entries', {
       'text': text,
@@ -362,6 +363,7 @@ class SoulApi {
       'localHour': DateTime.now().hour,
       'toneId': ?toneId,
       if (fromWeather) 'fromWeather': true,
+      if (introduction) 'introduction': true,
     });
     return SubmitResult.fromJson(json);
   }
@@ -399,6 +401,10 @@ class SoulApi {
   /// What the app holds about this user. The profile tab shows exactly
   /// this and nothing it has not been told.
   Future<Map<String, dynamic>> profileHeld() => _get('/profile');
+
+  /// The baseline answers the server holds.
+  Future<BaselineHeld> baselineHeld() async =>
+      BaselineHeld.fromJson(await _get('/baseline'));
 
   /// The baseline set. Skipped questions are simply absent.
   Future<void> baseline(String setVersion, List<int?> answers) async {
@@ -554,22 +560,33 @@ class SoulApi {
 
   /// The user's own words about somebody. Whatever they set here is theirs
   /// and is never written over by a later profile run.
-  Future<void> editPerson(
+  ///
+  /// Returns the id the person now lives under. A rename to a name already
+  /// on the list folds them together, and then it is the other one's id.
+  Future<String> editPerson(
     String id, {
     String? name,
     String? relation,
     String? reach,
   }) async {
-    await _patch('/people/$id', {
+    final json = await _patch('/people/$id', {
       'name': ?name,
       'relation': ?relation,
       'reach': ?reach,
     });
+    return json['id'] as String? ?? id;
   }
 
   /// Removes the person and the links. The entries stay.
   Future<void> forgetPerson(String id) async {
     await _delete('/people/$id');
+  }
+
+  /// Folds one person into another. Everything written about the first
+  /// moves under the second. Returns the id they now live under.
+  Future<String> mergePerson(String id, {required String into}) async {
+    final json = await _post('/people/$id/merge', {'into': into});
+    return json['id'] as String? ?? into;
   }
 
   /// Later. The card goes until tomorrow and nothing is recorded about what

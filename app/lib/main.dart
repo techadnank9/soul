@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -375,6 +376,30 @@ class _SessionState extends State<Session> {
   api.MirrorResult? _mirror;
   bool _loadingMirror = false;
 
+  /// The question asked when the reading does not arrive. Ours, fixed, and
+  /// the same for everybody, so the card never sits empty. The server asks
+  /// its own when it is the one that could not read closer.
+  static const _fallbackQuestion =
+      'Is there anything you might do about this, or nothing for now?';
+
+  static const _fallback = api.MirrorResult(
+    question: _fallbackQuestion,
+    fallback: true,
+  );
+
+  /// How long the reading gets before the fallback question goes up. The
+  /// request keeps running past it.
+  static const _mirrorPatience = Duration(seconds: 30);
+
+  Timer? _mirrorTimer;
+
+  /// Whether a pill has been tapped or a word typed under the question. A
+  /// reading that lands after that stays out of the way.
+  bool _touched = false;
+
+  /// One more look is offered under a fallback question, once.
+  bool _lookedAgain = false;
+
   /// Whether the entry behind the failure screen actually reached the server.
   bool _stored = false;
 
@@ -382,6 +407,12 @@ class _SessionState extends State<Session> {
   void initState() {
     super.initState();
     _submit();
+  }
+
+  @override
+  void dispose() {
+    _mirrorTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _submit() async {
@@ -437,23 +468,59 @@ class _SessionState extends State<Session> {
     }
   }
 
+  /// The reading. It never leaves the card empty: after thirty seconds, or
+  /// on a failure, the fallback question goes up while the request runs on.
+  /// A reading that lands late replaces the fallback only if nothing under
+  /// the question has been touched.
   Future<void> _lookCloser() async {
     final entryId = _entryId;
     if (entryId == null) return;
+    _mirrorTimer?.cancel();
     setState(() => _loadingMirror = true);
+    _mirrorTimer = Timer(_mirrorPatience, () {
+      if (!mounted || _mirror != null) return;
+      setState(() => _mirror = _fallback);
+    });
     try {
       final mirror = await _api.mirror(entryId);
+      _mirrorTimer?.cancel();
       if (!mounted) return;
       setState(() {
-        _mirror = mirror;
+        if (_mirror == null || !_touched) _mirror = mirror;
         _loadingMirror = false;
       });
     } catch (error) {
+      _mirrorTimer?.cancel();
       _api.event('mirror_failed', {
         'status': error is SoulApiException ? error.status : null,
       });
-      if (mounted) setState(() => _loadingMirror = false);
+      if (mounted) {
+        setState(() {
+          _mirror ??= _fallback;
+          _loadingMirror = false;
+        });
+      }
     }
+  }
+
+  void _lookAgain() {
+    if (_lookedAgain) return;
+    setState(() => _lookedAgain = true);
+    _lookCloser();
+  }
+
+  /// The answer to a pattern the reading brought back. Sent and not waited
+  /// on: the card has already said noted, and a lost answer is asked again
+  /// another day.
+  void _answerPattern(String answer) {
+    final candidateId = _mirror?.candidateId;
+    if (candidateId == null) return;
+    _api.event('pattern_answered', {'answer': answer});
+    _api.answerPattern(candidateId, answer).catchError((Object error) {
+      _api.event('pattern_answer_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
+    });
   }
 
   /// Done. What they wrote is held as a decision when there is anything to
@@ -505,6 +572,11 @@ class _SessionState extends State<Session> {
           loadingQuestion: _loadingMirror,
           underneath: _mirror?.underneath,
           question: _mirror?.question,
+          fallback: _mirror?.fallback ?? false,
+          proposal: _mirror?.cameUpBefore == true ? _mirror?.proposal : null,
+          onPatternAnswer: _answerPattern,
+          onTouched: () => _touched = true,
+          onLookAgain: _lookedAgain ? null : _lookAgain,
           onDone: _finish,
         ),
       _Beat.help when help != null =>

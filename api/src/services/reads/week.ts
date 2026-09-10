@@ -43,14 +43,26 @@ export async function week(session: Session): Promise<WeekView> {
      * tagger ran in. The tagger is async and can finish after midnight, and a
      * feeling that moved itself into the next week would be a theme the
      * student cannot find an entry for.
+     *
+     * One row per entry, the newest tag that names a feeling above the floor,
+     * as the day view and the patterns query do. An entry the tagger has run
+     * over twice used to count twice, which made the slices add up to more
+     * than the ring, and this is what lets unsorted below be a subtraction.
      */
     const themes = await tx<ThemeRow[]>`
       select t.feeling as "name", count(*)::int as "count"
-      from tags t
-      join entries e on e.id = t.entry_id
-      where t.student_id = ${session.studentId}
-        and t.feeling is not null
-        and t.confidence >= ${MIN_TAG_CONFIDENCE}
+      from entries e
+      join lateral (
+        select feeling
+        from tags
+        where entry_id = e.id
+          and student_id = ${session.studentId}
+          and feeling is not null
+          and confidence >= ${MIN_TAG_CONFIDENCE}
+        order by created_at desc
+        limit 1
+      ) t on true
+      where e.student_id = ${session.studentId}
         and (e.created_at at time zone ${zone})::date
             between ${first}::date and ${first}::date + 6
       group by t.feeling
@@ -104,13 +116,21 @@ export async function week(session: Session): Promise<WeekView> {
       }
     }
 
+    // The count of the seven days, not a query of its own, so the number
+    // above the ring is the ring. The themes are the other way to slice the
+    // same entries, at most one theme per entry, so the theme counts plus
+    // unsorted add up to this number. Unsorted is the entries in no shown
+    // theme: untagged, tagged under the floor, or under a fifth feeling.
+    const moments = days.reduce((total, day) => total + day.count, 0)
+    const sorted = themes.reduce((total, theme) => total + theme.count, 0)
+    const unsorted = themesFromAnswers ? 0 : Math.max(0, moments - sorted)
+
     return {
-      // The count of the seven days, not a query of its own, so the number
-      // above the ring can never disagree with the ring.
-      moments: days.reduce((total, day) => total + day.count, 0),
+      moments,
       opening,
       themesFromAnswers,
       themes: shown,
+      unsorted,
       days,
       holding: holding[0] ?? null,
     }

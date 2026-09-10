@@ -27,6 +27,12 @@ export const submitEntry = z.object({
    * when something was.
    */
   fromWeather: z.boolean().optional(),
+
+  /**
+   * The spoken introduction at first run. The entry is stored like any
+   * other and this marks it as the one the profile points at.
+   */
+  introduction: z.boolean().optional(),
 })
 export type SubmitEntry = z.infer<typeof submitEntry>
 
@@ -111,7 +117,7 @@ export type SubmitResult = z.infer<typeof submitResult>
  * The Mirror. Structured output, validated before display or storage. Free
  * prose is rejected rather than stored.
  */
-export const mirrorResult = z.object({
+export const mirrorReflection = z.object({
   tension: z.string().min(1).max(400),
   underneath: z.string().min(1).max(400),
   question: z.string().min(1).max(200),
@@ -123,6 +129,17 @@ export const mirrorResult = z.object({
     })
     .optional(),
 })
+export type MirrorReflection = z.infer<typeof mirrorReflection>
+
+/**
+ * What the route returns. Reflected carries the model's answer. Fallback is
+ * what the student gets when the model could not answer: one plain question,
+ * nothing asserted, and the entry stands as it was.
+ */
+export const mirrorResult = z.discriminatedUnion('state', [
+  mirrorReflection.extend({ state: z.literal('reflected') }),
+  z.object({ state: z.literal('fallback'), question: z.string().min(1).max(200) }),
+])
 export type MirrorResult = z.infer<typeof mirrorResult>
 
 export const createDecision = z.object({
@@ -177,6 +194,14 @@ export const weekView = z.object({
   themes: z
     .array(z.object({ name: z.string(), count: z.number().int() }))
     .max(4),
+
+  /**
+   * Moments in the week that are in no theme above: untagged, tagged below
+   * the confidence floor, or under a feeling past the fourth. The four
+   * counts and this one add up to moments. Zero while the themes come from
+   * the baseline answers, which have no entries behind them.
+   */
+  unsorted: z.number().int().min(0),
   days: z
     .array(
       z.object({
@@ -403,6 +428,22 @@ export const saveProfile = z.object({
   intentReason: z.enum(intentReasonKeys).nullable().optional(),
 })
 export type SaveProfile = z.infer<typeof saveProfile>
+
+/**
+ * What GET /baseline returns: the answers held for the current set, one per
+ * question answered, in question order. A question that was skipped is
+ * simply absent.
+ */
+export const baselineHeld = z.object({
+  setVersion: z.string(),
+  answers: z.array(
+    z.object({
+      questionIndex: z.number().int().min(0),
+      choiceIndex: z.number().int().min(0),
+    }),
+  ),
+})
+export type BaselineHeld = z.infer<typeof baselineHeld>
 
 /**
  * Signing in with Apple.

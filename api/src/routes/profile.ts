@@ -41,8 +41,12 @@ profile.get('/profile', async (c) => {
       appleUserId: students.appleUserId,
       intentArea: students.intentArea,
       intentReason: students.intentReason,
+      introductionId: entries.id,
+      introductionText: entries.text,
+      introductionAt: entries.createdAt,
     })
     .from(students)
+    .leftJoin(entries, eq(entries.id, students.introductionEntryId))
     .where(eq(students.id, session.studentId))
     .limit(1)
 
@@ -86,6 +90,16 @@ profile.get('/profile', async (c) => {
     // position and not showing it to them is the worse version of this.
     latitude: row?.latitude ?? null,
     longitude: row?.longitude ?? null,
+    // The entry they introduced themselves with at first run, read back
+    // whole. Null until one was marked.
+    introduction:
+      row?.introductionId && row.introductionText && row.introductionAt
+        ? {
+            entryId: row.introductionId,
+            text: row.introductionText,
+            at: row.introductionAt.toISOString(),
+          }
+        : null,
   })
 })
 

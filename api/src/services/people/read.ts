@@ -1,5 +1,7 @@
 import { asStudent, type Session } from '../../session.js'
 import { ISO_INSTANT } from '../reads/rules.js'
+import { mergeWithin } from './merge.js'
+import { enqueue } from '../../jobs/enqueue.js'
 
 /**
  * The people a student writes about, read back to them.
@@ -89,13 +91,42 @@ export async function readPerson(
   })
 }
 
-/** Their words win. A field they set is marked as theirs and never rewritten. */
+/**
+ * Their words win. A field they set is marked as theirs and never rewritten.
+ *
+ * A rename onto a name they already have, matched the way the extractor
+ * matches, is the student saying two rows are one person. The renamed row is
+ * merged into the one that already carries the name, and the id that comes
+ * back is the survivor's, so the caller knows which row to show next.
+ *
+ * Returns the id of the row that holds the edit, or null when the person is
+ * not theirs.
+ */
 export async function editPerson(
   session: Session,
   personId: string,
   input: { name?: string; relation?: string; reach?: string },
-): Promise<boolean> {
-  return asStudent(session, async (tx) => {
+): Promise<string | null> {
+  const result = await asStudent(session, async (tx) => {
+    let target = personId
+    let merged = false
+
+    if (input.name !== undefined) {
+      const same = await tx<{ id: string }[]>`
+        select id from people
+        where student_id = ${session.studentId}
+          and lower(name) = lower(${input.name})
+          and id <> ${personId}
+        limit 1`
+
+      const survivor = same[0]?.id
+      if (survivor) {
+        merged = await mergeWithin(tx, session, survivor, personId)
+        if (!merged) return null
+        target = survivor
+      }
+    }
+
     const rows = await tx<{ id: string }[]>`
       update people
       set name = coalesce(${input.name ?? null}, name),
@@ -110,12 +141,17 @@ export async function editPerson(
             else reach
           end,
           reach_is_theirs = reach_is_theirs or ${input.reach !== undefined}
-      where id = ${personId}
+      where id = ${target}
         and student_id = ${session.studentId}
       returning id`
 
-    return rows.length > 0
+    const id = rows[0]?.id ?? null
+    return id ? { id, merged } : null
   })
+
+  if (result?.merged) await enqueue('person_profile', { personId: result.id }, session)
+
+  return result?.id ?? null
 }
 
 /**
@@ -143,6 +179,12 @@ export async function forgetPerson(
     await tx`
       delete from people
       where id = ${personId} and student_id = ${session.studentId}`
+
+    // Districts have inspection rights. The row says a record about somebody
+    // was removed, and nothing about who they were.
+    await tx`
+      insert into audit_log (actor_id, actor_role, action, subject_student_id, subject_type, subject_id)
+      values (${session.studentId}, 'student', 'person_forgotten', ${session.studentId}, 'person', ${personId})`
 
     return true
   })

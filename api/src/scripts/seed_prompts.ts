@@ -34,10 +34,16 @@ const purposes = [
 
 async function main() {
   for (const file of readdirSync(folder).sort()) {
-    const match = /^(.+)\.(v\d+)\.md$/.exec(file)
+    // A file named <purpose>.fallback.v<n>.md is wording the service reads by
+    // version when the model cannot answer. It is stored inactive, because
+    // the one active row per purpose is the model prompt and the index allows
+    // only one, and it is looked up by its version and never by active.
+    const match = /^(.+?)(\.fallback)?\.(v\d+)\.md$/.exec(file)
     if (!match) continue
 
-    const [, purpose, version] = match
+    const [, purpose, fallbackPart, number] = match
+    const fallback = Boolean(fallbackPart)
+    const version = fallback ? `fallback.${number}` : number!
     if (!purposes.includes(purpose as (typeof purposes)[number])) {
       console.warn(`skipping ${file}, unknown purpose`)
       continue
@@ -49,21 +55,24 @@ async function main() {
     // One active prompt per purpose. The unique index enforces it, so the old
     // one has to be stood down before the new one is raised, not after. The
     // other order held only while each purpose had a single version, and it
-    // failed the first time a second one arrived.
-    await db
-      .update(prompts)
-      .set({ active: false })
-      .where(and(eq(prompts.purpose, typed), ne(prompts.version, version!)))
+    // failed the first time a second one arrived. A fallback row stands
+    // nothing down, since it is never the active one.
+    if (!fallback) {
+      await db
+        .update(prompts)
+        .set({ active: false })
+        .where(and(eq(prompts.purpose, typed), ne(prompts.version, version)))
+    }
 
     await db
       .insert(prompts)
-      .values({ purpose: typed, version: version!, text, active: true })
+      .values({ purpose: typed, version, text, active: !fallback })
       .onConflictDoUpdate({
         target: [prompts.purpose, prompts.version],
-        set: { text, active: true },
+        set: { text, active: !fallback },
       })
 
-    console.log(`${purpose} ${version} is active`)
+    console.log(fallback ? `${purpose} ${version} is stored` : `${purpose} ${version} is active`)
   }
 
   clearPromptCache()

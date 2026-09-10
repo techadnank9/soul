@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../capture/speech_field.dart';
@@ -20,6 +21,11 @@ class BeatOneScreen extends StatefulWidget {
     this.underneath,
     this.question,
     this.loadingQuestion = false,
+    this.fallback = false,
+    this.proposal,
+    this.onPatternAnswer,
+    this.onTouched,
+    this.onLookAgain,
   });
 
   final String transcript;
@@ -29,10 +35,32 @@ class BeatOneScreen extends StatefulWidget {
 
   /// The fuller reading, when it has arrived. underneath is one hedged
   /// sentence, question is the one thing to sit with. Both null until the
-  /// Mirror answers, and the card shows a thin line while it thinks.
+  /// Mirror answers, and the card shows a thin line while it thinks. A
+  /// question can arrive with nothing underneath it when the reading did
+  /// not come in time.
   final String? underneath;
   final String? question;
   final bool loadingQuestion;
+
+  /// The question shown is the one asked when the reading did not arrive,
+  /// rather than one written for this entry.
+  final bool fallback;
+
+  /// A pattern the reading brought back, in words, when this came up
+  /// before. Null when nothing did.
+  final String? proposal;
+
+  /// The answer to the proposal, as the server names it: fits or
+  /// not_the_same.
+  final ValueChanged<String>? onPatternAnswer;
+
+  /// The first time a pill is tapped or a word is typed. After this a late
+  /// reading must not replace what is on the card.
+  final VoidCallback? onTouched;
+
+  /// One more try at the reading, offered under a fallback question and
+  /// withdrawn once it has been taken.
+  final VoidCallback? onLookAgain;
 
   /// Done. answer is yes, no or null, and said is whatever they wrote or
   /// spoke into the box, which may be empty.
@@ -46,15 +74,67 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
   final _said = TextEditingController();
   bool? _answer;
 
+  /// Whether the person has been told the pattern arrived. Once, whichever
+  /// way it lands.
+  bool _nudged = false;
+
+  /// Whether the proposal has been answered, so the pills can go.
+  bool _patternAnswered = false;
+
+  bool _touched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _said.addListener(_onTyped);
+    _nudgeIfPattern();
+  }
+
+  @override
+  void didUpdateWidget(BeatOneScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.question == null && widget.question != null) {
+      _nudgeIfPattern();
+    }
+  }
+
   @override
   void dispose() {
+    _said.removeListener(_onTyped);
     _said.dispose();
     super.dispose();
+  }
+
+  void _nudgeIfPattern() {
+    if (_nudged || widget.question == null || widget.proposal == null) return;
+    _nudged = true;
+    HapticFeedback.lightImpact();
+  }
+
+  void _onTyped() {
+    if (_said.text.isNotEmpty) _touch();
+  }
+
+  void _touch() {
+    if (_touched) return;
+    _touched = true;
+    widget.onTouched?.call();
+  }
+
+  void _pick(bool answer) {
+    _touch();
+    setState(() => _answer = answer);
+  }
+
+  void _answerPattern(String answer) {
+    setState(() => _patternAnswered = true);
+    widget.onPatternAnswer?.call(answer);
   }
 
   @override
   Widget build(BuildContext context) {
     final question = widget.question;
+    final proposal = widget.proposal;
     return Screen(
       body: [
         Row(
@@ -84,8 +164,9 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
         const SizedBox(height: 28),
         // The question, on the tinted card because it is the thing waiting
         // for them. While it is on its way, a thin line says so and nothing
-        // else changes.
-        if (widget.loadingQuestion)
+        // else changes. Once there is a question the card stays, whatever
+        // else is still being looked for.
+        if (question == null && widget.loadingQuestion)
           const _ThinkingLine()
         else if (question != null) ...[
           SoulCard(
@@ -94,6 +175,29 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (proposal != null) ...[
+                  Label(_patternAnswered ? 'noted' : 'this came up before'),
+                  const SizedBox(height: 8),
+                  Text(
+                    proposal,
+                    style: SoulType.lead.copyWith(color: SoulColors.clayDark),
+                  ),
+                  if (!_patternAnswered) ...[
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        _Pill('It fits',
+                            on: false,
+                            onTap: () => _answerPattern('fits')),
+                        const SizedBox(width: 8),
+                        _Pill('Not the same',
+                            on: false,
+                            onTap: () => _answerPattern('not_the_same')),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                ],
                 const Label('one question'),
                 const SizedBox(height: 8),
                 if (widget.underneath != null) ...[
@@ -104,9 +208,9 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    _Pill('Yes', on: _answer == true, onTap: () => setState(() => _answer = true)),
+                    _Pill('Yes', on: _answer == true, onTap: () => _pick(true)),
                     const SizedBox(width: 8),
-                    _Pill('No', on: _answer == false, onTap: () => setState(() => _answer = false)),
+                    _Pill('No', on: _answer == false, onTap: () => _pick(false)),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -114,6 +218,14 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
               ],
             ),
           ),
+          if (widget.fallback && widget.onLookAgain != null) ...[
+            const SizedBox(height: 8),
+            SoulButton(
+              'Look closer again',
+              kind: SoulButtonKind.ghost,
+              onPressed: widget.onLookAgain,
+            ),
+          ],
         ],
       ],
       footer: SoulButton(
