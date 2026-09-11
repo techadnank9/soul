@@ -29,6 +29,7 @@ class LiveSpeech {
   final String language;
 
   WebSocket? _socket;
+  StreamSubscription<dynamic>? _messages;
   final _transcripts = StreamController<Transcript>.broadcast();
   final _held = BytesBuilder(copy: false);
   Completer<void>? _settled;
@@ -55,7 +56,17 @@ class LiveSpeech {
     final socket = await WebSocket.connect(url.toString())
         .timeout(const Duration(seconds: 8));
     _socket = socket;
-    socket.listen(_onMessage, onError: _transcripts.addError, onDone: _settle);
+    _messages = socket.listen(_onMessage, onError: _onError, onDone: _settle);
+  }
+
+  /// A message can still arrive while the socket is being closed, after the
+  /// person has stopped and the stream of words has been shut. It has
+  /// nowhere to go and is dropped rather than thrown.
+  bool get _open => !_transcripts.isClosed;
+
+  void _onError(Object error) {
+    if (_open) _transcripts.addError(error);
+    _settle();
   }
 
   /// Once. The socket closing after a commit would otherwise complete it twice.
@@ -65,7 +76,7 @@ class LiveSpeech {
   }
 
   void _onMessage(dynamic raw) {
-    if (raw is! String) return;
+    if (!_open || raw is! String) return;
     final message = jsonDecode(raw);
     if (message is! Map) return;
     final type = message['message_type'];
@@ -148,9 +159,14 @@ class LiveSpeech {
   }
 
   Future<void> close() async {
+    // The listener goes first, so nothing the closing socket still delivers
+    // can reach a stream that is no longer there.
+    await _messages?.cancel();
+    _messages = null;
+    _settle();
     await _socket?.close();
     _socket = null;
-    await _transcripts.close();
+    if (_open) await _transcripts.close();
     _held.clear();
   }
 }

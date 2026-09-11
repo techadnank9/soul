@@ -5593,3 +5593,38 @@ that the app names and cannot be answered is an assertion, which decision
 004 forbids; the answer is what makes it a proposal.
 
 Reverses if: the impact fires so rarely that nobody learns what it means.
+
+---
+
+### 270. A word arriving after the person stopped is dropped, not thrown
+Sep 2026, Claude
+
+Decision: the live transcription connection cancels its own listener before
+it closes the stream of words, and a message that still gets through is
+dropped.
+
+Sentry FLUTTER issue 7710667439, three people on build 7, the last of them
+this morning. `StateError: Bad state: Cannot add new events after calling
+close`, in `LiveSpeech._onMessage`, as an unhandled fatal. The breadcrumbs
+end on speech stopped, so it is the stop path every time.
+
+What happened: `close()` shut the socket and then the stream of words, but
+the socket's listener was never cancelled. A partial transcript the
+transcriber had already sent was delivered during or after the close and
+added to a stream that was gone. Nothing was lost by dropping it: the
+words on the screen are the last guess, and the stop path already keeps
+that guess when the commit does not come back.
+
+The fix is three lines of intent. The subscription is held and cancelled
+first in `close()`, the message and error handlers check the stream is open
+before adding to it, and `close()` can be called twice without harm, which
+the dispose paths on both capture screens already rely on. An error from
+the socket now also settles the wait in `finish()`, because nothing more is
+coming.
+
+Rejected: catching the StateError around the add. It would hide the
+ordering mistake rather than fix it, and the error handler had the same
+hole.
+
+Would reverse it: nothing. This is the shape a stream owner should have had
+from the start.
