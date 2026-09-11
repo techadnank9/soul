@@ -457,6 +457,7 @@ class _SessionState extends State<Session> {
       // The request itself failed, so nothing reached the server.
       _api.event('entry_failed', {
         'status': error is SoulApiException ? error.status : null,
+        'error': error.runtimeType.toString(),
         'spoken': widget.spoken,
       });
       if (mounted) {

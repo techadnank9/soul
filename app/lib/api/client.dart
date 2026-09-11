@@ -150,7 +150,11 @@ class SoulApi {
       method,
       Uri.parse('$baseUrl$path'),
     );
-    request.headers.set('content-type', 'application/json');
+    // The charset is not decoration. dart:io encodes a body as Latin 1
+    // unless the content type names something else, and a curly apostrophe,
+    // an emoji or any script that is not Latin throws before the request
+    // leaves the phone. Decision 271.
+    request.headers.set('content-type', 'application/json; charset=utf-8');
     request.headers.set('authorization', 'Bearer $bearer');
     if (body != null) request.write(jsonEncode(body));
 
@@ -227,7 +231,11 @@ class SoulApi {
   Future<Map<String, dynamic>> _post(String path, Object? body) async {
     final bearer = await _bearer();
     final request = await _client.postUrl(Uri.parse('$baseUrl$path'));
-    request.headers.set('content-type', 'application/json');
+    // The charset is not decoration. dart:io encodes a body as Latin 1
+    // unless the content type names something else, and a curly apostrophe,
+    // an emoji or any script that is not Latin throws before the request
+    // leaves the phone. Decision 271.
+    request.headers.set('content-type', 'application/json; charset=utf-8');
     request.headers.set('authorization', 'Bearer $bearer');
     if (body != null) request.write(jsonEncode(body));
 

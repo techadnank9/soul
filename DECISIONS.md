@@ -5628,3 +5628,43 @@ hole.
 
 Would reverse it: nothing. This is the shape a stream owner should have had
 from the start.
+
+---
+
+### 271. The body of a request is sent as UTF-8, which it never was
+Sep 2026, Claude
+
+Decision: every JSON request the app sends names its charset, so dart:io
+encodes it as UTF-8 instead of Latin 1.
+
+This is the "I am not able to send this" report, and it was never the
+network. dart:io's HttpClient encodes a written body as Latin 1 unless the
+content type says otherwise, and the app said `application/json` with no
+charset. A body containing any character outside Latin 1 throws an
+ArgumentError before the request leaves the phone: a curly apostrophe,
+which the iPhone keyboard puts in every "don't", an emoji, a name in
+Arabic or Hindi. The catch in the session screen logged it as
+`entry_failed` with no status, which is exactly what the table and PostHog
+show: four in two minutes from one person today, and the same person's
+spoken introduction failing the same way during first run the day before,
+each one followed by a rage tap.
+
+The proof is in the entries table. Of 341 entries stored in ten days, not
+one contains a character above U+00FF. Nobody writes like that. Every entry
+that did was lost on the phone, and the person was told the app could not
+be reached. Characters between U+0080 and U+00FF, an é say, went through
+as Latin 1 bytes that the server read as broken UTF-8, so those were the
+lucky ones.
+
+Both write sites in client.dart now send `application/json; charset=utf-8`,
+which dart:io reads and honours. A five string repro against a local
+server, straight apostrophe, curly apostrophe, é, emoji and Devanagari,
+threw on the second and now passes all five. `entry_failed` also carries
+the error's type from now on, as `reminders_sync_failed` already did, so a
+failure with no status is never again read as the network.
+
+Rejected: escaping non ASCII in the JSON on the way out. It would hide the
+encoding rather than set it, and the audio upload and any future body
+would meet the same default.
+
+Would reverse it: nothing. The header was wrong.
