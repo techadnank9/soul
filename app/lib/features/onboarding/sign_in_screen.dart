@@ -739,6 +739,7 @@ class _Field extends StatelessWidget {
       child: TextField(
         controller: controller,
         enabled: enabled,
+        contextMenuBuilder: soulContextMenu,
         keyboardType: keyboard,
         autocorrect: false,
         textInputAction: TextInputAction.done,

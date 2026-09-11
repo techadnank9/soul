@@ -1,6 +1,25 @@
 import 'package:flutter/material.dart';
 import 'soul_theme.dart';
 
+/// The edit menu on every box a person types into.
+///
+/// Flutter only lists Paste once it has asked the phone whether the
+/// clipboard holds text, and the menu is often drawn before the answer
+/// comes back. On iOS that leaves a long press showing Scan Text and
+/// nothing else, and somebody with a paragraph copied has no way to put
+/// it in. Paste is listed every time here. The phone decides what it does.
+/// Decision 272.
+Widget soulContextMenu(BuildContext context, EditableTextState state) {
+  if (SystemContextMenu.isSupportedByField(state)) {
+    final items = SystemContextMenu.getDefaultItems(state);
+    if (!items.any((i) => i is IOSSystemContextMenuItemPaste)) {
+      items.add(const IOSSystemContextMenuItemPaste());
+    }
+    return SystemContextMenu.editableText(editableTextState: state, items: items);
+  }
+  return AdaptiveTextSelectionToolbar.editableText(editableTextState: state);
+}
+
 /// The pieces every screen is assembled from. Each one has a counterpart class
 /// in docs/screens.html. Change both together or the designs stop being true.
 
@@ -226,6 +245,7 @@ class SoulField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       autofocus: autofocus,
+      contextMenuBuilder: soulContextMenu,
       style: SoulType.field,
       cursorColor: SoulColors.clay,
       minLines: 1,

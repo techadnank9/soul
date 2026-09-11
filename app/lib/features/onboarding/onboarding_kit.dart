@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/soul_theme.dart';
+import '../../theme/widgets.dart';
 
 /// The furniture first run is built from, so fifteen screens share one set
 /// of spacings, one button and one selected state rather than fifteen
@@ -455,6 +456,7 @@ class NameField extends StatelessWidget {
     return TextField(
       controller: controller,
       focusNode: focusNode,
+      contextMenuBuilder: soulContextMenu,
       style: const TextStyle(
         fontFamily: SoulType.serif,
         fontSize: 21,

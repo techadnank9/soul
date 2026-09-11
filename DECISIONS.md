@@ -5668,3 +5668,37 @@ encoding rather than set it, and the audio upload and any future body
 would meet the same default.
 
 Would reverse it: nothing. The header was wrong.
+
+---
+
+### 272. Paste is always on the edit menu
+Sep 2026, Claude
+
+Decision: every box a person types into lists Paste on the long press
+menu every time, whether or not Flutter has yet heard from the phone that
+the clipboard holds text.
+
+A tester wrote "I was trying to paste something and it wouldn't", with a
+screenshot of the entry box showing a menu that said Scan Text and
+nothing else. Flutter draws the iOS menu from a list it builds at the
+moment of the long press, and Paste is on that list only when an earlier
+question to the phone, whether the clipboard has strings, has come back
+pasteable. It is asked when the box is focused and answered later, so a
+first long press often comes before the answer, and the menu goes up
+without Paste. iOS then adds Scan Text of its own accord, which is why the
+menu was not empty.
+
+One function, `soulContextMenu` in theme/widgets.dart, takes Flutter's
+default items and adds Paste if it is missing. The framework says items
+passed this way are shown regardless of the state of the field, and the
+phone still decides what Paste does. The Flutter drawn menu is kept as the
+fallback where the system one is not supported. It is wired into the entry
+box, the name field, the sign in field and the shared SoulField, which is
+every TextField except the two search boxes in the location picker.
+
+Rejected: a paste button drawn next to the box. It would put a second way
+to do a thing the phone already has one for, and the tester asked for the
+menu to work, not for a button.
+
+Would reverse it: Flutter resolving the clipboard status before the menu
+is built, at which point the default list carries Paste on its own.

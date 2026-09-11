@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import '../../api/client.dart';
 import '../../theme/soul_theme.dart';
 import 'live_speech.dart';
+import '../../theme/widgets.dart';
 
 /// A box you can type into or talk into.
 ///
@@ -185,6 +186,7 @@ class _SpeechFieldState extends State<SpeechField> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              contextMenuBuilder: soulContextMenu,
               focusNode: widget.focusNode,
               scrollController: _scroll,
               minLines: 1,
