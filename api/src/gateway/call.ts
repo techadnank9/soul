@@ -382,9 +382,35 @@ function parseStructured<T>(schema: ZodType<T>, raw: string): T {
   } catch {
     throw new GatewayError('reply was not json')
   }
-  const result = schema.safeParse(value)
-  if (!result.success) throw new GatewayError('reply did not match the schema')
+  const result = schema.safeParse(undash(value))
+  if (!result.success) {
+    const first = result.error.issues[0]
+    const where = first?.path.join('.') || 'root'
+    throw new GatewayError(`reply did not match the schema at ${where}: ${first?.message}`)
+  }
   return result.data
+}
+
+/**
+ * Every string in a reply, with its dashes taken out.
+ *
+ * The contracts refuse a dash in anything a person reads, and the prompts
+ * say so, but a model still writes "co-worker" and "check-in" because that
+ * is how the words are spelt. Rejecting the whole reply for one hyphen threw
+ * away good facts and, with no second provider configured, failed the job.
+ * A dash becomes a space, which is the house style anyway. Decision 273.
+ */
+function undash(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.replace(/[-\u2010-\u2015\u2212]+/g, ' ').replace(/ {2,}/g, ' ').trim()
+  }
+  if (Array.isArray(value)) return value.map(undash)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, undash(v)]),
+    )
+  }
+  return value
 }
 
 /**

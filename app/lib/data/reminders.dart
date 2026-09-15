@@ -79,6 +79,7 @@ class Reminders {
     } catch (error) {
       _api.event('reminders_sync_failed', {
         'error': error.runtimeType.toString(),
+        'status': error is SoulApiException ? error.status : null,
       });
     }
   }

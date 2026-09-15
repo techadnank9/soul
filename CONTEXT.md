@@ -88,6 +88,39 @@ by the student before it becomes theirs.
 
 ---
 
+## What Soul Space stands for, said by the founder in September 2026
+
+This is the founder's own statement of the product, given on 15 September
+2026, and it is the sentence every other rule serves.
+
+People usually already know what they should do. What shapes what they
+actually do is their own history, what they felt, and the meaning they
+attached to what happened. So every reflection in Soul should help a person
+pull three things apart: what happened, what they made it mean, and how they
+responded. Then, gently, it connects moments that look alike over time.
+
+The app never diagnoses and never says "this is your pattern". The register
+for anything it has noticed is "I may be noticing something", followed by
+the person's own choice to confirm it, reject it, or leave it unsure. The
+third answer is as valid as the first two and is stored the same way.
+
+The goal for launch is one thing: a single moment of self recognition, the
+person thinking "I did not realise I keep doing that". That moment is what
+makes Soul different from a blank journal and from generic advice from a
+model, and it is the test a build is judged by until the app is out. The
+deeper work comes after release.
+
+What this changes in practice: a reflection that only restates what
+happened has done a third of the job. The Mirror's tension and underneath
+are where the meaning and the response get named, in the person's words.
+And a pattern is always offered in the hedged register above, never
+announced. The one place the app speaks plainly is still the sentence
+under a good or a bad pattern, decision 245 and the section above, and
+that sentence comes only after the person has confirmed the pattern is
+theirs.
+
+---
+
 ## Where the clinical guidance comes from
 
 Dr. Sofia Georgiadou, a licensed clinician with over fifteen years of practice

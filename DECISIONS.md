@@ -5702,3 +5702,77 @@ menu to work, not for a button.
 
 Would reverse it: Flutter resolving the clipboard status before the menu
 is built, at which point the default list carries Paste on its own.
+
+---
+
+### 273. A dash in a model reply becomes a space, not a failed job
+Sep 2026, Claude
+
+Decision: `parseStructured` in the gateway replaces every dash character in
+every string of a reply with a space before the schema sees it, and a reply
+that still fails names the field and the reason in the error.
+
+FLUTTER issue Y on Sentry, seven events over a week on Render, the last on
+11 September: "every provider failed for facts. openai: reply did not match
+the schema". The facts contract refuses a dash in any value, which is the
+voice rule, and the prompt says so. The model still writes words the way
+they are spelt, "co worker" with a hyphen, "check in" with a hyphen, and one
+such word failed the whole reply. With Gemini and OpenRouter unconfigured
+there was no second attempt, so the job failed five times and was marked
+failed, and the person's facts for that entry were never written.
+
+Turning the dash into a space keeps the good facts and lands them in house
+style, which writes those words with a space anyway. The error now says
+which field and why, so the next schema failure can be read from Sentry
+instead of guessed at.
+
+Rejected: loosening the contract to allow hyphens. The rule is right; the
+enforcement was in the wrong place.
+
+Would reverse it: a value where a dash carries meaning that a space loses.
+None of the contracts hold one.
+
+---
+
+### 274. The reminder sync failures were a deploy gap, and the event now carries the status
+Sep 2026, Claude
+
+Decision: no code change to the sync. The event it logs on failure carries
+the HTTP status from now on, as `entry_failed` does.
+
+FLUTTER issue X, thirty four `reminders_sync_failed` events from eleven
+people between 8 and 10 September, every one a `SoulApiException` with no
+status recorded. The route, `GET /reminders`, was added on 7 September in
+commit bcc0945. Render was running 973694c, the commit before it, from 7 September until
+the founder fired the deploy hook on 10 September at 12:46, and the
+failures stop at that minute. The app on builds 5 and 6 was calling a route the
+service did not have yet, and the service answered 404. Nothing has failed
+since.
+
+Two things follow. Pushes to main do not deploy on their own, decision 192,
+so an app build that depends on a new route has to wait for the founder to
+deploy the service first, and release.sh cannot check that for them. And a
+failure event that records only the exception's class name cost two days
+of guessing; the status is one more field.
+
+Would reverse it: nothing. This records what happened.
+
+---
+
+### 275. What Soul Space stands for, in the founder's words
+Sep 2026, founder
+
+Decision: the founder's statement of the product, given on 15 September, is
+written into CONTEXT.md as its own section, ahead of the clinical guidance.
+
+Three parts of it are rules from now on. Every reflection helps a person
+separate what happened, what they made it mean, and how they responded.
+Anything the app has noticed is offered as "I may be noticing something",
+with confirm, reject and unsure as equal answers. And the launch is judged
+by one moment of self recognition, "I did not realise I keep doing that",
+not by breadth.
+
+It sits alongside decision 245 rather than against it. The plain sentence
+under a confirmed pattern stays; the proposal before it is hedged.
+
+Would reverse it: the founder.
