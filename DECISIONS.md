@@ -5816,3 +5816,40 @@ Rejected: raising the threshold so only high blocks. The founder did not
 ask for fewer screens, they asked for none.
 
 Would reverse it: counsel saying the referral has to be on the screen.
+
+---
+
+### 277. The location dialog goes up once per install
+Sep 2026, founder
+
+Decision: the phone's location dialog is put up once in the life of the
+install, from wherever it is first needed, and home never puts it up again.
+A keychain flag records that it has been shown. The share button in the
+profile is the one place that may still raise it, because there a person
+has tapped for it.
+
+The founder, 17 September: the app keeps asking for location for the card,
+which is annoying, and if it cannot get a good position it should leave
+the weather out and write the card from what it knows.
+
+What was happening. Home reads the phone's position at launch, on every
+return from the background, and whenever the week is reloaded with no
+card yet. Each read asked for permission whenever the phone reported
+denied, which on iOS is also what never asked looks like, and also what
+Allow Once looks like the next time the app opens. So a person who chose
+Allow Once, which is the first option iOS offers, was asked again on
+every launch and every return. Somebody who chose Allow While Using was
+asked once, which is why it did not show up in development.
+
+The second half was already true and is unchanged. The card is shown
+whatever the position answers: the phone's fix, then its last fix, then
+the ones the app kept, then the profile, then nothing. The question is
+written from where they left off first, then the sky, then the day, and
+a card without a sky is written from the first and the last.
+
+Rejected: never asking from home at all, only from the profile. Nobody
+finds the profile on day one, and the card would be about the middle of
+a region for everybody.
+
+Would reverse it: iOS reporting Allow Once as its own state, at which
+point the flag is redundant.

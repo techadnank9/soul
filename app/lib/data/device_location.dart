@@ -18,14 +18,47 @@ class DeviceLocation {
   final double longitude;
 }
 
-/// Asks, once. A user who says no is not asked again by this function, and
-/// a user who has said never is not shown a prompt that cannot appear.
+/// Whether this install has ever put the phone's location dialog up.
+///
+/// iOS forgets an answer of Allow Once as soon as the app leaves the screen,
+/// and reports it afterwards the same way it reports never asked. Home used
+/// to ask again on every launch and every return from the background, so a
+/// person who had already answered was asked over and over. The dialog is
+/// now put up once in the life of the install, from wherever it comes
+/// first, and after that the phone's answer is taken as it stands. The one
+/// exception is the share button in the profile, which is a person asking
+/// for the dialog and gets it. Decision 277.
+const _askedKey = 'location_asked';
+
+Future<bool> _asked() async {
+  try {
+    return await _fixes.read(key: _askedKey) == 'yes';
+  } catch (_) {
+    // A keychain that will not open reads as never asked, which is one more
+    // dialog at worst.
+    return false;
+  }
+}
+
+Future<void> _markAsked() async {
+  try {
+    await _fixes.write(key: _askedKey, value: 'yes');
+  } catch (_) {
+    // Nothing more to do about it here.
+  }
+}
+
+/// Asks when the phone has no answer yet. A user who says no is not asked
+/// again by this function, and a user who has said never is not shown a
+/// prompt that cannot appear. This is behind a button somebody tapped, so
+/// it may put the dialog up even when home already has.
 Future<DeviceLocation?> currentLocation() async {
   try {
     if (!await Geolocator.isLocationServiceEnabled()) return null;
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      await _markAsked();
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied ||
@@ -55,10 +88,10 @@ Future<DeviceLocation?> currentLocation() async {
 /// Where the phone is right now, for the card at the top of home.
 ///
 /// It asks the first time, so the card is about where somebody is standing
-/// rather than where they were when they first opened the app. iOS asks
-/// once and remembers the answer, so this is one dialog in the life of the
-/// app and never a dialog on every open. Somebody who has said no is not
-/// asked again.
+/// rather than where they were when they first opened the app. It is one
+/// dialog in the life of the install and never a dialog on every open,
+/// whatever the phone reports afterwards. Somebody who has said no, or
+/// Allow Once, or nothing, is not asked again from here.
 ///
 /// It is never written anywhere. The position in the profile is the one
 /// they gave, and only they change it.
@@ -70,9 +103,11 @@ Future<DeviceLocation?> locationNow() async {
     if (!await Geolocator.isLocationServiceEnabled()) return null;
 
     var permission = await Geolocator.checkPermission();
-    // Denied on iOS is also what never asked looks like. Refused for good
-    // is its own answer and is not asked again.
-    if (permission == LocationPermission.denied) {
+    // Denied on iOS is also what never asked looks like, and what Allow
+    // Once looks like the next time. The dialog goes up only if no part of
+    // the app has put it up before. Refused for good is its own answer.
+    if (permission == LocationPermission.denied && !await _asked()) {
+      await _markAsked();
       permission = await Geolocator.requestPermission();
     }
     if (permission != LocationPermission.always &&

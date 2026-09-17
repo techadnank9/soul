@@ -80,7 +80,9 @@ main.dart → onboarding/first_run.dart, FirstRun
   │     of the sixteen regions is stored, and city, state and country are
   │     held as words in place. location_picker.dart holds the names
   │        data/device_location.dart asks for permission, coarse failure and
-  │        refusal both fall back to the map, which is always on screen
+  │        refusal both fall back to the map, which is always on screen.
+  │        The dialog goes up once per install, from wherever it comes
+  │        first; home never puts it up again. Decision 277
   │        world_map.dart holds the coastlines and the projection
   │     POST /profile  → services/profile/save.ts   ← background, nobody waits
   │        writes only the fields that arrived, and null empties a field
