@@ -7,21 +7,24 @@ import type { Session } from '../session.js'
  * The safety classifier. Blocking, on the write path, before any generation
  * exists so it can never be skipped later.
  *
+ * It records. It does not stop anything. Decision 276: no verdict puts a
+ * screen between a person and their reflection. Every entry still gets a
+ * safety_flags row, a medium or high one is left open for a human to read,
+ * and the cue cards still refuse to read an entry rated medium or above.
+ *
  * The threshold is biased toward false positives. It reads a transcript that
- * may be imperfect, on a population where speech recognition is weakest. A
- * wrongly flagged entry costs a student one screen. A missed one costs much
- * more.
+ * may be imperfect. Since a flag no longer costs the person anything, the
+ * bias is free.
  */
 export const CLASSIFIER_VERSION = 'safety-2026-08-a'
 
 export type Classification = {
   riskLevel: 'none' | 'low' | 'medium' | 'high'
   categories: string[]
-  blocked: boolean
 }
 
-/** medium and above shows the help screen instead of a reflection. */
-function blocks(riskLevel: Classification['riskLevel']): boolean {
+/** medium and above is left open in safety_flags for a person to review. */
+function worthReview(riskLevel: Classification['riskLevel']): boolean {
   return riskLevel === 'medium' || riskLevel === 'high'
 }
 
@@ -43,18 +46,18 @@ export async function classify(
     })
     riskLevel = result.value.riskLevel
     categories = result.value.categories
-    actionTaken = blocks(riskLevel) ? 'help_screen' : 'reflected'
+    actionTaken = 'reflected'
   } catch {
-    // If the classifier cannot answer, the entry is treated as unsafe to
-    // reflect on. Failing open here would mean generating a response to an
-    // entry nobody has checked, which is the one outcome this path exists to
-    // prevent.
+    // If the classifier cannot answer, the entry is recorded as unread rather
+    // than as safe: high, with the reason in the categories, and left open.
+    // The reflection still happens. Before decision 276 this showed the help
+    // screen to everybody whenever a provider key was missing.
     riskLevel = 'high'
     categories = ['classifier_unavailable']
-    actionTaken = 'help_screen_classifier_unavailable'
+    actionTaken = 'reflected_classifier_unavailable'
   }
 
-  const blocked = blocks(riskLevel)
+  const open = worthReview(riskLevel)
 
   // Written on every entry, hit or miss. Its own record with a status field,
   // because it becomes a workflow when the counsellor console exists.
@@ -67,9 +70,9 @@ export async function classify(
     categories,
     classifierVersion: CLASSIFIER_VERSION,
     actionTaken,
-    resourcesShown: blocked,
-    status: blocked ? 'open' : 'closed',
+    resourcesShown: false,
+    status: open ? 'open' : 'closed',
   })
 
-  return { riskLevel, categories, blocked }
+  return { riskLevel, categories }
 }

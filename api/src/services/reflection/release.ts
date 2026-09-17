@@ -29,8 +29,7 @@ export async function releaseHeld(session: Session): Promise<number> {
 
   let released = 0
   for (const entry of held) {
-    const verdict = await classify(entry.text, session, entry.id)
-    if (verdict.blocked) continue
+    await classify(entry.text, session, entry.id)
     await markProcessed(entry.id)
     await enqueue('tag_entry', { entryId: entry.id }, session)
     await enqueue('embed_entry', { entryId: entry.id }, session)

@@ -329,9 +329,9 @@ class _HomeState extends State<Home> {
 
 /// One pass through the loop, against the API.
 ///
-/// Screens 5 and 6. Every word on them is generated for this entry, the safety
-/// classifier has already run before any of it arrives, and a blocked entry
-/// never reaches this screen at all.
+/// Screens 5 and 6. Every word on them is generated for this entry, and the
+/// safety classifier has already run and recorded its reading before any of
+/// it arrives. Nothing it reads stops the reflection, decision 276.
 class Session extends StatefulWidget {
   const Session({
     super.key,
@@ -363,7 +363,7 @@ class Session extends StatefulWidget {
   State<Session> createState() => _SessionState();
 }
 
-enum _Beat { waiting, one, help, failed }
+enum _Beat { waiting, one, failed }
 
 class _SessionState extends State<Session> {
   final _api = SoulApi.fromEnvironment();
@@ -372,7 +372,6 @@ class _SessionState extends State<Session> {
 
   String? _entryId;
   String? _line;
-  api.HelpNeeded? _help;
   api.MirrorResult? _mirror;
   bool _loadingMirror = false;
 
@@ -440,11 +439,6 @@ class _SessionState extends State<Session> {
           // Unless the Mirror is switched off, in which case beat one is
           // the whole of it and nothing on screen says otherwise.
           if (isOn(Flag.mirror)) _lookCloser();
-        case api.HelpNeeded help:
-          setState(() {
-            _help = help;
-            _beat = _Beat.help;
-          });
         case api.Held():
           // Stored, nothing sent. The user is told plainly rather than
           // shown a reflection that was never generated.
@@ -560,7 +554,6 @@ class _SessionState extends State<Session> {
     // instead of throwing on a null check in front of somebody who has just
     // spoken. Decision 262.
     final line = _line;
-    final help = _help;
 
     return switch (_beat) {
       _Beat.waiting => const BreathingWait(note: 'reading what you said'),
@@ -580,8 +573,6 @@ class _SessionState extends State<Session> {
           onLookAgain: _lookedAgain ? null : _lookAgain,
           onDone: _finish,
         ),
-      _Beat.help when help != null =>
-        HelpScreen(help: help, onDone: widget.onFinished),
       // Failed, and every state that lost the thing it was going to draw.
       _ => _Failed(
           onDone: widget.onFinished,
@@ -643,41 +634,3 @@ class _Failed extends StatelessWidget {
   }
 }
 
-/// What a blocked entry shows. The wording comes from the server, so it can be
-/// changed without a store release.
-class HelpScreen extends StatelessWidget {
-  const HelpScreen({super.key, required this.help, required this.onDone});
-
-  final api.HelpNeeded help;
-  final VoidCallback onDone;
-
-  @override
-  Widget build(BuildContext context) {
-    return Screen(
-      body: [
-        Text(help.heading, style: SoulType.heading),
-        const SizedBox(height: 16),
-        Text(help.body, style: SoulType.lead),
-        const SizedBox(height: 24),
-        for (final contact in help.contacts) ...[
-          SoulCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  contact.label,
-                  style: SoulType.lead.copyWith(fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                Text(contact.detail, style: SoulType.secondary),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ],
-      footer: SoulButton('Done',
-          kind: SoulButtonKind.filled, onPressed: onDone),
-    );
-  }
-}

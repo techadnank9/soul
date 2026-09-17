@@ -5776,3 +5776,43 @@ It sits alongside decision 245 rather than against it. The plain sentence
 under a confirmed pattern stays; the proposal before it is hedged.
 
 Would reverse it: the founder.
+
+---
+
+### 276. The classifier records and never shows a screen
+Sep 2026, founder
+
+Decision: no safety verdict puts anything between a person and their
+reflection. The help screen is gone from the service, the contract and the
+app. The classifier still runs on every entry before anything is generated,
+still writes its row, and a medium or high reading is left open in
+safety_flags for a person to read. The cue cards still refuse to read an
+entry rated medium or above, which is unchanged.
+
+The founder's instruction on 17 September: that page is never shown to a
+user. In thirty days the screen went up four times out of 607 entries, and
+each was somebody telling a hard day: hit by glass, deciding about a party
+after passing out at the last one, driving distracted, and a typed entry
+that said "hel". Every one of them was told to stop and call a lifeline
+instead of being read. Decision 021 said the bias was cheap because a
+false flag cost one screen. It cost the only thing the app is for, four
+times, and caught nobody.
+
+The failure path changes with it. A classifier that cannot answer used to
+fail closed and show the help screen to everybody, which is how every
+entry in a build without keys got one. It now records the entry as high
+with `classifier_unavailable`, leaves it open, and the reflection goes
+ahead.
+
+This partly reverses decision 008, which said the crisis path reverses
+for nothing. What 008 rests on still stands: California SB 243 and New
+York's law want a protocol for detecting self harm and referring to crisis
+services, and SB 243 carries a private right of action. Detection stays.
+Referral, on the screen, does not. Whether the published protocol can
+satisfy those laws without a referral shown to the person is a question
+for a lawyer before launch, and this entry is where to start.
+
+Rejected: raising the threshold so only high blocks. The founder did not
+ask for fewer screens, they asked for none.
+
+Would reverse it: counsel saying the referral has to be on the screen.

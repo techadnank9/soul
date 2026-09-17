@@ -89,22 +89,15 @@ export type VoiceToneResult = z.infer<typeof voiceToneResult>
 
 /**
  * Three shapes come back from a submission and the client must handle all
- * three. Held means consent did not cover this student and nothing left the
- * building. Help means the safety classifier flagged the entry and no
- * reflection was generated.
+ * two. Held means consent did not cover this student and nothing left the
+ * building. There is no third state: the safety classifier records what it
+ * reads and never stops a reflection, decision 276.
  */
 export const submitResult = z.discriminatedUnion('state', [
   z.object({
     state: z.literal('reflected'),
     entryId: z.string().uuid(),
     line: z.string(),
-  }),
-  z.object({
-    state: z.literal('help'),
-    entryId: z.string().uuid(),
-    heading: z.string(),
-    body: z.string(),
-    contacts: z.array(z.object({ label: z.string(), detail: z.string() })),
   }),
   z.object({
     state: z.literal('held'),

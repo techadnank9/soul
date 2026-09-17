@@ -75,8 +75,9 @@ runs before either, blocking, on every entry.
    when the student confirms it. Rejections are stored too.
 5. Tags describe a situation, never a trait. "Avoided a conflict", not
    "avoidant".
-6. Crisis wording, safety thresholds and prompt text live in the database, not
-   in the app binary, so they can be changed without a store release.
+6. Safety thresholds and prompt text live in the database, not in the app
+   binary, so they can be changed without a store release. There is no crisis
+   screen: the classifier records, it never stops a reflection, decision 276.
 7. No third party analytics or crash SDKs in the student app.
 8. Audio is never persisted. The words are the record, and they land in the
    typing box as they are said so nothing is submitted that was not on the
@@ -240,8 +241,9 @@ the project. Flutter only finds a scheme by that name when told the flavor.
 Without the define the app talks to Render, which is decision 220 and the
 reason a simulator no longer goes quiet when nothing is running here.
 
-Without provider keys the safety classifier cannot answer, so every entry
-returns the help screen. That is the designed behaviour, not a failure.
+Without provider keys neither the safety classifier nor beat one can
+answer. The classifier records the entry as unread and the reflection fails
+on its own. Until decision 276 this showed every entry the help screen.
 
 ## Shipping a TestFlight build
 

@@ -1,6 +1,5 @@
 import { checkConsent } from '../../consent/gate.js'
 import { classify } from '../../safety/classify.js'
-import { helpScreen } from '../../safety/help.js'
 import { storeEntry, markProcessed, markIntroduction } from '../../entries/store.js'
 import { beatOne } from '../../generate/beatOne.js'
 import { enqueue } from '../../jobs/enqueue.js'
@@ -15,8 +14,8 @@ import type { SubmitEntry, SubmitResult } from '../../contracts.js'
  *   1. consent      no consent, nothing goes out, entry stored unprocessed
  *   2. store        the entry exists before anything is said about it
  *      link         a spoken entry picks up how it sounded, judged earlier
- *   3. safety       blocking, always written, hit or miss
- *   4. beat one     only reached if safety passed, told how they sounded
+ *   3. safety       blocking, always written, hit or miss, never a stop
+ *   4. beat one     reached after safety has been recorded, told how they sounded
  *   5. enqueue      tagging and embedding, nobody waits
  *
  * Consent and safety come before generation, so there is no code path where
@@ -55,13 +54,9 @@ export async function submit(
     return { state: 'held', entryId }
   }
 
-  // 2. Safety. Blocking. Nothing is generated before this returns.
-  const verdict = await classify(input.text, session, entryId)
-
-  if (verdict.blocked) {
-    const help = await helpScreen()
-    return { state: 'help', entryId, ...help }
-  }
+  // 2. Safety. Blocking. Nothing is generated before this returns, and
+  //    nothing it returns stops the reflection. It records, decision 276.
+  await classify(input.text, session, entryId)
 
   // 3. Beat one. The first thing the student reads.
   const { line } = await beatOne(input.text, session, entryId, tone)

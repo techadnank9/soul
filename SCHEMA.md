@@ -300,7 +300,8 @@ Checked by the sweep so the same wrong idea is never offered twice.
 
 Its own record with a status field, not a boolean on an entry, because it
 becomes a workflow when the counsellor console exists. Written on every entry,
-hit or miss.
+hit or miss. `resources_shown` is always false since decision 276, and
+`status` is open for a medium or high reading, closed otherwise.
 
 ## generations
 `id`, `entry_id`, `student_id`, `purpose`, `prompt_version`, `model_version`,

@@ -15,18 +15,6 @@ sealed class SubmitResult {
           entryId: json['entryId'] as String,
           line: (json['line'] as String?) ?? '',
         ),
-      'help' => HelpNeeded(
-          entryId: json['entryId'] as String,
-          heading: json['heading'] as String,
-          body: json['body'] as String,
-          contacts: [
-            for (final c in json['contacts'] as List)
-              (
-                label: (c as Map)['label'] as String,
-                detail: c['detail'] as String,
-              ),
-          ],
-        ),
       'held' => Held(entryId: json['entryId'] as String),
       final other => throw FormatException('unknown state $other'),
     };
@@ -38,20 +26,6 @@ final class Reflected extends SubmitResult {
   const Reflected({required this.entryId, required this.line});
   final String entryId;
   final String line;
-}
-
-/// The safety classifier flagged the entry. No reflection was generated.
-final class HelpNeeded extends SubmitResult {
-  const HelpNeeded({
-    required this.entryId,
-    required this.heading,
-    required this.body,
-    required this.contacts,
-  });
-  final String entryId;
-  final String heading;
-  final String body;
-  final List<({String label, String detail})> contacts;
 }
 
 /// Consent does not cover this user. The entry is saved and nothing left.

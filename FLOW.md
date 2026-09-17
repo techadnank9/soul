@@ -258,8 +258,9 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        ├─ 3. safety/classify.ts
        │     classify(text, session, entryId) → gateway.call('safety', ...)
        │     writes safety_flags row always, hit or miss
-       │     classifier unreachable → treated as high risk, not as a pass
-       │     HIT → returns help screen payload, STOP. No generation happens.
+       │     classifier unreachable → recorded as high, left open, still reflected
+       │     medium or high → the row is left open for a person to read.
+       │     Nothing stops here. No verdict shows a screen, decision 276.
        │
        ├─ 4. generate/beatOne.ts
        │     buildBeatOnePrompt(entry, tone) ← current entry only, minimal history
@@ -273,7 +274,8 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
 ```
 
 Two things to notice. Consent comes before storage, safety comes before
-generation, and neither can be skipped by any path. And the function that
+generation, and neither can be skipped by any path. Consent can stop the
+flow; safety cannot, it only records. And the function that
 returns the response does not call the tagger; it enqueues it.
 
 This flow is not streamed anywhere. `submit()` awaits the classifier, then
