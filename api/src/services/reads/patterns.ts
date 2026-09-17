@@ -36,8 +36,21 @@ export type PatternSection = {
   source: 'outcomes' | 'model'
 }
 
+/**
+ * Something the app may be noticing. Open ones carry the three answers;
+ * confirmed and unsure ones stay on the screen with the answer given.
+ */
+export type Noticing = {
+  id: string
+  line: string
+  lean: 'good' | 'bad' | 'open'
+  status: 'open' | 'confirmed' | 'unsure'
+  entries: number
+}
+
 export type PatternsView = {
   reflections: number
+  noticings: Noticing[]
   good: PatternSection[]
   bad: PatternSection[]
   forming: { id: string; theme: string; supporting: number }[]
@@ -180,7 +193,25 @@ export async function patterns(session: Session): Promise<PatternsView> {
 
     const judged = new Set(sections.map((row) => row.theme))
 
+    /**
+     * What the app may be noticing, from the first entry on. Decision 278.
+     * Rejected and superseded rows are the record and are not shown.
+     */
+    const noticed = await tx<Noticing[]>`
+      select
+        id,
+        line,
+        lean::text as lean,
+        status::text as status,
+        cardinality(evidence_entry_ids)::int as "entries"
+      from noticings
+      where student_id = ${session.studentId}
+        and status in ('open', 'confirmed', 'unsure')
+      order by (status = 'open') desc, created_at desc
+      limit 4`
+
     return {
+      noticings: noticed,
       // Every entry the student has ever written, not this week's. This number
       // is the one thing on the screen that only goes up.
       reflections: counted[0]?.reflections ?? 0,

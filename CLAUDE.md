@@ -11,7 +11,9 @@ district tables still say student because they were built for that. Since
 decisions 196 and 201 a phone gets an account on first launch, using the app
 is the agreement, and the rostered path is one way in rather than the only
 one. A person speaks for thirty seconds, gets one short line back, and can go
-deeper if they want. Over months, recurring themes are offered back as patterns the
+deeper if they want. From the first entry, the returning tab offers at most
+two things the app may be noticing, hedged, for them to say yes, no or not
+sure to. Over months, recurring themes are offered back as patterns the
 student confirms or rejects, and the ones that keep returning are sorted into
 what is doing them good and what is costing them, with one sentence under each
 saying to keep it or to stop it.

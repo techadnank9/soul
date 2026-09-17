@@ -225,6 +225,27 @@ const config: Record<Purpose, PurposeConfig> = {
     reasoning: 'medium',
   },
 
+  /**
+   * The noticings, from the first entry on. A person reads these, so the
+   * same model as beat one and the Mirror, and the same reason: the first
+   * thing any model reaches for is a retelling of the entry, and this call
+   * exists to say the sentence they did not write. Decision 278.
+   */
+  noticings: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-6-astra',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-6-astra',
+    },
+    temperature: 0.5,
+    maxTokens: 4000,
+    timeoutMs: 90_000,
+    json: true,
+    // Medium, and nobody is waiting. Deciding that one entry does not carry
+    // a gap worth naming is the answer it gets wrong when hurried.
+    reasoning: 'medium',
+  },
   pattern_verdict: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {

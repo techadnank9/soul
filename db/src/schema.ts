@@ -53,6 +53,14 @@ export const candidateStatus = pgEnum('candidate_status', ['pending', 'surfaced'
  * something.
  */
 export const themeVerdict = pgEnum('theme_verdict', ['good', 'bad', 'unsettled'])
+export const noticingLean = pgEnum('noticing_lean', ['good', 'bad', 'open'])
+export const noticingStatus = pgEnum('noticing_status', [
+  'open',
+  'confirmed',
+  'rejected',
+  'unsure',
+  'superseded',
+])
 export const verdictSource = pgEnum('verdict_source', ['outcomes', 'model'])
 export const generationPurpose = pgEnum('generation_purpose', [
   'safety',
@@ -70,6 +78,7 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'welcome',
   'weather_question',
   'reminders',
+  'noticings',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
@@ -846,6 +855,43 @@ export const patternVerdicts = pgTable(
   },
   (t) => [
     index('pattern_verdicts_student_theme_idx').on(t.studentId, t.theme, t.createdAt.desc()),
+  ],
+)
+
+/**
+ * Something the app may be noticing, from the first entry on.
+ *
+ * A pattern needs the same coping across three entries, and most people
+ * never get there: six in ten entries carry no coping at all, because people
+ * say what they felt and not what they did. This is the reflection that
+ * exists before any of that. It is written from everything the person has
+ * said so far, hedged so it can be refused, and offered with yes, no and not
+ * sure as equal answers. Decision 278.
+ *
+ * `lean` is whether it seems to be doing them good, costing them, or the
+ * model could not say. `evidence_entry_ids` are the entries it came from, so
+ * the claim can always be shown beside its grounds. An open noticing is
+ * superseded when a later run replaces it, and a superseded row stays as the
+ * record of what was said.
+ */
+export const noticings = pgTable(
+  'noticings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    line: text('line').notNull(),
+    lean: noticingLean('lean').notNull(),
+    evidenceEntryIds: uuid('evidence_entry_ids').array().notNull(),
+    status: noticingStatus('status').notNull().default('open'),
+    answeredAt: timestamp('answered_at', { withTimezone: true }),
+    promptVersion: text('prompt_version').notNull(),
+    modelVersion: text('model_version').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    index('noticings_student_status_idx').on(t.studentId, t.status, t.createdAt.desc()),
   ],
 )
 

@@ -75,6 +75,42 @@ class _PatternsScreenState extends State<PatternsScreen> {
     }
   }
 
+  /// Yes, no or not sure. The row shows the answer at once and the server is
+  /// told after, so a slow network is not a tap that did nothing. A rejected
+  /// noticing leaves the screen; the other two stay with the answer under
+  /// them.
+  Future<void> _answer(Noticing noticing, String answer) async {
+    final patterns = _patterns;
+    if (patterns == null) return;
+    setState(() {
+      _patterns = PatternsView(
+        reflections: patterns.reflections,
+        noticings: [
+          for (final n in patterns.noticings)
+            if (n.id != noticing.id)
+              n
+            else if (answer != 'no')
+              Noticing(
+                id: n.id,
+                line: n.line,
+                lean: n.lean,
+                status: answer == 'yes' ? 'confirmed' : 'unsure',
+                entries: n.entries,
+              ),
+        ],
+        good: patterns.good,
+        bad: patterns.bad,
+        forming: patterns.forming,
+      );
+    });
+    try {
+      await widget.api.answerNoticing(noticing.id, answer);
+    } catch (_) {
+      // The answer did not land. The next load shows it open again, which
+      // is the truth, and asking a second time costs one tap.
+    }
+  }
+
   /// Opens the reflection on its own page and reloads on the way back, since
   /// answering a check back from there can move a theme between sections.
   Future<void> _open(String theme) async {
@@ -135,21 +171,24 @@ class _PatternsScreenState extends State<PatternsScreen> {
     final good = _said(patterns.good);
     final bad = _said(patterns.bad);
 
-    // Months of entries can go by before anything comes back often enough to
-    // be worth a sentence, so this is the ordinary state for a long time. It
-    // says the one plain thing rather than showing three empty frames.
-    if (good.isEmpty && bad.isEmpty && patterns.forming.isEmpty) {
+    // Before the first entry has been read, and for the minute after it
+    // lands, there is nothing to show. It says the one plain thing rather
+    // than showing three empty frames.
+    if (good.isEmpty &&
+        bad.isEmpty &&
+        patterns.forming.isEmpty &&
+        patterns.noticings.isEmpty) {
       return Screen(
         body: [
           const SizedBox(height: 40),
-          const Text('Nothing has repeated yet', style: SoulType.heading),
+          const Text('Nothing to say yet', style: SoulType.heading),
           const SizedBox(height: 14),
           const Text(
-            'This is where the things that keep happening show up. When you '
-            'have handled something the same way in three moments, it '
-            'appears here as still forming, with the moments behind it. Once '
-            'there is enough to say whether it is doing you good or costing '
-            'you, one sentence says which.',
+            'This is where what the app may be noticing shows up, from your '
+            'first entry on, for you to say yes or no to. Later, the things '
+            'that keep happening appear here too, with the moments behind '
+            'them and one sentence on whether each is doing you good or '
+            'costing you.',
             style: SoulType.secondary,
           ),
           const SizedBox(height: 12),
@@ -194,6 +233,20 @@ class _PatternsScreenState extends State<PatternsScreen> {
         ],
       ),
       const SizedBox(height: 22),
+
+      // What the app may be noticing, first, because on most days it is the
+      // only thing here with a sentence in it. Open ones carry the three
+      // answers as equals. Decision 275.
+      if (patterns.noticings.isNotEmpty)
+        ..._section(
+          heading: 'Something I may be noticing',
+          mark: SoulColors.border2,
+          settled: false,
+          rows: [
+            for (final noticing in patterns.noticings)
+              _NoticingRow(noticing: noticing, onAnswer: _answer),
+          ],
+        ),
 
       // An empty group is missing entirely, and says nothing about itself. A
       // user with two things worth keeping and nothing worth stopping
@@ -399,6 +452,92 @@ class _PatternsScreenState extends State<PatternsScreen> {
 
     final months = days ~/ 30;
     return months == 1 ? 'last month' : '$months months ago';
+  }
+}
+
+/// One noticing: the sentence, which way it seems to cut, and the answers.
+///
+/// The three answers are the same size and the same weight. Yes is not the
+/// filled one, because the app is asking rather than confirming, and a person
+/// who says no has given the model something as useful as a yes.
+class _NoticingRow extends StatelessWidget {
+  const _NoticingRow({required this.noticing, required this.onAnswer});
+
+  final Noticing noticing;
+  final void Function(Noticing noticing, String answer) onAnswer;
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = switch (noticing.lean) {
+      'good' => SoulColors.moss,
+      'bad' => SoulColors.clay,
+      _ => SoulColors.border2,
+    };
+    final leans = switch (noticing.lean) {
+      'good' => 'may be doing you good',
+      'bad' => 'may be costing you',
+      _ => 'not sure which way yet',
+    };
+    final answered = switch (noticing.status) {
+      'confirmed' => 'you said yes',
+      'unsure' => 'you said not sure',
+      _ => null,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: mark, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 9),
+            Label(leans),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(noticing.line, style: SoulType.lead),
+        const SizedBox(height: 12),
+        if (answered != null)
+          Label(answered)
+        else
+          Row(
+            children: [
+              for (final (label, answer) in const [
+                ('Yes', 'yes'),
+                ('No', 'no'),
+                ('Not sure', 'unsure'),
+              ]) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => onAnswer(noticing, answer),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SoulColors.text,
+                      side: const BorderSide(color: SoulColors.border2),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontFamily: SoulType.sans,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                if (answer != 'unsure') const SizedBox(width: 8),
+              ],
+            ],
+          ),
+      ],
+    );
   }
 }
 

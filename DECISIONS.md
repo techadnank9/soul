@@ -5853,3 +5853,45 @@ a region for everybody.
 
 Would reverse it: iOS reporting Allow Once as its own state, at which
 point the flag is redundant.
+
+---
+
+### 278. Something to come back to, from the first entry
+Sep 2026, founder
+
+Decision: after every tagged entry, from the first one, a job reads the
+newest twelve entries and offers back at most two things the app may be
+noticing, each hedged, each with the entries it came from, each with a lean
+of doing you good, costing you, or not sure which. They sit at the top of
+the returning tab with yes, no and not sure as equal answers. Yes and not
+sure stay on the screen with the answer under them. No leaves the screen
+and is shown to the model on every later run as a thing not to say again.
+An unanswered noticing is superseded, never deleted, when a later run does
+not keep it.
+
+The founder, 17 September: the reflection is not forming, the tab says
+nothing has repeated, and there should be something for a person to come
+back to as soon as they have signed up and talked about themselves.
+
+The numbers behind it. A pattern needs the same coping across three
+entries. In thirty days of real writing, 46 of 77 entries carried no coping
+at all, because people say what they felt and not what they did, and
+nearly everyone had one to three entries. One person had ever reached a
+verdict. The tab was empty for everybody else and would stay empty for
+weeks.
+
+What a noticing is, is decision 275 made concrete: the gap between what
+happened, what they made it mean, and how they responded, offered as "I
+may be noticing something" and refusable. It is the sentence they did not
+write. A line that retells the entry is the failure, and the prompt says
+so. It runs on gpt-6-astra like beat one and the Mirror, since a person
+reads it.
+
+Rejected: lowering the pattern threshold to two entries. It would not have
+helped: the entries with no coping stay uncountable at any threshold, and
+a "pattern" from two entries is a claim the product cannot show grounds
+for. Also rejected: a noticing from the introduction alone before the
+first entry. The introduction is an entry, so it is already the first one.
+
+Would reverse it: people answering no to most of them. The answers are
+stored for exactly that.

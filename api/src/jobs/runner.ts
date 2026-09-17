@@ -13,6 +13,7 @@ import { extractFacts } from '../services/memory/facts.js'
 import { consolidateAll } from '../services/memory/consolidate.js'
 import { sweep } from './pattern_sweep.js'
 import { sweepVerdicts } from '../services/verdicts/sweep.js'
+import { writeNoticings } from '../services/noticings/write.js'
 import { scheduleSweep, scheduleVerdicts, scheduleConsolidation } from './enqueue.js'
 import type { Session } from '../session.js'
 
@@ -53,6 +54,8 @@ const HANDLED = [
   // one of them sat pending and no held entry was ever released. Decision
   // 256.
   'release_held',
+  // Decision 278. Booked by the tagger, for the person whose entry landed.
+  'noticings',
 ]
 
 type Job = {
@@ -149,6 +152,13 @@ async function run(job: Job): Promise<void> {
       // week is the first sign the prompt has stopped working.
       const cards = await generateCards(payload.entryId!, studentOf(job))
       console.log(`${cards} cards written`)
+      return
+    }
+    case 'noticings': {
+      // At most two on the screen at once, so zero is the ordinary answer
+      // once something is already there and still holds.
+      const written = await writeNoticings(studentOf(job))
+      console.log(`${written} noticings written`)
       return
     }
     case 'pattern_sweep_one': {

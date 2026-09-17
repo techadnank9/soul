@@ -377,7 +377,25 @@ jobs/runner.ts fires tag_entry
        ├─ gateway.call('tagger', entryText + how it sounded)
        ├─ parseStructured() → { trigger, feeling, coping, confidence }
        ├─ insert tags row
-       └─ enqueue cue_cards, people, extract_facts   ← each its own job
+       └─ enqueue cue_cards, people, extract_facts, extract_reminders,
+                  pattern_sweep_one, noticings        ← each its own job
+
+jobs/runner.ts fires noticings                        ← decision 278
+  └─ services/noticings/write.ts
+       ├─ consent gate, then the newest twelve processed entries, oldest first
+       ├─ the open noticings already on the screen, and the rejected ones
+       ├─ gateway.call('noticings', entries + open + rejected)
+       ├─ { kept: [numbers], noticings: [{ line, lean, entries }] }, two at most
+       ├─ open rows not kept → status superseded, never deleted
+       └─ insert noticings rows with evidence_entry_ids
+
+...on the returning tab...
+
+reads/patterns.ts → noticings, open first, then confirmed and unsure
+POST /noticings/answer → services/noticings/answer.ts
+     yes      → confirmed, stays on the screen
+     no       → rejected, leaves the screen, shown to the model as not to say
+     unsure   → unsure, stays on the screen with the answer
 
 jobs/runner.ts fires extract_facts
   └─ services/memory/facts.ts
@@ -718,6 +736,8 @@ extract_reminders
                  nothing at all for almost every entry
 person_profile   what happens between the student and somebody, once that
                  person has come up twice
+noticings        what the app may be noticing, from the first entry on, two
+                 at most, hedged, answered yes, no or not sure
 pattern_sweep    the nightly candidate query, which books the verdicts
 pattern_verdicts whether a theme is doing them good or costing them
 consolidate_memory

@@ -336,6 +336,7 @@ class DayEntry {
 class PatternsView {
   const PatternsView({
     required this.reflections,
+    required this.noticings,
     required this.good,
     required this.bad,
     required this.forming,
@@ -343,6 +344,10 @@ class PatternsView {
 
   /// Every entry this user has ever written.
   final int reflections;
+
+  /// What the app may be noticing, from the first entry on. Open ones are
+  /// answered on the tab; confirmed and unsure ones stay with the answer.
+  final List<Noticing> noticings;
 
   /// Themes that are doing them good, each with the sentence that says so.
   final List<JudgedTheme> good;
@@ -358,6 +363,10 @@ class PatternsView {
 
   static PatternsView fromJson(Map<String, dynamic> json) => PatternsView(
         reflections: json['reflections'] as int,
+        noticings: [
+          for (final noticing in (json['noticings'] as List<dynamic>? ?? []))
+            Noticing.fromJson(noticing as Map<String, dynamic>),
+        ],
         good: _judged(json['good']),
         bad: _judged(json['bad']),
         forming: [
@@ -373,6 +382,40 @@ class PatternsView {
         for (final theme in (group as List<dynamic>? ?? []))
           JudgedTheme.fromJson(theme as Map<String, dynamic>),
       ];
+}
+
+/// Something the app may be noticing, offered so it can be refused.
+class Noticing {
+  const Noticing({
+    required this.id,
+    required this.line,
+    required this.lean,
+    required this.status,
+    required this.entries,
+  });
+
+  final String id;
+
+  /// The sentence, hedged, in the server's words.
+  final String line;
+
+  /// good, bad, or open: whether it seems to be doing them good, costing
+  /// them, or the model could not say.
+  final String lean;
+
+  /// open, confirmed, or unsure. Rejected ones never reach the screen.
+  final String status;
+
+  /// How many entries it came from.
+  final int entries;
+
+  static Noticing fromJson(Map<String, dynamic> json) => Noticing(
+        id: json['id'] as String,
+        line: json['line'] as String,
+        lean: (json['lean'] as String?) ?? 'open',
+        status: (json['status'] as String?) ?? 'open',
+        entries: (json['entries'] as num?)?.toInt() ?? 1,
+      );
 }
 
 /// Who decided what a theme is doing to the user.

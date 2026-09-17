@@ -310,6 +310,12 @@ const feltTheme = z.object({
   lastAt: z.string(),
 })
 
+/** Yes, no and not sure, as equals. Decision 275. */
+export const answerNoticing = z.object({
+  noticingId: z.string().uuid(),
+  answer: z.enum(['yes', 'no', 'unsure']),
+})
+
 export const patternsView = z.object({
   reflections: z.number().int().min(0),
   lighter: z.array(feltTheme),

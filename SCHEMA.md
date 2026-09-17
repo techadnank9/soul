@@ -359,6 +359,18 @@ A yes writes a `decisions` row and books the check back. A no writes neither.
 
 ---
 
+## noticings
+`id`, `student_id`, `school_id`, `district_id`, `line`, `lean`,
+`evidence_entry_ids[]`, `status`, `answered_at`, `prompt_version`,
+`model_version`, `created_at`
+
+Something the app may be noticing, from the first entry on. `lean` is good,
+bad or open: doing them good, costing them, or the model could not say.
+`status` is open until answered, then confirmed, rejected or unsure, and
+superseded when a later run replaced it unanswered. Rows are never deleted;
+a rejected line is shown to the model as a thing not to say again. Decision
+278.
+
 ## pattern_verdicts
 `id`, `student_id`, `school_id`, `district_id`, `theme`, `verdict`, `source`,
 `line`, `supporting`, `prompt_version`, `model_version`, `created_at`

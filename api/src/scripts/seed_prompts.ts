@@ -30,6 +30,7 @@ const purposes = [
   'weather_question',
   'consolidate',
   'reminders',
+  'noticings',
 ] as const
 
 async function main() {

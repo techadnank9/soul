@@ -93,4 +93,9 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
   // leaving it until the nightly sweep. The query is the same one and it is
   // scoped to this person. Decision 258.
   await enqueue('pattern_sweep_one', {}, session)
+
+  // And something the app may be noticing, from this entry and the ones
+  // before it, so the returning tab has a sentence on it from the first
+  // entry rather than after the third repeat. Decision 278.
+  await enqueue('noticings', {}, session)
 }

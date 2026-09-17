@@ -19,6 +19,7 @@ export type JobType =
   | 'people'
   | 'person_profile'
   | 'release_held'
+  | 'noticings'
 
 /** The hour the sweep runs. Late enough that a school day is long over. */
 const SWEEP_HOUR = 3

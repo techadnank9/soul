@@ -5,6 +5,7 @@ import { lookCloser } from '../services/reflection/mirror.js'
 import { createDecision } from '../services/decisions/create.js'
 import { recordOutcome } from '../services/decisions/recordOutcome.js'
 import { answerCandidate } from '../services/patterns/answer.js'
+import { answerNoticing } from '../services/noticings/answer.js'
 import type { Session } from '../session.js'
 
 /**
@@ -45,6 +46,14 @@ entries.post('/outcomes', async (c) => {
   if (!parsed.success) return c.json({ error: 'invalid outcome' }, 400)
 
   await recordOutcome(c.get('session'), parsed.data)
+  return c.json({ ok: true })
+})
+
+entries.post('/noticings/answer', async (c) => {
+  const parsed = contracts.answerNoticing.safeParse(await c.req.json())
+  if (!parsed.success) return c.json({ error: 'invalid answer' }, 400)
+
+  await answerNoticing(c.get('session'), parsed.data)
   return c.json({ ok: true })
 })
 

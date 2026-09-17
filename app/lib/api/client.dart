@@ -606,6 +606,14 @@ class SoulApi {
   Future<PatternsView> patterns() async =>
       PatternsView.fromJson(await _get('/patterns'));
 
+  /// yes, no or unsure, as equals.
+  Future<void> answerNoticing(String noticingId, String answer) async {
+    await _post('/noticings/answer', {
+      'noticingId': noticingId,
+      'answer': answer,
+    });
+  }
+
   Future<void> answerPattern(String candidateId, String answer) async {
     await _post('/patterns/answer', {
       'candidateId': candidateId,
