@@ -6077,3 +6077,21 @@ notes.
 
 Would reverse it: the app leaving review for good, or the code being found
 in use by anybody who is not Apple.
+
+---
+
+### 284. The first release is for iPhone only
+Sep 2026, Claude, on the founder's word to do everything needed to submit
+
+Decision: `TARGETED_DEVICE_FAMILY` is 1 in the Soul Xcode project. Builds
+up to 12 also declared iPad.
+
+Why: App Store Connect refused to add build 12 for review without 13 inch
+iPad screenshots. The app has never been laid out or run on an iPad, and a
+reviewer who is handed an iPad build tests it on an iPad. Drawing iPad
+screenshots around a layout nobody has looked at would be a claim we cannot
+back. An iPhone only app still runs on an iPad, in the phone sized window,
+and needs no iPad screenshots.
+
+Would reverse it: a real iPad layout, checked on an iPad, with its own
+screenshots.
