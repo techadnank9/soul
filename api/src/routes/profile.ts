@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { deleteAccount } from '../services/account/delete.js'
 import { count, eq } from 'drizzle-orm'
 import { db, entries, students } from '../db.js'
 import * as contracts from '../contracts.js'
@@ -108,5 +109,14 @@ profile.post('/profile', async (c) => {
   if (!parsed.success) return c.json({ error: 'invalid profile' }, 400)
 
   await saveProfile(c.get('session'), parsed.data)
+  return c.json({ ok: true })
+})
+
+/**
+ * A person deletes their own account and everything in it. No id on the
+ * path: the session is the only thing that says whose. Decision 281.
+ */
+profile.delete('/account', async (c) => {
+  await deleteAccount(c.get('session'))
   return c.json({ ok: true })
 })

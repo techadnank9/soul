@@ -609,6 +609,12 @@ class SoulApi {
   Future<PatternsView> patterns() async =>
       PatternsView.fromJson(await _get('/patterns'));
 
+  /// Deletes this person's account and everything in it, for good. The
+  /// session decides whose; there is no id to pass. Decision 281.
+  Future<void> deleteAccount() async {
+    await _delete('/account');
+  }
+
   /// yes, no or unsure, as equals.
   Future<void> answerNoticing(String noticingId, String answer) async {
     await _post('/noticings/answer', {

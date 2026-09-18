@@ -22,6 +22,7 @@ There are only twelve ways anything starts running.
 | Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
 | Student opens a day | Human | `app/lib/features/shell/app_shell.dart`, from home or the Days list |
 | Student opens home | Human | `app/lib/features/home/home_screen.dart`, `GET /home`, decision 279 |
+| Student deletes their account | Human | `app/lib/features/profile/profile_tab.dart`, `DELETE /account`, `services/account/delete.ts`, decision 281 |
 | Student answers or puts off a card | Human | `app/lib/features/day/cue_card.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |

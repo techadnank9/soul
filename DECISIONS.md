@@ -5988,3 +5988,68 @@ together somewhere, even if home is not that place.
 
 Would reverse it: the founder wanting the said and wrote gap shown after
 all, at which point the data is already there.
+
+---
+
+### 281. A person can delete their own account from the profile
+Sep 2026, founder
+
+Decision: Delete my account sits at the bottom of the profile, under Log
+out. One sheet asks once, in plain words, and then `DELETE /account` removes
+everything that hangs off the account and the account itself, in one
+transaction, children before parents. The route takes no id. The session is
+the only thing that says whose account it is, so the only account it can
+ever delete is the caller's own. The phone is left where a log out leaves
+it, at first run, with nothing held.
+
+Why: Apple requires it of any app that creates accounts, guideline 5.1.1,
+and the privacy policy has always promised that an account is removed
+rather than hidden. Until now the only way was to write to the founder.
+
+What is kept: one audit row, `account_deleted`, with no link to anybody,
+because a deletion nobody can show happened is not one anybody can be held
+to. Earlier audit rows for the account lose their link and keep their
+action names, which never held anything a person wrote.
+
+This does not change the standing rule that nobody on our side deletes or
+modifies an account. That rule is about us. This is the person, on their
+own phone, deleting what is theirs.
+
+Tested against a throwaway demo account on 18 September: seventeen
+entries with their tags, three decisions, two outcomes and the answers all
+went, the account row went, the session stopped working, and the audit row
+was written.
+
+Every table that learns to reference a student or an entry has to be added
+to `services/account/delete.ts`, the same rule the demo seed lives under.
+
+Would reverse it: nothing. It is required and it is right.
+
+---
+
+### 282. The policies say what the app does, and name no companies
+Sep 2026, founder
+
+Decision: the terms and the privacy policy, on the site and inside the app,
+are brought into line with what the app does as of build 12, and the two
+copies are kept word for word the same from now on.
+
+Three things were untrue. Both said the app stops and shows a screen when
+an entry looks like a crisis, which decision 276 removed; they now say that
+every entry is read automatically for signs of risk, that a record is kept,
+and that nothing on the screen changes. Both said there is no analytics and
+no crash reporting, while the app ships both on founder decisions 245 and
+247; they now say what each receives, that text and images are masked in
+replays, and that neither is ever sent anything a person wrote or said.
+Both said deletion is by writing to us; they now point at the profile.
+The in app copy also still spoke of schools and districts setting up
+accounts, which stopped being true at decisions 196 and 201.
+
+On the founder's instruction the providers are described by what they do,
+a speech recognition provider, an AI model provider, an email delivery
+service, an error reporting service, a product analytics service, and not
+by name. The current list is sent to anybody who asks. The App Privacy
+answers in App Store Connect still declare every data type truthfully.
+
+Would reverse it: a lawyer or a regulator asking for the processors to be
+named in the policy itself, which some privacy laws prefer.

@@ -443,6 +443,26 @@ class _ProfileTabState extends State<ProfileTab> {
           'Log out',
           onPressed: () => _logOut(context),
         ),
+        const SizedBox(height: 14),
+        // Removed rather than hidden, from here, without writing to anybody.
+        // Apple asks for it and the privacy policy has always promised it.
+        Center(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _deleteAccount(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Text(
+                'Delete my account',
+                style: SoulType.secondary.copyWith(
+                  color: SoulColors.clayDark,
+                  decoration: TextDecoration.underline,
+                  decorationColor: SoulColors.clayDark,
+                ),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 22),
         // Which build this is. The first question on any report from a
         // tester is which one they are looking at, and asking somebody to
@@ -504,6 +524,58 @@ class _ProfileTabState extends State<ProfileTab> {
 
   /// Set at build time by release.sh, empty in a build made by hand.
   static const _build = String.fromEnvironment('SOUL_BUILD');
+
+  /// Asks once, plainly, and then removes everything. The phone is left
+  /// where a log out leaves it, at first run, with nothing held.
+  Future<void> _deleteAccount(BuildContext context) async {
+    final sure = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: SoulColors.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Delete everything?', style: SoulType.heading),
+              const SizedBox(height: 12),
+              const Text(
+                'Your account, every entry, what came back, the people you '
+                'named and the answers you gave. It is removed, not hidden, '
+                'and it cannot be brought back.',
+                style: SoulType.secondary,
+              ),
+              const SizedBox(height: 22),
+              SoulButton(
+                'Delete everything',
+                kind: SoulButtonKind.filled,
+                onPressed: () => Navigator.of(sheet).pop(true),
+              ),
+              const SizedBox(height: 10),
+              SoulButton('Keep it', onPressed: () => Navigator.of(sheet).pop(false)),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (sure != true) return;
+
+    try {
+      await widget.api.deleteAccount();
+    } catch (_) {
+      if (mounted) setState(() => _note = 'That did not go through. Nothing was deleted.');
+      return;
+    }
+    await forgetWhoTheyAre();
+    await clearSessionToken();
+    await clearFirstRunDone();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/start', (_) => false);
+  }
 
   Future<void> _logOut(BuildContext context) async {
     widget.api.event('logged_out');

@@ -2,14 +2,13 @@
 ///
 /// Written to match how this app actually works, and not reviewed by a lawyer.
 /// Anything here that stops being true is a defect, not a wording preference:
-/// this is the text a district will read before they let a child use it.
+/// this is the text Apple's reviewer and every person signing in reads.
 ///
-/// Both are drafts. The named third parties, the retention window and the
-/// escalation wording all have to be checked against the signed district
-/// agreement before any user sees this.
+/// Both are drafts and they mirror www/terms.html and www/privacy.html. When
+/// one changes the other changes in the same commit. Decision 282.
 library;
 
-const policyUpdated = 'Draft, not yet reviewed';
+const policyUpdated = 'Last updated 18 September 2026. Draft, not yet reviewed by a lawyer.';
 
 const termsOfService = '''
 $policyUpdated
@@ -27,9 +26,9 @@ and not a replacement for anyone you would talk to.
 
 SOUL IS NOT A CRISIS SERVICE
 
-If what you write looks like a crisis, the app stops and shows you a screen
-with people you can reach. That screen is produced automatically. Nobody reads
-your entry before you see it.
+Soul does not watch for emergencies and cannot respond to one. Every entry is
+read automatically for signs of risk and a record is kept of that reading, but
+nobody reads your entry and nothing on your screen changes because of it.
 
 If you are in danger or thinking about harming yourself, contact emergency
 services or a crisis line where you are, straight away. In the United States
@@ -39,26 +38,31 @@ cannot contact anyone for you, and cannot respond to an emergency.
 NO ADVICE
 
 Nothing in the app is medical, psychological or therapeutic advice. It does not
-diagnose anything, and it does not tell you what to do. Talk to a qualified
-person about anything serious.
+diagnose anything. On the patterns screen, and nowhere else, it will say that
+something you keep doing is worth keeping or worth stopping. That is one
+sentence about a situation you can see the entries for. It is never a statement
+about what kind of person you are. Talk to a qualified person about anything
+serious.
 
 YOUR ACCOUNT
 
-Your school or district sets up your account. Signing in with Apple links that
-account to your device so what you write follows you if you change phones.
+Your phone is given an account the first time the app opens, before you are
+asked anything. You can then sign in with Apple, or with a code sent to your
+email. If you sign in with your email, the address is held so you can get back
+in. Signing in links the account to you so that what you write follows you if
+you change phones.
 
 WHAT YOU WRITE
 
 What you write is yours. To answer you, the app sends what you wrote to the
 model providers named in the Privacy Policy. Your words are never used to train
-anybody's model, and they are never sold. You can delete any entry, and you can
-ask for everything to be deleted.
+anybody's model, and they are never sold. You can delete your whole account and
+everything in it from your profile, at any time.
 
 WHAT THE APP ASKS YOU
 
 Every question in the app can be answered or left. Nothing in the app scores
-you, ranks you, or reports how you answered to your school as a result of
-answering.
+you or ranks you.
 
 CHANGES
 
@@ -95,34 +99,40 @@ too.
 
 WHO ELSE SEES IT
 
-To turn speech into text: ElevenLabs.
-To describe how you sounded when you spoke: OpenAI.
-To deliver a sign in code, if you sign in with your email: Resend.
-To write a line back and to describe your entries in a few words: OpenAI.
+To turn speech into text: a speech recognition provider.
+To write a line back, to describe your entries in a few words, and to describe
+how you sounded when you spoke: an AI model provider.
+To deliver a sign in code, if you sign in with your email: an email delivery
+service.
 
-They process what is sent and nothing more. Your words are not used to train
-their models. If your school has not agreed to this processing, nothing leaves
-the app at all and your entries are simply stored.
+They process what is sent and nothing more, under agreements that say so. Your
+words are not used to train their models. The current list of providers is sent
+to anybody who asks at founder@soulspacehealth.com.
 
-NO TRACKING
+WHAT WE MEASURE
 
-There is no analytics package in this app, no crash reporting package, and no
-advertising. Nobody is watching which screens you open.
+Two services help us find faults and see how the app is used. An error
+reporting service receives error reports and a recording of the screens around
+an error, with text and images masked, so it shows where somebody tapped and
+not what they wrote. A product analytics service receives the names of screens
+and actions, how many moments you have
+written, and, once you sign in, your email address and first name, so that a
+reply to feedback can reach you. Neither is ever sent anything you wrote or
+said. There is no advertising, and nothing is sold.
 
-YOUR SCHOOL AND YOUR DISTRICT
+IF SOMETHING LOOKS SERIOUS
 
-Your account belongs to a school inside a district. A district can ask what is
-held about a user and when consent was recorded. What you write is not sent
-to your teachers as a report.
-
-If something you write suggests you are at risk, the app records that it
-happened. What is done about it is set by your district's escalation policy,
-which is written down and which you can ask to see.
+Every entry is read automatically for signs of risk, and the app records what
+that reading was. Nothing on your screen changes because of it, and nothing is
+sent to anybody on your behalf. Soul is not a crisis service. If you are in
+danger, contact emergency services or a crisis line where you are. In the
+United States you can call or text 988.
 
 DELETING
 
-You can delete an entry. You can ask for your whole account and everything in
-it to be deleted, and it is then removed rather than hidden.
+You can delete your whole account and everything in it from your profile:
+Delete my account is at the bottom. It is removed rather than hidden, straight
+away, and it cannot be brought back.
 
 CHANGES
 
