@@ -168,9 +168,9 @@ not paraphrase a fact into a trait anywhere it is rendered.
 
 **Empty states get built before populated ones.** Every mockup shows a full week
 of data. No user has that on day one. Home is the test of this: on day one
-the five tiles carry what the person said about how they decide, outlined
-until their own entries show each one, with the line written at the end of
-first run under them; the map holds whoever the introduction named; the
+the five tiles carry what the person said about how they decide, as plain
+sentences in their own answers, with the line written at the end of first
+run under them; the map holds whoever the introduction named; the
 strip is the days ending today. Every other card on home is absent until
 there is something real in it, never shown empty. Decision 279. What keeps
 returning is not shown at all until there are themes from real entries,

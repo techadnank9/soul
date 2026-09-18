@@ -255,6 +255,8 @@ class HomeView {
 class HomeTile {
   const HomeTile({
     required this.section,
+    required this.title,
+    required this.line,
     required this.answers,
     required this.seen,
     required this.entryIds,
@@ -262,6 +264,12 @@ class HomeTile {
   });
 
   final String section;
+
+  /// What the pair is about, in plain words.
+  final String title;
+
+  /// The two answers as plain sentences, in the second person.
+  final String line;
   final List<String> answers;
   final int seen;
   final List<String> entryIds;
@@ -269,6 +277,9 @@ class HomeTile {
 
   static HomeTile fromJson(Map<String, dynamic> json) => HomeTile(
         section: json['section'] as String,
+        title: (json['title'] as String?) ?? (json['section'] as String),
+        line: (json['line'] as String?) ??
+            [for (final a in (json['answers'] as List<dynamic>? ?? [])) a as String].join(' \u00b7 '),
         answers: [for (final a in (json['answers'] as List<dynamic>? ?? [])) a as String],
         seen: (json['seen'] as num?)?.toInt() ?? 0,
         entryIds: [for (final e in (json['entryIds'] as List<dynamic>? ?? [])) e as String],

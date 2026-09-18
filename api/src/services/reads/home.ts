@@ -1,6 +1,6 @@
 import { asStudent, type Session } from '../../session.js'
 import { ISO_INSTANT, studentZone } from './rules.js'
-import { BASELINE_SET, answeredBySection, type BaselineSection } from './baseline_set.js'
+import { BASELINE_SET, SECTION_TITLES_PLAIN, answeredBySection, sectionLine, type BaselineSection } from './baseline_set.js'
 
 /**
  * Home. Everything below the question card, in one read. Decision 279.
@@ -17,6 +17,10 @@ import { BASELINE_SET, answeredBySection, type BaselineSection } from './baselin
  */
 export type HomeTile = {
   section: BaselineSection
+  /** What the pair is about, in plain words: under pressure, what you wait for. */
+  title: string
+  /** The two answers as one or two plain sentences in the second person. */
+  line: string
   answers: string[]
   seen: number
   entryIds: string[]
@@ -77,6 +81,8 @@ export async function home(session: Session): Promise<HomeView> {
       const mine = sightings.filter((row) => row.section === s.section)
       return {
         section: s.section,
+        title: SECTION_TITLES_PLAIN[s.section],
+        line: sectionLine(s.section, s.fragments),
         answers: s.shorts,
         seen: mine.length,
         entryIds: mine.map((row) => row.entryId).slice(0, 20),

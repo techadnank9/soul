@@ -319,7 +319,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ..._waiting()
         // Nothing at all: no answers held, nothing written. A rostered
         // account that skipped first run, and nobody else for long.
-        else if (home.moments == 0 && home.tiles.isEmpty && home.map.nodes.isEmpty)
+        else if (home.moments == 0 &&
+            home.tiles.isEmpty &&
+            home.map.nodes.isEmpty &&
+            home.leftOff == null &&
+            home.coming.isEmpty &&
+            home.people.isEmpty &&
+            home.decisions.isEmpty &&
+            home.week == null)
           ..._dayOne()
         else
           ..._populated(home),
@@ -628,9 +635,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           moments: home.moments,
           tiles: home.tiles,
           opening: home.opening,
-          onOpenTile: (tile) {
-            if (tile.lastOn != null) widget.onOpenDay(tile.lastOn!);
-          },
+          onOpenTile: (_) => widget.onOpenProfile?.call(),
         ),
       ],
       // The people and things around them, growing with every entry.
@@ -952,11 +957,9 @@ class _DayColumn extends StatelessWidget {
   }
 }
 
-/// One of the five tiles: what they said, and whether it has been seen.
-///
-/// A tile is solid in its section colour once at least one entry has shown
-/// it, and outlined until then. The grid reads as the answers on day one and
-/// as the evidence later, and the difference between the two is the point.
+/// The five tiles: what they said at first run about how they decide, as
+/// plain sentences. The answers are the person's own and the tile only reads
+/// them back; tapping one opens the profile, where they can be changed.
 class _TilesCard extends StatelessWidget {
   const _TilesCard({
     required this.moments,
@@ -975,15 +978,20 @@ class _TilesCard extends StatelessWidget {
     final rows = <Widget>[];
     for (var i = 0; i < tiles.length; i += 2) {
       final last = i + 1 >= tiles.length;
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _Tile(tile: tiles[i], wide: last, onTap: () => onOpenTile(tiles[i]))),
-          if (!last) ...[
-            const SizedBox(width: 8),
-            Expanded(child: _Tile(tile: tiles[i + 1], onTap: () => onOpenTile(tiles[i + 1]))),
+      // Two tiles side by side take the taller one's height, so a pair
+      // reads as a pair. IntrinsicHeight is what lets stretch work inside
+      // a column, which otherwise hands the row an infinite height.
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _Tile(tile: tiles[i], wide: last, onTap: () => onOpenTile(tiles[i]))),
+            if (!last) ...[
+              const SizedBox(width: 8),
+              Expanded(child: _Tile(tile: tiles[i + 1], onTap: () => onOpenTile(tiles[i + 1]))),
+            ],
           ],
-        ],
+        ),
       ));
       if (!last) rows.add(const SizedBox(height: 8));
     }
@@ -996,8 +1004,7 @@ class _TilesCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Label(
-              'how you decide, as you told us \u00b7 '
-              '${moments == 1 ? 'one moment' : '$moments moments'} this week',
+              'how you decide, as you told us',
             ),
           ),
           const SizedBox(height: 10),
@@ -1043,43 +1050,32 @@ class _Tile extends StatelessWidget {
   Widget build(BuildContext context) {
     final (mark, tint, ink) = _colours[tile.section] ??
         (SoulColors.clay, SoulColors.clayLight, SoulColors.clayDark);
-    final seen = tile.seen > 0;
-    final title = tile.section == 'readiness' ? 'right now' : tile.section;
-    final status = seen
-        ? 'showed up in ${tile.seen == 1 ? 'one moment' : '${tile.seen} moments'}'
-        : 'not seen yet in what you wrote';
 
     final glyph = SizedBox(
       width: 56,
       height: 34,
-      child: CustomPaint(painter: _SectionGlyph(tile.section, mark, seen)),
+      child: CustomPaint(painter: _SectionGlyph(tile.section, mark, true)),
     );
     final words = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: SoulType.muted.copyWith(color: ink, fontSize: 11)),
-        const SizedBox(height: 2),
+        Text(tile.title, style: SoulType.muted.copyWith(color: ink, fontSize: 11)),
+        const SizedBox(height: 3),
         Text(
-          tile.answers.join(' \u00b7 '),
+          tile.line,
           style: SoulType.secondary.copyWith(color: SoulColors.text, fontSize: 13, height: 1.35),
         ),
-        const SizedBox(height: 5),
-        Text(status, style: SoulType.muted.copyWith(color: ink, fontSize: 11)),
       ],
     );
 
     return GestureDetector(
-      onTap: seen ? onTap : null,
+      onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: seen ? tint : Colors.transparent,
+          color: tint,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: seen ? tint : mark.withValues(alpha: 0.55),
-            width: seen ? 1 : 1.2,
-          ),
         ),
         child: wide
             ? Row(

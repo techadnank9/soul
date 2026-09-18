@@ -5954,3 +5954,37 @@ sense rather than only look like something.
 
 Would reverse it: the tagger filling tiles that people say do not fit. The
 entry behind every fill is kept so that can be checked.
+
+---
+
+### 280. The tiles are the ten answers, read back plainly, and nothing else
+Sep 2026, founder
+
+Decision: each of the five tiles on home carries a plain title, "under
+pressure", "what you wait for", "when feelings run high", "what comes back",
+"right now", and one or two sentences in the second person built from the
+two answers the person gave, "Under pressure you tend to delay it as long
+as you can. You decide most easily after time to reflect." No section
+names from the questionnaire, no seen or not seen line, no outlined state.
+Tapping a tile opens the profile, where the answers can be changed.
+
+The founder, on seeing the first build: the section names "timing" and
+"agency" mean nothing to a person, and a line saying "not seen in what you
+wrote" should never be shown. The tiles are the onboarding questions and
+that is the whole point of them.
+
+Why the words are built on the server. The forty options each carry a
+fragment written to read as part of a sentence about the person, in
+`api/src/services/reads/baseline_set.ts`, so the app prints what it is
+given and the wording can change without a release. The five section keys
+stay as they are underneath for the tagger and the tables.
+
+What stays from decision 279. The tagger still records which of the five
+an entry shows, in `section_sightings`, and the home read still carries
+the count and the entries. Nothing on the screen uses it yet. It is kept
+because it is the evidence the noticings and the week can draw on, and
+because decision 275's recognition moment needs the two sides held
+together somewhere, even if home is not that place.
+
+Would reverse it: the founder wanting the said and wrote gap shown after
+all, at which point the data is already there.
