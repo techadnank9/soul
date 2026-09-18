@@ -6053,3 +6053,27 @@ answers in App Store Connect still declare every data type truthfully.
 
 Would reverse it: a lawyer or a regulator asking for the processors to be
 named in the policy itself, which some privacy laws prefer.
+
+---
+
+### 283. The review address and code stay set on Render
+Sep 2026, founder
+
+Decision: `SOUL_REVIEW_EMAIL` and `SOUL_REVIEW_CODE` stay on soul-api for
+good, not only while a review is open. Decision 261 said to unset them when
+a review is over.
+
+Why: Apple has to sign in and use the app, and it reviews every update,
+not only the first submission. The review video shows this address and
+this code, and the App Review notes give them. A reviewer who is refused at
+sign in is a rejection, and nobody will remember to set two variables
+again before each build.
+
+What keeps it safe is what decision 261 already built: one exact address,
+a code that lives only on the host and can be changed there without a
+release, and an account that is an ordinary row holding only sample
+entries. If the code ever leaks, change it on Render and in the App Review
+notes.
+
+Would reverse it: the app leaving review for good, or the code being found
+in use by anybody who is not Apple.

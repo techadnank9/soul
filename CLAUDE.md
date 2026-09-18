@@ -197,8 +197,9 @@ There is also a review account, for Apple. `SOUL_REVIEW_EMAIL` and
 `SOUL_REVIEW_CODE` on a host make that one address take a fixed code instead
 of a sent one, because a reviewer cannot read an inbox they do not own and
 first run cannot be skipped. `npm run seed:review -w @soul/api` makes the
-account and fills it with the demo week so home is not empty. Unset both
-variables when a review is over. Decision 261.
+account and fills it with the demo week so home is not empty. Both variables
+stay set on Render: Apple reviews every update, not only the first one, and a
+reviewer who cannot sign in is a rejection. Decisions 261 and 283.
 
 Two test students exist: `student_with_consent` and `student_no_consent`. The
 second one is how you check the gate without editing code. They are created by
