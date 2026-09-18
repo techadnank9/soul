@@ -31,6 +31,7 @@ const purposes = [
   'consolidate',
   'reminders',
   'noticings',
+  'week_notes',
 ] as const
 
 async function main() {

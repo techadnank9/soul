@@ -168,11 +168,13 @@ not paraphrase a fact into a trait anywhere it is rendered.
 
 **Empty states get built before populated ones.** Every mockup shows a full week
 of data. No user has that on day one. Home is the test of this: on day one
-the ring is filled from the baseline answers, the strip is the seven days
-ending today so nothing in it is greyed out, and the line under the greeting
-is the one written at the end of first run. What keeps returning is not
-shown at all until there are themes from real entries, because an empty
-patterns screen is a promise the app cannot keep.
+the five tiles carry what the person said about how they decide, outlined
+until their own entries show each one, with the line written at the end of
+first run under them; the map holds whoever the introduction named; the
+strip is the days ending today. Every other card on home is absent until
+there is something real in it, never shown empty. Decision 279. What keeps
+returning is not shown at all until there are themes from real entries,
+because an empty patterns screen is a promise the app cannot keep.
 
 **The card at the top of home always appears, unless today has been
 answered.** No position, no weather reading, no network: it still asks

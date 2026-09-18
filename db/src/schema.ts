@@ -79,6 +79,7 @@ export const generationPurpose = pgEnum('generation_purpose', [
   'weather_question',
   'reminders',
   'noticings',
+  'week_notes',
 ])
 export const jobStatus = pgEnum('job_status', ['pending', 'running', 'done', 'failed', 'cancelled'])
 export const actorRole = pgEnum('actor_role', ['student', 'system', 'counsellor', 'district_admin'])
@@ -892,6 +893,60 @@ export const noticings = pgTable(
   },
   (t) => [
     index('noticings_student_status_idx').on(t.studentId, t.status, t.createdAt.desc()),
+  ],
+)
+
+/**
+ * The week as three sentences, written on Sunday evening in the person's
+ * own timezone from everything they wrote that week. Decision 279.
+ *
+ * One row per person per week, and the newest is what home shows. Older
+ * rows stay as the record of what was said about each week.
+ */
+export const weekNotes = pgTable(
+  'week_notes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    weekStart: date('week_start').notNull(),
+    lines: text('lines').array().notNull(),
+    moments: integer('moments').notNull(),
+    promptVersion: text('prompt_version').notNull(),
+    modelVersion: text('model_version').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    uniqueIndex('week_notes_student_week_idx').on(t.studentId, t.weekStart),
+  ],
+)
+
+/**
+ * An entry that is an instance of one of the five ways of deciding the
+ * person described at first run: timing, agency, emotion, repetition,
+ * readiness. Written by the tagger, one row per section per entry, empty
+ * for most entries. The tiles on home fill from these, so every filled
+ * tile can show the moments behind it. Decision 279.
+ */
+export const sectionSightings = pgTable(
+  'section_sightings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    studentId: uuid('student_id').notNull().references(() => students.id),
+    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    districtId: uuid('district_id').notNull().references(() => districts.id),
+    section: text('section').notNull(),
+    entryId: uuid('entry_id')
+      .notNull()
+      .references(() => entries.id, { onDelete: 'cascade' }),
+    promptVersion: text('prompt_version').notNull(),
+    modelVersion: text('model_version').notNull(),
+    createdAt: now(),
+  },
+  (t) => [
+    uniqueIndex('section_sightings_section_entry_idx').on(t.section, t.entryId),
+    index('section_sightings_student_idx').on(t.studentId, t.section, t.createdAt.desc()),
   ],
 )
 

@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
     required this.api,
     required this.onCapture,
     required this.onOpenDay,
-    required this.onOpenPatterns,
+    required this.onOpenPerson,
     this.revision = 0,
     this.showFooter = true,
     this.name,
@@ -52,7 +52,8 @@ class HomeScreen extends StatefulWidget {
   /// Given the date of the day that was tapped, as YYYY-MM-DD.
   final ValueChanged<String> onOpenDay;
 
-  final VoidCallback onOpenPatterns;
+  /// Opens somebody's page, from a chip or a node on the map.
+  final ValueChanged<String> onOpenPerson;
 
   /// Changes when an entry lands. The count and the dots then come from the
   /// server again rather than being added up on the device, so what is on
@@ -68,7 +69,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  WeekView? _week;
+  HomeView? _home;
   bool _failed = false;
 
   /// Asked for on its own rather than as part of the week, so a slow or
@@ -294,12 +295,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _load() async {
     setState(() {
-      _week = null;
+      _home = null;
       _failed = false;
     });
     try {
-      final week = await widget.api.week();
-      if (mounted) setState(() => _week = week);
+      final home = await widget.api.home();
+      if (mounted) setState(() => _home = home);
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     }
@@ -307,25 +308,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final week = _week;
+    final home = _home;
 
     return Screen(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       body: [
         if (_failed)
           ..._notLoaded()
-        else if (week == null)
+        else if (home == null)
           ..._waiting()
-        // Day one, and every later week with nothing in it yet.
-        else if (week.moments == 0)
+        // Nothing at all: no answers held, nothing written. A rostered
+        // account that skipped first run, and nobody else for long.
+        else if (home.moments == 0 && home.tiles.isEmpty && home.map.nodes.isEmpty)
           ..._dayOne()
         else
-          ..._populated(week),
+          ..._populated(home),
         // Under everything, on every state of this screen including the one
         // that would not load, because a screen that failed is exactly when
         // somebody has something to say. Not while the week is still coming:
         // there is nothing to have an opinion about yet.
-        if (week != null || _failed) ..._tellUs(),
+        if (home != null || _failed) ..._tellUs(),
       ],
       // The invitation is the one thing worth offering while the week is still
       // coming, and it is the only way out of a week that would not load.
@@ -460,11 +462,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// This is the only place in the product where an outcome is written, and
   /// without it the two sections built on outcomes could never fill: the job
   /// marks a decision due and nothing ever asked about it.
-  Future<void> _askHowItWent(Holding holding) async {
+  Future<void> _askHowItWent(String decisionId, String chose) async {
     final answer = await Navigator.of(context).push<({String? happened, String? felt})>(
       MaterialPageRoute(
         builder: (page) => OutcomeScreen(
-          decision: holding.chose,
+          decision: chose,
           onDone: (happened, felt) =>
               Navigator.of(page).pop((happened: happened, felt: felt)),
         ),
@@ -475,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     try {
       await widget.api.recordOutcome(
-        decisionId: holding.decisionId,
+        decisionId: decisionId,
         whatHappened: answer.happened,
         felt: answer.felt,
       );
@@ -488,8 +490,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (mounted) await _load();
   }
 
-  List<Widget> _populated(WeekView week) {
-    final slices = _slices(week);
+  List<Widget> _populated(HomeView home) {
     final today = todayOnDevice();
 
     return [
@@ -618,83 +619,51 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ],
-      const SizedBox(height: 18),
-      SoulCard(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Label(_momentLine(week.moments)),
-            const SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: 132,
-                height: 132,
-                child: CustomPaint(painter: _WeekRing(slices)),
-              ),
-            ),
-            // A week can hold entries with nothing to divide by: the tagger
-            // has not run on them yet, or it ran and found no feeling in
-            // them, which is the honest answer for a few words typed to see
-            // what happens. Rather than a blank circle, the card holds what
-            // the baseline said, which is the one thing the app does know
-            // about somebody who has only just arrived. Their own week
-            // replaces it as soon as it has something in it.
-            if (week.themes.isEmpty) ...[
-              const SizedBox(height: 16),
-              if (week.opening != null) ...[
-                Text(
-                  week.opening!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: SoulType.serif,
-                    fontSize: 17,
-                    height: 1.4,
-                    color: SoulColors.text,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              const Center(child: Label('nothing to divide yet')),
-            ],
-            if (slices.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              for (var i = 0; i < slices.length; i += 2) ...[
-                if (i > 0) const SizedBox(height: 10),
-                Row(
-                  children: [
-                    for (var j = i; j < i + 2 && j < slices.length; j++)
-                      Expanded(
-                        child: _LegendRow(
-                          slice: slices[j],
-                          // These have no entries behind them yet, so there
-                          // is no number to give.
-                          counted: !week.themesFromAnswers,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ],
-          ],
+      // What they said about how they decide, filled in by what they have
+      // written since. The first thing on the screen that is about them, and
+      // it is there the minute first run ends. Decision 279.
+      if (home.tiles.isNotEmpty) ...[
+        const SizedBox(height: 18),
+        _TilesCard(
+          moments: home.moments,
+          tiles: home.tiles,
+          opening: home.opening,
+          onOpenTile: (tile) {
+            if (tile.lastOn != null) widget.onOpenDay(tile.lastOn!);
+          },
         ),
-      ),
-      // The thing they are holding, once the day they named has passed. It
-      // sits above what keeps returning because it is the only card on this
-      // screen that is waiting on them.
-      if (week.holding != null) ...[
+      ],
+      // The people and things around them, growing with every entry.
+      if (home.map.nodes.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        _MapCard(
+          map: home.map,
+          opening: home.tiles.isEmpty ? home.opening : null,
+          onOpenPerson: widget.onOpenPerson,
+        ),
+      ],
+      // What is waiting for an answer: a check back on something they
+      // decided, or a card about something they said was coming up.
+      if (home.leftOff != null) ...[
         const SizedBox(height: 14),
         SoulCard(
           background: SoulColors.clayLight,
           borderColor: const Color(0x33EA5F17),
-          onTap: () => _askHowItWent(week.holding!),
+          onTap: () {
+            final left = home.leftOff!;
+            if (left.kind == 'decision') {
+              _askHowItWent(left.id, left.text);
+            } else {
+              widget.onCapture(prompt: left.text);
+            }
+          },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Label('you were holding this'),
+              const Label('where you left off'),
               const SizedBox(height: 6),
               Text(
-                week.holding!.chose,
+                home.leftOff!.text,
                 style: const TextStyle(
                   fontFamily: SoulType.serif,
                   fontSize: 18,
@@ -703,13 +672,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 12),
-              // Neutral. It asks what happened rather than whether they did
-              // it, because a check back that reads as a test turns this into
-              // something that keeps score.
               Row(
                 children: [
-                  const Expanded(
-                    child: Text('How did it go?', style: SoulType.secondary),
+                  Expanded(
+                    child: Text(
+                      home.leftOff!.kind == 'decision'
+                          ? 'How did it go?'
+                          : 'Say how it is going',
+                      style: SoulType.secondary,
+                    ),
                   ),
                   const Icon(Icons.chevron_right,
                       size: 18, color: SoulColors.text3),
@@ -719,31 +690,138 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ],
-      // Only once entries have put something in it. Sent to an empty
-      // patterns screen, what keeps returning is a promise the app cannot
-      // keep yet, and the answers from first run are not reflection.
-      if (week.themes.isNotEmpty && !week.themesFromAnswers) ...[
-      const SizedBox(height: 14),
-      SoulCard(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        onTap: widget.onOpenPatterns,
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'What keeps returning',
-                style: TextStyle(
-                  fontFamily: SoulType.sans,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w300,
-                  color: SoulColors.text,
+      if (home.coming.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        SoulCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Label('coming up'),
+              const SizedBox(height: 4),
+              for (var i = 0; i < home.coming.length; i++)
+                _RowLine(
+                  first: i == 0,
+                  onTap: () => widget.onCapture(prompt: home.coming[i].said),
+                  child: RichText(
+                    text: TextSpan(
+                      style: SoulType.secondary.copyWith(color: SoulColors.text),
+                      children: [
+                        TextSpan(
+                          text: _dayWord(home.coming[i].on, today),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        TextSpan(text: ' \u00b7 ${home.coming[i].said}'),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 18, color: SoulColors.text3),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
+      if (home.people.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        SoulCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Label('people this week'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final person in home.people)
+                    _Chip(
+                      text: person.name,
+                      onTap: () => widget.onOpenPerson(person.id),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+      if (home.decisions.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        SoulCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Label('what you decided'),
+              const SizedBox(height: 4),
+              for (var i = 0; i < home.decisions.length; i++)
+                _RowLine(
+                  first: i == 0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        home.decisions[i].chose,
+                        style: SoulType.secondary.copyWith(color: SoulColors.text),
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: switch (home.decisions[i].felt) {
+                                'lighter' => SoulColors.moss,
+                                'worse' => SoulColors.clay,
+                                'same' => SoulColors.amber,
+                                _ => SoulColors.border2,
+                              },
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            switch (home.decisions[i].felt) {
+                              'lighter' => 'left you lighter',
+                              'worse' => 'left you worse',
+                              'same' => 'left you about the same',
+                              _ => 'not answered yet',
+                            },
+                            style: SoulType.muted,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+      // The week as three sentences, written on Sunday and held all week.
+      if (home.week != null) ...[
+        const SizedBox(height: 14),
+        SoulCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Label(
+                'the week from ${_dateWords(home.week!.from)}, '
+                '${_momentLine(home.week!.moments)}',
+              ),
+              const SizedBox(height: 10),
+              for (var i = 0; i < home.week!.lines.length; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                Text(
+                  home.week!.lines[i],
+                  style: const TextStyle(
+                    fontFamily: SoulType.serif,
+                    fontSize: 17,
+                    height: 1.35,
+                    color: SoulColors.text,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
       const SizedBox(height: 60),
     ];
@@ -751,6 +829,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   static String _momentLine(int moments) =>
       moments == 1 ? 'one moment' : '$moments moments';
+
+  /// Today, tomorrow, or the weekday, for a date within the next two weeks.
+  static String _dayWord(String iso, String today) {
+    if (iso == today) return 'Today';
+    final day = DateTime.tryParse(iso);
+    final now = DateTime.tryParse(today);
+    if (day == null || now == null) return iso;
+    final days = day.difference(now).inDays;
+    if (days == 1) return 'Tomorrow';
+    if (days < 7) return _weekdays[day.weekday - 1];
+    return '${day.day} ${_months[day.month - 1]}';
+  }
+
+  static String _dateWords(String iso) {
+    final day = DateTime.tryParse(iso);
+    if (day == null) return iso;
+    return '${day.day} ${_months[day.month - 1]}';
+  }
 
   /// Morning until noon, afternoon until five, evening after that and
   /// through the night, because nobody wants to be told good night by the
@@ -779,34 +875,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return '${_weekdays[now.weekday - 1]} ${now.day} ${_months[now.month - 1]}';
   }
 
-  /// The themes, each given one of the four colours.
-  ///
-  /// By position, because the week arrives highest first and four distinct
-  /// colours in a fixed order is what makes the ring readable. Nothing in the
-  /// contract ties a feeling to a colour, and a colour chosen here only ever
-  /// says which arc is which line of the key.
-  ///
-  /// The moments under none of the shown themes come last, in the track's
-  /// own grey, so the ring adds up to the number above it and the key says
-  /// where the rest went.
-  static List<({String name, int count, Color colour})> _slices(
-    WeekView week,
-  ) {
-    final themes = week.themes;
-    const palette = [
-      SoulColors.clay,
-      SoulColors.amber,
-      SoulColors.violet,
-      SoulColors.moss,
-    ];
-
-    return [
-      for (var i = 0; i < themes.length && i < palette.length; i++)
-        (name: themes[i].name, count: themes[i].count, colour: palette[i]),
-      if (week.unsorted > 0)
-        (name: 'not sorted yet', count: week.unsorted, colour: SoulColors.s3),
-    ];
-  }
 }
 
 class _DayColumn extends StatelessWidget {
@@ -884,108 +952,430 @@ class _DayColumn extends StatelessWidget {
   }
 }
 
-/// The week as one ring, divided by theme.
+/// One of the five tiles: what they said, and whether it has been seen.
 ///
-/// Arc lengths are the share of the week each theme took, so a glance answers
-/// what most of it was about before any number is read. Drawn with a rounded
-/// cap and a gap between arcs, because touching arcs read as one smeared band.
-class _WeekRing extends CustomPainter {
-  const _WeekRing(this.slices);
+/// A tile is solid in its section colour once at least one entry has shown
+/// it, and outlined until then. The grid reads as the answers on day one and
+/// as the evidence later, and the difference between the two is the point.
+class _TilesCard extends StatelessWidget {
+  const _TilesCard({
+    required this.moments,
+    required this.tiles,
+    required this.opening,
+    required this.onOpenTile,
+  });
 
-  final List<({String name, int count, Color colour})> slices;
+  final int moments;
+  final List<HomeTile> tiles;
+  final String? opening;
+  final ValueChanged<HomeTile> onOpenTile;
 
-  static const _stroke = 15.0;
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < tiles.length; i += 2) {
+      final last = i + 1 >= tiles.length;
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _Tile(tile: tiles[i], wide: last, onTap: () => onOpenTile(tiles[i]))),
+          if (!last) ...[
+            const SizedBox(width: 8),
+            Expanded(child: _Tile(tile: tiles[i + 1], onTap: () => onOpenTile(tiles[i + 1]))),
+          ],
+        ],
+      ));
+      if (!last) rows.add(const SizedBox(height: 8));
+    }
 
-  /// A hair of space between arcs, in radians.
-  static const _gap = 0.045;
+    return SoulCard(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Label(
+              'how you decide, as you told us \u00b7 '
+              '${moments == 1 ? 'one moment' : '$moments moments'} this week',
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...rows,
+          if (opening != null) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                opening!,
+                style: const TextStyle(
+                  fontFamily: SoulType.serif,
+                  fontSize: 17,
+                  height: 1.35,
+                  color: SoulColors.text,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  const _Tile({required this.tile, required this.onTap, this.wide = false});
+
+  final HomeTile tile;
+  final VoidCallback onTap;
+  final bool wide;
+
+  static const _colours = <String, (Color, Color, Color)>{
+    // section: (mark, tint, text on tint)
+    'timing': (SoulColors.clay, SoulColors.clayLight, SoulColors.clayDark),
+    'agency': (SoulColors.amber, Color(0xFFFFF6E0), Color(0xFF8A5A00)),
+    'emotion': (SoulColors.violet, Color(0xFFEFEDFB), Color(0xFF3E36A0)),
+    'repetition': (SoulColors.moss, Color(0xFFEAF3E6), Color(0xFF2C6320)),
+    'readiness': (SoulColors.clay, SoulColors.clayLight, SoulColors.clayDark),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final (mark, tint, ink) = _colours[tile.section] ??
+        (SoulColors.clay, SoulColors.clayLight, SoulColors.clayDark);
+    final seen = tile.seen > 0;
+    final title = tile.section == 'readiness' ? 'right now' : tile.section;
+    final status = seen
+        ? 'showed up in ${tile.seen == 1 ? 'one moment' : '${tile.seen} moments'}'
+        : 'not seen yet in what you wrote';
+
+    final glyph = SizedBox(
+      width: 56,
+      height: 34,
+      child: CustomPaint(painter: _SectionGlyph(tile.section, mark, seen)),
+    );
+    final words = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: SoulType.muted.copyWith(color: ink, fontSize: 11)),
+        const SizedBox(height: 2),
+        Text(
+          tile.answers.join(' \u00b7 '),
+          style: SoulType.secondary.copyWith(color: SoulColors.text, fontSize: 13, height: 1.35),
+        ),
+        const SizedBox(height: 5),
+        Text(status, style: SoulType.muted.copyWith(color: ink, fontSize: 11)),
+      ],
+    );
+
+    return GestureDetector(
+      onTap: seen ? onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: seen ? tint : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: seen ? tint : mark.withValues(alpha: 0.55),
+            width: seen ? 1 : 1.2,
+          ),
+        ),
+        child: wide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [glyph, const SizedBox(width: 12), Expanded(child: words)],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [glyph, const SizedBox(height: 4), words],
+              ),
+      ),
+    );
+  }
+}
+
+/// A small mark per section, echoing the scene each pair of questions was
+/// answered with: an orb, a few joined stars, ripples, two arcs, a dial.
+class _SectionGlyph extends CustomPainter {
+  const _SectionGlyph(this.section, this.colour, this.solid);
+
+  final String section;
+  final Color colour;
+  final bool solid;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final centre = Offset(size.width / 2, size.height / 2);
-    final radius = (math.min(size.width, size.height) - _stroke) / 2;
-    final box = Rect.fromCircle(center: centre, radius: radius);
-
-    final track = Paint()
+    final c = Offset(size.width / 2, size.height / 2);
+    final fill = Paint()..color = solid ? colour : colour.withValues(alpha: 0.45);
+    final line = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = _stroke
-      ..color = SoulColors.s3;
-    canvas.drawCircle(centre, radius, track);
+      ..strokeWidth = 1.6
+      ..color = colour.withValues(alpha: solid ? 0.45 : 0.3);
 
-    final total = slices.fold<int>(0, (sum, slice) => sum + slice.count);
-    if (total == 0) return;
-
-    // From the top, clockwise, in the order the themes are given.
-    var start = -math.pi / 2;
-
-    for (final slice in slices) {
-      final sweep = (slice.count / total) * math.pi * 2;
-      if (sweep <= _gap) continue;
-
-      canvas.drawArc(
-        box,
-        start + _gap / 2,
-        sweep - _gap,
-        false,
-        Paint()
+    switch (section) {
+      case 'timing':
+        canvas.drawCircle(c, 15, line);
+        canvas.drawCircle(c, 9, fill);
+      case 'agency':
+        final a = Offset(c.dx - 18, c.dy + 8);
+        final b = Offset(c.dx, c.dy - 8);
+        final d = Offset(c.dx + 18, c.dy + 4);
+        canvas.drawLine(a, b, line);
+        canvas.drawLine(b, d, line);
+        canvas.drawCircle(a, 3, fill);
+        canvas.drawCircle(b, 4, fill);
+        canvas.drawCircle(d, 3, fill);
+      case 'emotion':
+        canvas.drawCircle(c, 16, line);
+        canvas.drawCircle(c, 10, line);
+        canvas.drawCircle(c, 4.5, fill);
+      case 'repetition':
+        final arc = Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = _stroke
+          ..strokeWidth = 2
           ..strokeCap = StrokeCap.round
-          ..color = slice.colour,
-      );
-      start += sweep;
+          ..color = solid ? colour : colour.withValues(alpha: 0.45);
+        canvas.drawArc(Rect.fromCircle(center: c.translate(0, 8), radius: 18), math.pi, math.pi, false, arc);
+        canvas.drawArc(Rect.fromCircle(center: c.translate(0, 8), radius: 11), math.pi, math.pi, false, arc..color = colour.withValues(alpha: solid ? 0.5 : 0.3));
+      default:
+        final base = c.translate(0, 9);
+        canvas.drawArc(Rect.fromCircle(center: base, radius: 17), math.pi, math.pi, false, Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.5
+          ..strokeCap = StrokeCap.round
+          ..color = colour.withValues(alpha: 0.28));
+        canvas.drawLine(base, base.translate(11, -12), Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.6
+          ..strokeCap = StrokeCap.round
+          ..color = solid ? colour : colour.withValues(alpha: 0.5));
     }
   }
 
   @override
-  bool shouldRepaint(_WeekRing old) => !listEquals(old.slices, slices);
+  bool shouldRepaint(_SectionGlyph old) =>
+      old.section != section || old.colour != colour || old.solid != solid;
 }
 
-/// One line of the key under the ring. The dot carries the colour, the name
-/// says what it is, the number is last because it is the least of the three.
-class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.slice, this.counted = true});
+/// The people and things around them, drawn from what they have said.
+///
+/// The person is the dot in the middle. Whoever they have named sits on a
+/// ring around them, closer and larger the more they have come up lately,
+/// with hairlines out from the middle. It grows with every entry and never
+/// rewards anything: it only draws what is already there.
+class _MapCard extends StatelessWidget {
+  const _MapCard({
+    required this.map,
+    required this.opening,
+    required this.onOpenPerson,
+  });
 
-  final ({String name, int count, Color colour}) slice;
+  final HomeMap map;
+  final String? opening;
+  final ValueChanged<String> onOpenPerson;
 
-  /// Whether the number means anything. A theme drawn from the baseline
-  /// answers has no entries behind it, so it carries a weight rather than a
-  /// count and the weight is nobody's business.
-  final bool counted;
+  static const _height = 210.0;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: slice.colour,
-            shape: BoxShape.circle,
+    return SoulCard(
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Label('you, and who is around'),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            slice.name,
-            style: SoulType.secondary.copyWith(fontSize: 14),
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(height: 4),
+          LayoutBuilder(
+            builder: (context, box) {
+              final size = Size(box.maxWidth, _height);
+              final placed = _place(map.nodes, size);
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (tap) {
+                  for (final node in placed) {
+                    if ((tap.localPosition - node.at).distance < 26 && node.node.kind == 'person') {
+                      onOpenPerson(node.node.id);
+                      return;
+                    }
+                  }
+                },
+                child: CustomPaint(size: size, painter: _MapPainter(placed, map.edges)),
+              );
+            },
           ),
-        ),
-        if (counted) ...[
-          const SizedBox(width: 6),
-          Text(
-            '${slice.count}',
-            style: const TextStyle(
-              fontFamily: SoulType.sans,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: SoulColors.text,
+          if (opening != null) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                opening!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: SoulType.serif,
+                  fontSize: 17,
+                  height: 1.35,
+                  color: SoulColors.text,
+                ),
+              ),
             ),
-          ),
+          ],
         ],
-        const SizedBox(width: 14),
-      ],
+      ),
+    );
+  }
+
+  /// Heavier nodes on the inner ring, lighter on the outer, spread evenly.
+  static List<_Placed> _place(List<HomeNode> nodes, Size size) {
+    final centre = Offset(size.width / 2, size.height / 2 + 4);
+    final sorted = [...nodes]..sort((a, b) => b.weight.compareTo(a.weight));
+    final inner = sorted.take(4).toList();
+    final outer = sorted.skip(4).toList();
+    final out = <_Placed>[];
+    void ring(List<HomeNode> group, double radius, double offset) {
+      for (var i = 0; i < group.length; i++) {
+        final angle = offset + (i / group.length) * math.pi * 2;
+        out.add(_Placed(
+          node: group[i],
+          at: centre + Offset(math.cos(angle) * radius, math.sin(angle) * radius * 0.72),
+        ));
+      }
+    }
+    ring(inner, math.min(size.width, 300) * 0.28, -math.pi / 2 + 0.4);
+    ring(outer, math.min(size.width, 300) * 0.44, -math.pi / 2 - 0.3);
+    return out;
+  }
+}
+
+class _Placed {
+  const _Placed({required this.node, required this.at});
+  final HomeNode node;
+  final Offset at;
+}
+
+class _MapPainter extends CustomPainter {
+  const _MapPainter(this.placed, this.edges);
+
+  final List<_Placed> placed;
+  final List<HomeEdge> edges;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centre = Offset(size.width / 2, size.height / 2 + 4);
+    final hair = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = SoulColors.border2;
+    final heavy = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..color = const Color(0xFFF0997B);
+
+    final maxWeight = placed.fold<int>(1, (m, p) => math.max(m, p.node.weight));
+    for (final p in placed) {
+      canvas.drawLine(centre, p.at, p.node.weight >= maxWeight && p.node.weight > 1 ? heavy : hair);
+    }
+    final byId = {for (final p in placed) p.node.id: p.at};
+    for (final e in edges) {
+      final a = byId[e.from];
+      final b = byId[e.to];
+      if (a != null && b != null) canvas.drawLine(a, b, hair..color = SoulColors.border);
+    }
+
+    canvas.drawCircle(centre, 10, Paint()..color = SoulColors.clay);
+
+    for (final p in placed) {
+      final big = p.node.weight >= maxWeight && p.node.weight > 1;
+      canvas.drawCircle(
+        p.at,
+        big ? 8 : 6,
+        Paint()..color = big ? const Color(0xFFFFD9C4) : SoulColors.s3,
+      );
+      canvas.drawCircle(
+        p.at,
+        big ? 8 : 6,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = big ? const Color(0xFFF0997B) : SoulColors.border2,
+      );
+      final text = TextPainter(
+        text: TextSpan(
+          text: p.node.name,
+          style: const TextStyle(
+            fontFamily: SoulType.sans,
+            fontSize: 11,
+            color: SoulColors.text,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: '\u2026',
+      )..layout(maxWidth: 90);
+      final above = p.at.dy < centre.dy;
+      text.paint(
+        canvas,
+        Offset(
+          (p.at.dx - text.width / 2).clamp(2, size.width - text.width - 2),
+          above ? p.at.dy - 12 - text.height : p.at.dy + 11,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MapPainter old) =>
+      !listEquals(old.placed.map((p) => p.node.id).toList(), placed.map((p) => p.node.id).toList()) ||
+      old.edges.length != edges.length;
+}
+
+/// One row in a list card, with a hairline above every row but the first.
+class _RowLine extends StatelessWidget {
+  const _RowLine({required this.child, required this.first, this.onTap});
+
+  final Widget child;
+  final bool first;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = Padding(
+      padding: EdgeInsets.only(top: first ? 6 : 10, bottom: 4),
+      child: child,
+    );
+    final row = first
+        ? body
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [Container(height: 1, color: SoulColors.border), body],
+          );
+    if (onTap == null) return row;
+    return GestureDetector(onTap: onTap, behavior: HitTestBehavior.opaque, child: row);
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.text, required this.onTap});
+
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: SoulColors.s1,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: SoulColors.border2),
+        ),
+        child: Text(text, style: SoulType.secondary.copyWith(color: SoulColors.text, fontSize: 13)),
+      ),
     );
   }
 }

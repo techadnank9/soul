@@ -14,7 +14,8 @@ import { consolidateAll } from '../services/memory/consolidate.js'
 import { sweep } from './pattern_sweep.js'
 import { sweepVerdicts } from '../services/verdicts/sweep.js'
 import { writeNoticings } from '../services/noticings/write.js'
-import { scheduleSweep, scheduleVerdicts, scheduleConsolidation } from './enqueue.js'
+import { scheduleSweep, scheduleVerdicts, scheduleConsolidation, scheduleWeekNotes } from './enqueue.js'
+import { writeWeekNotes } from '../services/week/write.js'
 import type { Session } from '../session.js'
 
 /**
@@ -56,6 +57,8 @@ const HANDLED = [
   'release_held',
   // Decision 278. Booked by the tagger, for the person whose entry landed.
   'noticings',
+  // Decision 279. Nightly, for everybody whose week just ended.
+  'week_notes',
 ]
 
 type Job = {
@@ -179,6 +182,15 @@ async function run(job: Job): Promise<void> {
       // And the verdicts on the back of it, now rather than tonight, because
       // the themes this sweep just read are the ones they are written about.
       await scheduleVerdicts()
+      // And the week's three sentences for anybody whose Sunday just ended.
+      await scheduleWeekNotes()
+      return
+    }
+    case 'week_notes': {
+      // Most nights most people are mid week and nothing is written. Counted
+      // so a week of zeros can be told from a week the job did not run.
+      const { people, written } = await writeWeekNotes()
+      console.log(`${people} weeks ended, ${written} written`)
       return
     }
     case 'pattern_verdicts': {

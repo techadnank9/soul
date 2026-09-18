@@ -540,6 +540,9 @@ export const taggerResult = z.object({
   coping: z.enum(copingWays).nullable(),
   domain: z.string().max(120).nullable(),
   confidence: z.number().min(0).max(1),
+  /// Which of the five ways of deciding this entry is plainly an instance
+  /// of, when the tagger was told them. Empty for most entries. Decision 279.
+  shows: z.array(z.string().max(40)).max(5).default([]),
 })
 
 /** What the safety classifier must return. */

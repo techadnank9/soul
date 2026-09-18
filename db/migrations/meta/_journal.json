@@ -225,6 +225,13 @@
       "when": 1789430400000,
       "tag": "0031_noticings",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789516800000,
+      "tag": "0032_week_notes_and_sightings",
+      "breakpoints": true
     }
   ]
 }

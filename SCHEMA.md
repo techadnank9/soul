@@ -371,6 +371,23 @@ superseded when a later run replaced it unanswered. Rows are never deleted;
 a rejected line is shown to the model as a thing not to say again. Decision
 278.
 
+## week_notes
+`id`, `student_id`, `school_id`, `district_id`, `week_start`, `lines[]`,
+`moments`, `prompt_version`, `model_version`, `created_at`
+
+The week as three sentences, written on Sunday evening in the person's own
+timezone. One row per person per week; the newest is the one home shows.
+Decision 279.
+
+## section_sightings
+`id`, `student_id`, `school_id`, `district_id`, `section`, `entry_id`,
+`prompt_version`, `model_version`, `created_at`
+
+An entry that is an instance of one of the five ways of deciding the person
+described at first run (timing, agency, emotion, repetition, readiness).
+Written by the tagger, empty for most entries. The tiles on home fill from
+these, so a filled tile can always show the moments behind it. Decision 279.
+
 ## pattern_verdicts
 `id`, `student_id`, `school_id`, `district_id`, `theme`, `verdict`, `source`,
 `line`, `supporting`, `prompt_version`, `model_version`, `created_at`

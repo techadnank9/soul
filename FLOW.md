@@ -21,6 +21,7 @@ There are only twelve ways anything starts running.
 | Student answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
 | Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
 | Student opens a day | Human | `app/lib/features/shell/app_shell.dart`, from home or the Days list |
+| Student opens home | Human | `app/lib/features/home/home_screen.dart`, `GET /home`, decision 279 |
 | Student answers or puts off a card | Human | `app/lib/features/day/cue_card.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
@@ -375,8 +376,11 @@ jobs/runner.ts fires tag_entry
   └─ services/tagging/tag.ts
        ├─ services/tone/store.ts loadTone(entryId), null for a typed entry
        ├─ gateway.call('tagger', entryText + how it sounded)
-       ├─ parseStructured() → { trigger, feeling, coping, confidence }
+       ├─ told the five ways they said they decide, from baseline_answers
+       ├─ parseStructured() → { trigger, feeling, coping, confidence, shows }
        ├─ insert tags row
+       ├─ insert section_sightings rows, one per section in shows, usually
+       │     none. The tiles on home fill from these. Decision 279
        └─ enqueue cue_cards, people, extract_facts, extract_reminders,
                   pattern_sweep_one, noticings        ← each its own job
 
@@ -738,6 +742,8 @@ person_profile   what happens between the student and somebody, once that
                  person has come up twice
 noticings        what the app may be noticing, from the first entry on, two
                  at most, hedged, answered yes, no or not sure
+week_notes       nightly, booked by the sweep: three sentences about the week
+                 for everybody whose Sunday just ended in their own timezone
 pattern_sweep    the nightly candidate query, which books the verdicts
 pattern_verdicts whether a theme is doing them good or costing them
 consolidate_memory

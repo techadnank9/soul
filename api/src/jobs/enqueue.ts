@@ -20,6 +20,7 @@ export type JobType =
   | 'person_profile'
   | 'release_held'
   | 'noticings'
+  | 'week_notes'
 
 /** The hour the sweep runs. Late enough that a school day is long over. */
 const SWEEP_HOUR = 3
@@ -101,6 +102,20 @@ export async function scheduleConsolidation(runAt: Date = nextNight()): Promise<
     select 'consolidate_memory', '{}', ${runAt.toISOString()}::timestamptz
     where not exists (
       select 1 from jobs where type = 'consolidate_memory' and status = 'pending'
+    )`
+}
+
+/**
+ * The week notes run, booked by the runner at the end of every sweep so it
+ * runs once a night like the others. Each run writes for the people whose
+ * week just ended in their own timezone. Decision 279.
+ */
+export async function scheduleWeekNotes(runAt: Date = new Date()): Promise<void> {
+  await sql`
+    insert into jobs (type, payload, run_at)
+    select 'week_notes', '{}', ${runAt.toISOString()}::timestamptz
+    where not exists (
+      select 1 from jobs where type = 'week_notes' and status = 'pending'
     )`
 }
 

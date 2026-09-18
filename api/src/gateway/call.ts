@@ -246,6 +246,20 @@ const config: Record<Purpose, PurposeConfig> = {
     // a gap worth naming is the answer it gets wrong when hurried.
     reasoning: 'medium',
   },
+  /** The week as three sentences, read on home all week. Decision 279. */
+  week_notes: {
+    order: ['openai', 'gemini', 'openrouter'],
+    model: {
+      openai: 'gpt-6-astra',
+      gemini: 'gemini-2.5-pro',
+      openrouter: 'openai/gpt-6-astra',
+    },
+    temperature: 0.5,
+    maxTokens: 4000,
+    timeoutMs: 90_000,
+    json: true,
+    reasoning: 'medium',
+  },
   pattern_verdict: {
     order: ['openai', 'gemini', 'openrouter'],
     model: {

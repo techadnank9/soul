@@ -5895,3 +5895,62 @@ first entry. The introduction is an entry, so it is already the first one.
 
 Would reverse it: people answering no to most of them. The answers are
 stored for exactly that.
+
+---
+
+### 279. Home says something about the person from the first minute
+Sep 2026, founder
+
+Decision: everything above the question card on home stays as it was. The
+week ring goes. Below the question card, in this order: five tiles carrying
+what the person said at first run about how they decide, outlined until
+their own entries show each one and solid after, with the opening line the
+app already writes kept underneath; a map of the people and things they
+have named, growing with every entry; where they left off, which is the
+check back or the cue card whose time has come; what is coming, from
+reminders and decisions with a day ahead; the people named this week; what
+they decided and how they said it went; and the week as three sentences,
+written on Sunday evening in their own timezone. Every card is absent when
+empty. One read, `GET /home`, carries all of it.
+
+The founder, 17 September: home is empty and gets emptier after two days,
+and there is nothing on it about the person even though they answered ten
+questions. They asked for research across journaling, mental health, AI
+coach and habit apps and ten options, then chose from mockups.
+
+What the research said. Oura and Whoop win with one personal thing each
+morning, different every day. Ash, Rosebud and Pi win on continuity: check
+ins on what you raised before and visible memory. Day One's users name "on
+this day" as why they keep opening it. Duolingo's streak lifts retention
+but the widget mattered more than the counter, and the counter is why
+people resent it. Headspace's Today tab is criticised for being too long.
+Kross and Ayduk: reflection helps when the person sees the event from
+outside, which is the founder's what happened, what it meant, how you
+responded frame. And the ten questions map almost one to one onto Scott
+and Bruce's General Decision Making Style scale, so the answers describe a
+studied thing and are worth showing back. Of eighteen real people who
+answered, ten chose "understanding my pattern" as what they want most.
+
+Why the ring went. It divided the week by the tagger's coping, which is
+null on six in ten entries, so it said "nothing to divide yet" to nearly
+everyone for good, and the opening line under it vanished on day two.
+
+Why the tiles are meaningful rather than decorative. The app already writes
+a personal line and weighted situations from the answers and lost them
+after a day. A tile filled by the person's own entry, with the entry
+behind it, holds what they said about themselves next to what they then
+wrote. That gap, in either direction, is the "I did not realise I keep
+doing that" moment decision 275 says launch is judged by. Nothing is
+scored; a tile is filled or it is not. The tagger fills them: it is told
+the five statements and returns which, if any, an entry is plainly an
+instance of, and it is told never to stretch, because a filled tile that
+does not fit reads as the app not listening.
+
+Rejected, in order: a written line at the top of home (too much text, the
+founder said); a pet or a reward, which CONTEXT.md forbids and the map does
+without; a score or a radar chart; a separate petal figure; the ring kept
+with new meaning. The founder chose the tiles and asked that they make
+sense rather than only look like something.
+
+Would reverse it: the tagger filling tiles that people say do not fit. The
+entry behind every fill is kept so that can be checked.

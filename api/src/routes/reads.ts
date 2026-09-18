@@ -4,6 +4,7 @@ import { week } from '../services/reads/week.js'
 import { day } from '../services/reads/day.js'
 import { days } from '../services/reads/days.js'
 import { patterns } from '../services/reads/patterns.js'
+import { home } from '../services/reads/home.js'
 import { reflection } from '../services/reads/reflection.js'
 import type { Session } from '../session.js'
 
@@ -47,6 +48,11 @@ reads.get('/reflection', async (c) => {
   if (!view) return c.json({ error: 'no such reflection' }, 404)
 
   return c.json(view)
+})
+
+/** Everything below the question card on home, in one read. Decision 279. */
+reads.get('/home', async (c) => {
+  return c.json(await home(c.get('session')))
 })
 
 reads.get('/patterns', async (c) => {

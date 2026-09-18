@@ -494,6 +494,9 @@ class SoulApi {
   /// device what day it is.
   Future<WeekView> week() async => WeekView.fromJson(await _get('/week'));
 
+  /// Everything below the question card on home. Decision 279.
+  Future<HomeView> home() async => HomeView.fromJson(await _get('/home'));
+
   /// One day, earliest first. The date is YYYY-MM-DD and it is the string the
   /// week gave back, passed through untouched.
   /// Every day this user has written on, newest first. Days with nothing

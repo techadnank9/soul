@@ -17,6 +17,7 @@ export type Purpose =
   | 'weather_question'
   | 'reminders'
   | 'noticings'
+  | 'week_notes'
 
 /**
  * Prompt text comes from the database, never from the binary.

@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm'
-import { db, entries, tags } from '../../db.js'
+import { db, entries, tags, sectionSightings, baselineAnswers } from '../../db.js'
+import { BASELINE_SET, answeredBySection } from '../reads/baseline_set.js'
 import { call } from '../../gateway/call.js'
 import { enqueue } from '../../jobs/enqueue.js'
 import { taggerResult } from '../../contracts.js'
@@ -44,9 +45,24 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
     // first and the prompt says the voice may sharpen the feeling or lower the
     // confidence, never replace what was said.
     const tone = await loadTone(entryId, session)
-    const user = tone
+    let user = tone
       ? `${entry.text}\n\nHow they sounded, from their voice:\n${renderTone(tone)}`
       : entry.text
+
+    // The five ways they said they decide, so the tagger can say which of
+    // them this entry is an instance of. The tiles on home fill from the
+    // answer. Decision 279.
+    const held = await db
+      .select({ questionIndex: baselineAnswers.questionIndex, choiceIndex: baselineAnswers.choiceIndex })
+      .from(baselineAnswers)
+      .where(and(eq(baselineAnswers.studentId, session.studentId), eq(baselineAnswers.setVersion, BASELINE_SET)))
+    const sections = answeredBySection(held)
+    if (sections.length > 0) {
+      const said = sections
+        .map((s) => `${s.section}: ${s.said.map((q) => `${q.question} ${q.answer.toLowerCase()}`).join('; ')}`)
+        .join('\n')
+      user = `${user}\n\nThe five ways they said they decide:\n${said}`
+    }
 
     const result = await call('tagger', {
       user,
@@ -67,6 +83,25 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
       confidence: result.value.confidence,
       taggerVersion: TAGGER_VERSION,
     })
+
+    const known = new Set(sections.map((s) => s.section))
+    const shown = [...new Set(result.value.shows.map((s) => s.trim().toLowerCase()))].filter((s) => known.has(s as never))
+    if (shown.length > 0) {
+      await db
+        .insert(sectionSightings)
+        .values(
+          shown.map((section) => ({
+            studentId: session.studentId,
+            schoolId: session.schoolId,
+            districtId: session.districtId,
+            section,
+            entryId,
+            promptVersion: result.promptVersion,
+            modelVersion: result.model,
+          })),
+        )
+        .onConflictDoNothing()
+    }
   }
 
   // Cue cards go last and in their own job, so a card is never the reason an

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../data/reminders.dart';
 import '../people/people_screen.dart';
+import '../people/person_screen.dart';
 import '../profile/profile_tab.dart';
 import '../day/day_screen.dart';
 import '../day/days_screen.dart';
@@ -97,6 +98,18 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   /// The profile is a screen of its own now rather than a fifth tab. It is
   /// read now and then and changed rarely, which is not what a place in the
   /// bar is for.
+  void _openPerson(String id) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => PersonScreen(
+          api: _api,
+          personId: id,
+          onBack: () => Navigator.of(page).pop(),
+        ),
+      ),
+    );
+  }
+
   void _openProfile() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -123,7 +136,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             showFooter: false,
             onCapture: widget.onCapture,
             onOpenDay: _openDay,
-            onOpenPatterns: () => setState(() => _tab = 2),
+            onOpenPerson: _openPerson,
           ),
           DaysScreen(
             api: _api,

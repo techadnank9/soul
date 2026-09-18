@@ -196,6 +196,194 @@ class WeekTheme {
       );
 }
 
+/// Home, below the question card. The wire shape is HomeView in
+/// api/src/services/reads/home.ts.
+class HomeView {
+  const HomeView({
+    required this.moments,
+    required this.opening,
+    required this.tiles,
+    required this.map,
+    required this.leftOff,
+    required this.coming,
+    required this.people,
+    required this.decisions,
+    required this.week,
+  });
+
+  final int moments;
+  final String? opening;
+  final List<HomeTile> tiles;
+  final HomeMap map;
+  final HomeLeftOff? leftOff;
+  final List<HomeComing> coming;
+  final List<HomePerson> people;
+  final List<HomeDecision> decisions;
+  final HomeWeek? week;
+
+  static HomeView fromJson(Map<String, dynamic> json) => HomeView(
+        moments: (json['moments'] as num?)?.toInt() ?? 0,
+        opening: json['opening'] as String?,
+        tiles: [
+          for (final t in (json['tiles'] as List<dynamic>? ?? []))
+            HomeTile.fromJson(t as Map<String, dynamic>),
+        ],
+        map: HomeMap.fromJson((json['map'] as Map<String, dynamic>?) ?? const {}),
+        leftOff: json['leftOff'] == null
+            ? null
+            : HomeLeftOff.fromJson(json['leftOff'] as Map<String, dynamic>),
+        coming: [
+          for (final c in (json['coming'] as List<dynamic>? ?? []))
+            HomeComing.fromJson(c as Map<String, dynamic>),
+        ],
+        people: [
+          for (final p in (json['people'] as List<dynamic>? ?? []))
+            HomePerson.fromJson(p as Map<String, dynamic>),
+        ],
+        decisions: [
+          for (final d in (json['decisions'] as List<dynamic>? ?? []))
+            HomeDecision.fromJson(d as Map<String, dynamic>),
+        ],
+        week: json['week'] == null
+            ? null
+            : HomeWeek.fromJson(json['week'] as Map<String, dynamic>),
+      );
+}
+
+/// One of the five ways they said they decide, and whether it has been
+/// seen in their own writing.
+class HomeTile {
+  const HomeTile({
+    required this.section,
+    required this.answers,
+    required this.seen,
+    required this.entryIds,
+    required this.lastOn,
+  });
+
+  final String section;
+  final List<String> answers;
+  final int seen;
+  final List<String> entryIds;
+  final String? lastOn;
+
+  static HomeTile fromJson(Map<String, dynamic> json) => HomeTile(
+        section: json['section'] as String,
+        answers: [for (final a in (json['answers'] as List<dynamic>? ?? [])) a as String],
+        seen: (json['seen'] as num?)?.toInt() ?? 0,
+        entryIds: [for (final e in (json['entryIds'] as List<dynamic>? ?? [])) e as String],
+        lastOn: json['lastOn'] as String?,
+      );
+}
+
+class HomeNode {
+  const HomeNode({required this.id, required this.kind, required this.name, required this.weight});
+  final String id;
+  final String kind;
+  final String name;
+  final int weight;
+
+  static HomeNode fromJson(Map<String, dynamic> json) => HomeNode(
+        id: json['id'] as String,
+        kind: (json['kind'] as String?) ?? 'thing',
+        name: json['name'] as String,
+        weight: (json['weight'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class HomeEdge {
+  const HomeEdge({required this.from, required this.to});
+  final String from;
+  final String to;
+}
+
+class HomeMap {
+  const HomeMap({required this.nodes, required this.edges});
+  final List<HomeNode> nodes;
+  final List<HomeEdge> edges;
+
+  static HomeMap fromJson(Map<String, dynamic> json) => HomeMap(
+        nodes: [
+          for (final n in (json['nodes'] as List<dynamic>? ?? []))
+            HomeNode.fromJson(n as Map<String, dynamic>),
+        ],
+        edges: [
+          for (final e in (json['edges'] as List<dynamic>? ?? []))
+            HomeEdge(from: (e as Map)['from'] as String, to: e['to'] as String),
+        ],
+      );
+}
+
+/// A check back on a decision, or a cue card whose time has come.
+class HomeLeftOff {
+  const HomeLeftOff({required this.kind, required this.id, required this.text, required this.since});
+  final String kind;
+  final String id;
+  final String text;
+  final String since;
+
+  static HomeLeftOff fromJson(Map<String, dynamic> json) => HomeLeftOff(
+        kind: json['kind'] as String,
+        id: json['id'] as String,
+        text: json['text'] as String,
+        since: (json['since'] as String?) ?? '',
+      );
+}
+
+class HomeComing {
+  const HomeComing({required this.on, required this.said, required this.kind});
+  final String on;
+  final String said;
+  final String kind;
+
+  static HomeComing fromJson(Map<String, dynamic> json) => HomeComing(
+        on: json['on'] as String,
+        said: json['said'] as String,
+        kind: (json['kind'] as String?) ?? 'reminder',
+      );
+}
+
+class HomePerson {
+  const HomePerson({required this.id, required this.name, required this.times});
+  final String id;
+  final String name;
+  final int times;
+
+  static HomePerson fromJson(Map<String, dynamic> json) => HomePerson(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        times: (json['times'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class HomeDecision {
+  const HomeDecision({required this.id, required this.chose, required this.on, required this.felt});
+  final String id;
+  final String chose;
+  final String on;
+  final String? felt;
+
+  static HomeDecision fromJson(Map<String, dynamic> json) => HomeDecision(
+        id: json['id'] as String,
+        chose: json['chose'] as String,
+        on: json['on'] as String,
+        felt: json['felt'] as String?,
+      );
+}
+
+class HomeWeek {
+  const HomeWeek({required this.from, required this.moments, required this.lines});
+  final String from;
+  final int moments;
+  final List<String> lines;
+
+  static HomeWeek fromJson(Map<String, dynamic> json) => HomeWeek(
+        from: json['from'] as String,
+        moments: (json['moments'] as num?)?.toInt() ?? 0,
+        lines: [for (final l in (json['lines'] as List<dynamic>? ?? [])) l as String],
+      );
+}
+
 /// One day of the week strip.
 class WeekDay {
   const WeekDay({

@@ -55,7 +55,7 @@ begin
     'confirmed_patterns','pattern_rejections','pattern_verdicts','safety_flags',
     'people','entry_people',
     'generations','prompts','jobs','audit_log','email_codes','app_events',
-    'feedback','reminders','noticings',
+    'feedback','reminders','noticings','week_notes','section_sightings',
     'legacy_feedback','legacy_users'
   ]
   loop
@@ -76,7 +76,7 @@ begin
     'baseline_answers','cue_cards',
     'pattern_candidates','confirmed_patterns','pattern_rejections',
     'pattern_verdicts','safety_flags','generations','people','entry_people',
-    'app_events','feedback','reminders','noticings'
+    'app_events','feedback','reminders','noticings','week_notes','section_sightings'
   ]
   loop
     execute format('drop policy if exists %I on %I', t || '_student_scope', t);
