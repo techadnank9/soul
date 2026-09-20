@@ -56,7 +56,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   /// what an app had scheduled when the app is replaced.
   late final _reminders = Reminders(_api);
 
-  /// The evening question, booked a fortnight ahead on this phone and
+  /// The evening question, booked a month ahead on this phone and
   /// rebooked every time the app comes to the front, so the run never
   /// empties. Silent until the person has written something. Decision 288.
   late final _nudges = Nudges(_api);

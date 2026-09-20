@@ -30,11 +30,20 @@ import type { Session } from '../../session.js'
 export const NUDGE_HOUR = 20
 
 /**
- * How many days the phone books ahead. iOS keeps sixty four pending local
- * notifications per app and silently drops the rest, and the reminders a
- * person actually asked for share that budget and matter more.
+ * How many days the phone books ahead.
+ *
+ * iOS keeps sixty four pending local notifications per app and silently
+ * drops the rest, and the reminders a person actually asked for share that
+ * budget and matter more. Thirty leaves well over half of it for them.
+ *
+ * This number is the whole reach of the feature for anybody who stops
+ * opening the app, because the run is only ever rebooked from inside it.
+ * At fourteen a person who drifted away went quiet after a fortnight. At
+ * thirty they get a month, which is the most a phone can be asked to hold
+ * without taking the budget the reminders need. Past that it needs a real
+ * push, and that is a different decision with device tokens in it.
  */
-export const NUDGE_DAYS = 14
+export const NUDGE_DAYS = 30
 
 /**
  * The lines. Short, concrete, and a question rather than an invitation.
@@ -75,7 +84,7 @@ const LINES = [
  *
  * Two people who install on the same day should not be read the same
  * question on the same evening, and the same person should not meet one
- * twice inside a fortnight. A stable offset from the account id gives both,
+ * twice inside the first three weeks. A stable offset from the account id gives both,
  * and it needs nothing stored.
  */
 export function nudgeLines(session: Session, days = NUDGE_DAYS): string[] {
@@ -84,8 +93,11 @@ export function nudgeLines(session: Session, days = NUDGE_DAYS): string[] {
     offset = (offset * 31 + character.charCodeAt(0)) % LINES.length
   }
 
+  // Wraps past the end of the list. Thirty days is longer than the list, so
+  // the last few repeat a question from the first week rather than the run
+  // simply stopping short.
   return Array.from(
-    { length: Math.min(days, LINES.length) },
+    { length: days },
     (_, day) => LINES[(offset + day) % LINES.length]!,
   )
 }

@@ -60,8 +60,12 @@ class Nudges {
     _ready = true;
   }
 
-  /// Books the next fortnight of evenings, and rebooks them every time the
-  /// app is opened so the run never empties.
+  /// Books the next month of evenings, and rebooks them every time the app
+  /// is opened so the run never empties.
+  ///
+  /// The month is the whole reach of this for somebody who stops opening the
+  /// app. Nothing here can reach a phone that has not been back, because
+  /// nothing here is sent: the phone booked it all in advance.
   ///
   /// Does nothing at all until the person has written something. Quiet about
   /// every failure: a list that will not load leaves what is booked where it

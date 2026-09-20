@@ -688,7 +688,7 @@ GET /weather    → services/weather/now.ts      where to look, and whether
                                                day on the person, so it
                                                stands until then and stands
                                                down after. Decision 233
-GET /nudges     → routes/nudges.ts             the evening question, a fortnight
+GET /nudges     → routes/nudges.ts             the evening question, a month
                                                of lines and the hour to ask
                                                them at. No dates: the phone
                                                books them against its own

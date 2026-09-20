@@ -6219,10 +6219,16 @@ first entry, which is the same rule the reminders already follow.
 
 It rings on the phone. Local notifications, the same as the reminders: no
 push, no device token, nothing about anybody told to a notification
-service. The fortnight is rebooked every time the app comes to the front,
-so the run never empties, and fourteen days leaves most of the sixty four
-pending notifications iOS allows for the reminders a person actually asked
-for.
+service. The run is rebooked every time the app comes to the front, so it
+never empties, and the thirty days booked at a time leave well over half of
+the sixty four pending notifications iOS allows for the reminders a person
+actually asked for.
+
+Thirty is also the whole reach of this for anybody who stops opening the
+app, because the run is only ever rebooked from inside it. Somebody who
+drifts away hears the question for a month and then hears nothing at all.
+Reaching them after that needs a real push with a device token held on our
+side, which is a different decision and has not been taken.
 
 The lines sit in `api/src/services/nudges/lines.ts` rather than in the
 prompts table because nothing generates them, and changing one is an api
