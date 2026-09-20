@@ -594,18 +594,43 @@ export const reminderView = z.object({
 })
 export type ReminderView = z.infer<typeof reminderView>
 
+/**
+ * One fact, exactly as it has to arrive to be written.
+ *
+ * Named on its own so a single bad item can be told apart from a bad reply.
+ */
+const factItem = z.object({
+  subject: z.string().trim().min(1).max(60).regex(NO_DASH),
+  predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
+  object: z.string().trim().min(1).max(160).regex(NO_DASH),
+  sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
+  confidence: z.number().min(0).max(1),
+})
+
+/**
+ * The facts in one entry. An item that does not hold is dropped, and the
+ * rest of the list is kept.
+ *
+ * One bad item used to fail the whole call. The reply that showed it was a
+ * fact whose object was a dash, which `undash` turns into an empty string
+ * and `min(1)` then refuses, so `parseStructured` threw, every provider was
+ * tried and threw the same way, and the job burned its five attempts. The
+ * cost of that was never one fact. It was every fact in the entry, and the
+ * entries around it waiting behind a job that could not finish.
+ *
+ * This does not soften what a fact has to be. `factItem` is unchanged, so
+ * nothing reaches the table that would not have reached it before, and
+ * nothing unvalidated is stored. What changed is how much a single bad item
+ * is allowed to take with it. Decision 285.
+ */
 export const factsResult = z.object({
-  facts: z
-    .array(
-      z.object({
-        subject: z.string().trim().min(1).max(60).regex(NO_DASH),
-        predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
-        object: z.string().trim().min(1).max(160).regex(NO_DASH),
-        sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
-        confidence: z.number().min(0).max(1),
-      }),
-    )
-    .max(8),
+  facts: z.preprocess(
+    (value) =>
+      Array.isArray(value)
+        ? value.filter((item) => factItem.safeParse(item).success)
+        : value,
+    z.array(factItem).max(8),
+  ),
 })
 export type FactsResult = z.infer<typeof factsResult>
 

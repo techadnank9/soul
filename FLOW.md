@@ -407,6 +407,7 @@ jobs/runner.ts fires extract_facts
        ├─ loads the open facts already held, newest forty
        ├─ gateway.call('facts', entryText + the held facts)
        ├─ parseStructured() → { facts: [subject, predicate, object, sentence, confidence] }
+       │     an item that does not hold is dropped, the rest of the list is kept
        ├─ said again (same subject, predicate, object) → entry id joins the open fact
        ├─ contradicted (same subject and predicate, new object)
        │     → old fact gets valid_to, never deleted

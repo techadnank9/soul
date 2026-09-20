@@ -14,8 +14,21 @@
 set -eu
 cd "$(dirname "$0")"
 API="${SOUL_API:-https://soul-api-i6mr.onrender.com}"
-# Product analytics, off in any build made without it. Export POSTHOG_KEY
-# before running this, or put it in the shell profile on the release Mac.
+
+# Product analytics. The define below reads an empty string when POSTHOG_KEY
+# is not exported in this shell, analytics then never starts, and the build
+# is silently dark: Sentry still reports, so nothing looks wrong, and the
+# funnel for everybody on that build is simply absent. Build 13 went to app
+# review that way and sent PostHog nothing at all.
+#
+# So this refuses to build rather than shipping a build nobody can be
+# counted in. Export the key, or say plainly that this one is meant to be
+# dark with SOUL_NO_POSTHOG=1. Decision 286.
+if [ -z "${POSTHOG_KEY:-}" ] && [ -z "${SOUL_NO_POSTHOG:-}" ]; then
+  echo "POSTHOG_KEY is not set, so this build would reach nobody in the funnels."
+  echo "Export it, or run again with SOUL_NO_POSTHOG=1 to build without it."
+  exit 1
+fi
 
 version=$(grep '^version:' pubspec.yaml | sed 's/version: *//')
 name=${version%%+*}

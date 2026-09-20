@@ -6095,3 +6095,60 @@ and needs no iPad screenshots.
 
 Would reverse it: a real iPad layout, checked on an iPad, with its own
 screenshots.
+
+---
+
+### 285. One bad fact does not lose the rest of the entry
+Sep 2026, Claude
+
+Decision: `factsResult` drops an item that does not hold and keeps the
+list. `factItem` itself is unchanged, so nothing reaches the facts table
+that would not have reached it before.
+
+Why: Sentry has nine of `every provider failed for facts. openai: reply did
+not match the schema at facts.0.object: Too small: expected string to have
+>=1 characters`, the last one at 23:52 on 19 September, live, on the
+service. The model wrote a fact whose object was a dash. `undash` turns a
+dash into a space and trims, the string arrives empty, `min(1)` refuses it,
+and `parseStructured` throws. Every provider then answers the same way and
+throws the same way, so the whole call fails, and the job retries until it
+has spent all five attempts.
+
+The price of that was never the one fact. It was every fact in that entry,
+and five model calls each time, and a queue behind a job that could not
+finish. A list that arrives with one item wrong is the ordinary case for a
+model and the expensive case for us.
+
+Invariant 4 is untouched. `parseStructured` still rejects rather than
+storing free prose, and a reply that is not a list is still refused whole.
+What changed is how far one item is allowed to reach.
+
+Would reverse it: facts arriving empty often enough that dropping them
+silently hides a prompt that has stopped working. The count returned by
+`extractFacts` is what would show it.
+
+---
+
+### 286. A release build that cannot be counted does not get made
+Sep 2026, Claude
+
+Decision: `app/release.sh` stops before building when `POSTHOG_KEY` is not
+in the environment. `SOUL_NO_POSTHOG=1` says the build is meant to be dark
+and lets it through.
+
+Why: the define reads an empty string when the variable is not exported,
+`startAnalytics` returns without starting, and the build ships with no
+product analytics at all. Nothing about it looks wrong, because Sentry is
+wired separately and keeps reporting.
+
+That is what happened to build 13, the one now in app review. Sentry holds
+two events from it, both from Cupertino: Sign in with Apple failing twice
+on 18 September and a watchdog termination on 20 September. PostHog holds
+nothing from build 13 at all, while build 12 is there with 24 events. The
+first cohort to reach the App Store would have been invisible in the
+funnels, which are the only place that says where first run loses people.
+
+A prompt would be missed at four in the morning. A refusal cannot be.
+
+Would reverse it: the key moving into the build itself, where forgetting
+it stops being possible.

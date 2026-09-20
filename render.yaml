@@ -35,8 +35,10 @@ services:
         sync: false
       # App review signs in with this address and this code, because a
       # reviewer cannot receive a code sent to an inbox they do not own and
-      # first run cannot be skipped. Off unless both are set. Unset them when
-      # the review is over. Decision 261.
+      # first run cannot be skipped. Off unless both are set. They stay set
+      # for good: Apple reviews every update, not only the first
+      # submission, and a reviewer who cannot sign in is a rejection.
+      # Decisions 261 and 283.
       - key: SOUL_REVIEW_EMAIL
         sync: false
       - key: SOUL_REVIEW_CODE
