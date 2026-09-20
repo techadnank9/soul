@@ -21,9 +21,19 @@ API="${SOUL_API:-https://soul-api-i6mr.onrender.com}"
 # funnel for everybody on that build is simply absent. Build 13 went to app
 # review that way and sent PostHog nothing at all.
 #
-# So this refuses to build rather than shipping a build nobody can be
-# counted in. Export the key, or say plainly that this one is meant to be
-# dark with SOUL_NO_POSTHOG=1. Decision 286.
+# So the key is held here rather than in a shell nobody checks. It is the
+# project's write key, which is a public key by design: it can send events
+# and read nothing, and it is in the app binary already. The personal key
+# that reads the funnels is a different key, starts phx_, and never goes
+# anywhere near a build.
+#
+# Only release builds get it, which is the point. A build made by hand has
+# no key and sends nothing, so a simulator being poked at never lands in
+# the numbers. Decisions 286 and 287.
+POSTHOG_KEY="${POSTHOG_KEY:-phc_BbVbTG4AbuunTZUzHsBXykgnJvQGNwJUuNHKVj499feB}"
+
+# Still a refusal, for the one case left: somebody blanking the key on
+# purpose and not saying so.
 if [ -z "${POSTHOG_KEY:-}" ] && [ -z "${SOUL_NO_POSTHOG:-}" ]; then
   echo "POSTHOG_KEY is not set, so this build would reach nobody in the funnels."
   echo "Export it, or run again with SOUL_NO_POSTHOG=1 to build without it."

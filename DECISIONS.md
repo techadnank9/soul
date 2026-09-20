@@ -6152,3 +6152,31 @@ A prompt would be missed at four in the morning. A refusal cannot be.
 
 Would reverse it: the key moving into the build itself, where forgetting
 it stops being possible.
+
+---
+
+### 287. The funnel key lives in the release script, not in a shell
+Sep 2026, Claude
+
+Decision: `app/release.sh` holds the PostHog project write key as the
+default for `POSTHOG_KEY`. The refusal from decision 286 stays for the case
+where somebody blanks it on purpose.
+
+Why: 286 made a forgotten key loud instead of silent, which was right, but
+it still left the key somewhere a person has to remember. The key is a
+project write key. It can send events and read nothing, it is already
+inside every release binary, and PostHog publishes it as the key clients
+ship with. There is nothing to protect by keeping it out of a file that
+only builds releases.
+
+The personal key, which starts phx_ and reads the funnels and everything
+else in the account, is a different key. It is pasted into a session when
+the numbers are read and it goes nowhere near a build. Confusing the two
+would put an account wide read key in a binary anybody can unzip.
+
+Only a release gets the key, which was already true and stays true: a
+build made by hand defines nothing, analytics never starts, and a
+simulator being poked at does not land in the numbers.
+
+Would reverse it: the key becoming one that can read as well as write.
+
