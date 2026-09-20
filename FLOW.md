@@ -688,6 +688,16 @@ GET /weather    → services/weather/now.ts      where to look, and whether
                                                day on the person, so it
                                                stands until then and stands
                                                down after. Decision 233
+GET /nudges     → routes/nudges.ts             the evening question, a fortnight
+                                               of lines and the hour to ask
+                                               them at. No dates: the phone
+                                               books them against its own
+                                               days. Nothing read from
+                                               anything the person wrote.
+                                               The phone cancels tonight
+                                               when an entry lands, and books
+                                               nothing at all until the first
+                                               one. Decision 288.
 GET /reminders  → routes/reminders.ts          what they said they would do
                                                and have not been rung about.
                                                Only what is still ahead. The

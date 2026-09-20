@@ -10,6 +10,7 @@ import 'api/models.dart' as api;
 
 import 'data/analytics.dart';
 import 'data/flags.dart';
+import 'data/nudges.dart';
 import 'data/session_store.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/day/day_screen.dart';
@@ -426,6 +427,11 @@ class _SessionState extends State<Session> {
       _api.event('entry_${result.runtimeType.toString().toLowerCase()}', {
         'spoken': widget.spoken,
       });
+      // Today has been talked about, so this evening does not ask about it.
+      // This is also the first moment the evening question is allowed to
+      // exist at all: it is booked from the next launch, after an entry.
+      // Decision 288.
+      unawaited(Nudges(_api).answeredToday());
       if (!mounted) return;
 
       switch (result) {

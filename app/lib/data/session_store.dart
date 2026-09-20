@@ -93,3 +93,27 @@ Future<void> clearFirstRunDone() async {
     await _keychain.delete(key: _firstRunKey);
   } catch (_) {}
 }
+
+/// Whether this person has ever written an entry on this device.
+///
+/// The evening question is gated on it. An app that asks to send
+/// notifications before somebody has used it once is asking for a habit
+/// rather than for permission, and the answer to that ask is usually no and
+/// is never asked again.
+const _hasWrittenKey = 'has_written';
+
+Future<bool> hasWritten() async {
+  try {
+    return await _keychain.read(key: _hasWrittenKey) == 'yes';
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<void> markHasWritten() async {
+  try {
+    await _keychain.write(key: _hasWrittenKey, value: 'yes');
+  } catch (_) {
+    // The evening question waits for the next entry. Nothing else changes.
+  }
+}

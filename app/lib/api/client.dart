@@ -222,6 +222,18 @@ class SoulApi {
     ];
   }
 
+  /// The evening question, and the hour to ask it at. The phone books the
+  /// list against its own days, so nothing here carries a date or a time.
+  Future<NudgePlan> nudges() async {
+    final json = await _get('/nudges');
+    return NudgePlan(
+      hour: (json['hour'] as num?)?.toInt() ?? 20,
+      lines: [
+        for (final line in (json['lines'] as List? ?? [])) line as String,
+      ],
+    );
+  }
+
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>
       _send('PATCH', path, body);
 

@@ -6180,3 +6180,56 @@ simulator being poked at does not land in the numbers.
 
 Would reverse it: the key becoming one that can read as well as write.
 
+
+---
+
+### 288. One question in the evening, on a day nothing was written
+Sep 2026, Claude, on the founder's instruction
+
+Decision: the app books one local notification a day, at eight in the
+evening on the phone's own clock, carrying a written question about today.
+It is cancelled on any day an entry lands, and nothing is booked until the
+person has written their first one.
+
+This reverses something this repository states flatly.
+`app/lib/data/reminders.dart` says a notification exists only because
+somebody named a time out loud, and that nothing in the app is a streak, a
+nudge or a come back and write something. That rule still holds for
+reminders and for everything else. This is the single exception, asked for
+by the founder, and the comment in reminders.dart has not been softened,
+because the rule it states is still the rule everywhere it applies.
+
+What holds it to something defensible:
+
+It says nothing about the person. Every line is written by us and none is
+read from an entry, a fact, a name or a pattern. A notification is read on
+a locked screen by whoever is standing near it, so this is not a matter of
+taste. It is also why the lines are written rather than generated: a model
+given somebody's history will eventually put a piece of it on a lock
+screen, and no prompt reliably stops that.
+
+It keeps no score. No streak, no count, no how long it has been. A person
+who ignores it has not lost anything and is not told they have.
+
+It is quiet on a day they already wrote, cancelled the moment the entry
+lands, so it only ever reaches somebody who has not said anything today.
+
+It is not asked for on the first frame. Permission is requested after the
+first entry, which is the same rule the reminders already follow.
+
+It rings on the phone. Local notifications, the same as the reminders: no
+push, no device token, nothing about anybody told to a notification
+service. The fortnight is rebooked every time the app comes to the front,
+so the run never empties, and fourteen days leaves most of the sixty four
+pending notifications iOS allows for the reminders a person actually asked
+for.
+
+The lines sit in `api/src/services/nudges/lines.ts` rather than in the
+prompts table because nothing generates them, and changing one is an api
+deploy of under a minute rather than a release Apple has to process.
+
+Would reverse it: people turning notifications off at a rate the funnel can
+see, which is the measure that matters and the one to watch. A question
+nobody wants is worse than no question, because it takes the reminders
+somebody did want down with it when the permission goes.
+

@@ -944,3 +944,12 @@ class WeatherWhere {
   }
 }
 
+
+/// The evening question run: which lines, and the hour on the phone's own
+/// clock to ask them at. No dates: the phone knows its own days.
+class NudgePlan {
+  const NudgePlan({required this.hour, required this.lines});
+
+  final int hour;
+  final List<String> lines;
+}
