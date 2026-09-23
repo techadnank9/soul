@@ -9,10 +9,17 @@ import '../api/models.dart';
 
 /// The notifications somebody asked for by saying a time out loud.
 ///
-/// Every one of these exists because a person said "tomorrow at two I am
-/// meeting my brother". Nothing here is a streak, a nudge, a come back and
-/// write something, or anything else an app decides on its own that somebody
-/// needs. If they did not name a time, their phone stays quiet.
+/// Every one of these exists because a person chose the hour. Most because
+/// they said "tomorrow at two I am meeting my brother". Some because they
+/// confirmed a pattern and asked to be told about it next time, and picked
+/// when, which is decision 295 and goes in this same table for this same
+/// reason. Nothing here is a streak, a nudge, a come back and write
+/// something, or anything else an app decides on its own that somebody
+/// needs. If they did not choose an hour, their phone stays quiet.
+///
+/// That was briefly untrue. Decision 288 booked an evening question the app
+/// chose itself, and decision 296 took it out again before any build
+/// carried it.
 ///
 /// **The phone rings itself.** The server holds what was said and when, and
 /// this reads that list and books a local notification for each one. No push,

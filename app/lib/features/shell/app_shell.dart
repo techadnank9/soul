@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../api/client.dart';
-import '../../data/nudges.dart';
 import '../../data/reminders.dart';
 import '../people/people_screen.dart';
 import '../people/person_screen.dart';
@@ -56,17 +55,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   /// what an app had scheduled when the app is replaced.
   late final _reminders = Reminders(_api);
 
-  /// The evening question, booked a month ahead on this phone and
-  /// rebooked every time the app comes to the front, so the run never
-  /// empties. Silent until the person has written something. Decision 288.
-  late final _nudges = Nudges(_api);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _reminders.sync();
-    _nudges.sync();
   }
 
   @override
@@ -77,10 +71,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _reminders.sync();
-      _nudges.sync();
-    }
+    if (state == AppLifecycleState.resumed) _reminders.sync();
   }
   int _tab = 0;
 

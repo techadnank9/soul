@@ -6562,3 +6562,64 @@ turned off more often than this one is set, 288 goes.
 
 Would reverse it: nothing about this. 288 is the open question.
 
+
+---
+
+### 296. The evening question goes. Decision 288 is reversed
+Sep 2026, Claude, on the founder's call to decide it
+
+Decision: the app books no notification it was not asked for.
+`data/nudges.dart`, `routes/nudges.ts` and `services/nudges/lines.ts` are
+deleted. Decision 295 stands: a person who confirms a pattern may ask to be
+told about it next time, and picks the hour.
+
+I argued for 288 and built it. It is wrong, for three reasons that are about
+this product rather than about taste.
+
+**It cannot reach the people it was built for.** It was asked for after the
+retention numbers: eighteen entries, seven people, three who came back. But
+it books local notifications a month ahead from inside the app, so it only
+ever reaches a phone that has been opened in the last thirty days. The
+person who drifted away is exactly the person it cannot touch. It answers
+the question it was given by not answering it.
+
+**It risks the reminders that work.** iOS asks once. Somebody who turns
+notifications off because of a daily question they never asked for also
+loses the reminder they did ask for, the one that rings on Friday about the
+thing they said they would do by Friday. That reminder is the product's
+actual promise and the thing the whole outcomes loop hangs on. Spending
+that permission on an unasked question is trading the part that works for
+the part that does not.
+
+**It is the only place in the product where the app acts on somebody
+without their say.** Everything else here is the same move made over and
+over: a pattern is proposed and never asserted, nothing is confirmed
+without their yes, a rejection is kept so a wrong guess is never repeated
+twice, the evidence is shown so the yes means something, what is held can
+be reworded and deleted, permission is only asked when there is something
+to ask about. The person is the authority on themselves and the app does
+not move on them unasked. One feature that contradicts that does not sit
+beside the others. It undermines the claim they are all making.
+
+The mitigations I built into it were real and they did not change what it
+is. Saying nothing about the person, staying quiet on a day they wrote,
+asking permission only after a first entry: all of that makes a
+well mannered version of the app deciding somebody needs to be interrupted.
+
+The cost of this is one build's worth of work and nothing else. No build
+ever carried it: build 13 went to App Review on 18 September and the
+evening question was written on the 19th. Nobody has received one. Removing
+it now costs a person nothing. Removing it after a release would cost a
+notification that went out and then stopped.
+
+What replaces it, if the retention problem still needs answering: nothing
+in the notification layer. The people who left did not leave because their
+phone was quiet. Two of twenty six accounts ever wrote enough for anything
+to repeat, and what the others met was a first line that had never been
+measured, which is task 7 and is still not done.
+
+Would reverse it: a person asking to be asked. If somebody wants a daily
+question, the way to build it is to offer it once, accept no as an answer,
+and let them pick the hour. That is decision 295 with a different trigger,
+and it is a different thing from what 288 was.
+

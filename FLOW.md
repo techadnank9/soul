@@ -697,16 +697,6 @@ GET /memory     → routes/memory.ts             everything held about them, in
                                                takes a moment back with
                                                everything that stood on it
                                                alone. Decision 292.
-GET /nudges     → routes/nudges.ts             the evening question, a month
-                                               of lines and the hour to ask
-                                               them at. No dates: the phone
-                                               books them against its own
-                                               days. Nothing read from
-                                               anything the person wrote.
-                                               The phone cancels tonight
-                                               when an entry lands, and books
-                                               nothing at all until the first
-                                               one. Decision 288.
 GET /reminders  → routes/reminders.ts          what they said they would do
                                                and have not been rung about.
                                                Only what is still ahead. The
