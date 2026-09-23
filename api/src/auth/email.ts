@@ -3,6 +3,7 @@ import { and, desc, eq, gt, isNull, sql as raw } from 'drizzle-orm'
 import { db, emailCodes, students } from '../db.js'
 import type { Session } from '../session.js'
 import { auditLinked, createAccount, issueSession, type SignedIn } from './accounts.js'
+import { adoptFirstRun } from './adopt.js'
 import { sendSignInCode } from './resend.js'
 import { env } from '../env.js'
 
@@ -122,7 +123,13 @@ async function signInAs(email: string, current: Session | null): Promise<SignedI
     .from(students)
     .where(eq(students.email, email))
     .limit(1)
-  if (known[0]) return issueSession(known[0])
+  // The same hole the Apple path had. An address that already has an account
+  // moves the session to it, and without this everything first run wrote on
+  // the device account stays there. Decision 299.
+  if (known[0]) {
+    if (current) await adoptFirstRun(current.studentId, known[0].id)
+    return issueSession(known[0])
+  }
 
   // A new address. It attaches to the account this device already has, if
   // that account has no address yet. Otherwise it is a new person on a shared

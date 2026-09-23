@@ -2,6 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm'
 import { db, students } from '../db.js'
 import type { Session } from '../session.js'
 import { auditLinked, createAccount, issueSession, type SignedIn } from './accounts.js'
+import { adoptFirstRun } from './adopt.js'
 
 /**
  * Signing in with Apple attaches an Apple account to the account this device
@@ -41,7 +42,16 @@ export async function signInWithApple(
 
   // A second device, or the same one after a reinstall. The Apple account
   // decides which account this is.
-  if (linked[0]) return issueSession(linked[0])
+  //
+  // What first run wrote comes with them. Without this the session moved to
+  // the linked account and everything written into the device account in the
+  // last few minutes stayed there: the name, the ten answers, the line
+  // written about them. They signed in and met a home screen that knew none
+  // of it. Decision 299.
+  if (linked[0]) {
+    if (current) await adoptFirstRun(current.studentId, linked[0].id)
+    return issueSession(linked[0])
+  }
 
   // A phone with no account, after a log out, signing in with an Apple
   // account nothing was ever attached to. It gets a new one.

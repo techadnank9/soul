@@ -3,6 +3,7 @@ import { and, desc, eq, gt, isNull, sql as raw } from 'drizzle-orm'
 import { db, phoneCodes, students } from '../db.js'
 import type { Session } from '../session.js'
 import { auditLinked, createAccount, issueSession, type SignedIn } from './accounts.js'
+import { adoptFirstRun } from './adopt.js'
 import { sendSignInCodeBySms } from './sms.js'
 
 /**
@@ -83,7 +84,11 @@ export async function verifyPhoneSignIn(
     .from(students)
     .where(eq(students.phone, phone))
     .limit(1)
-  if (known[0]) return issueSession(known[0])
+  // As the Apple and email paths do. Decision 299.
+  if (known[0]) {
+    if (current) await adoptFirstRun(current.studentId, known[0].id)
+    return issueSession(known[0])
+  }
 
   // A new number. It attaches to the account this device already has, if
   // that account has no number yet. Otherwise it is a new person on a shared

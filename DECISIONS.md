@@ -6714,3 +6714,54 @@ Would reverse it: nothing. The one to watch is whether people reword
 patterns at all. If nobody does, the wording we write is close enough and
 the editor is dead weight.
 
+
+---
+
+### 299. First run follows them to the account they sign in to
+Sep 2026, Claude, from a founder report
+
+Decision: `auth/adopt.ts`. When signing in moves the session to an account
+that already existed, whatever first run wrote into this phone's device
+account comes with it. Called from all three ways in: Apple, email and
+phone.
+
+The bug: a phone gets an account on first launch and first run writes into
+it. The name, the age band, the gender, where they are, the ten baseline
+answers, the line written about them at the end, and the two intent
+answers. Then they sign in. If that Apple id or that address already had an
+account, `signInWithApple` returned a session for it and every one of those
+rows stayed on an account nobody would ever open again.
+
+What that looked like to the founder, on his own phone, an hour ago: he
+answered ten questions, watched the app write a line about him, signed in
+with Apple, and landed on a home screen with no tiles on it and a profile
+that said not answered ten times. The data was all there. It was on the
+account he had stopped being.
+
+Eleven device accounts in the database are holding a first run nobody can
+reach. That is eleven of the twenty six people who have ever used this.
+
+The fix fills only what the account they are joining does not have. A field
+already there is theirs and is never overwritten, and a set of baseline
+answers already recorded is never replaced by one from a phone. It is one
+statement, column to column, so the values never leave the database:
+reading them into JavaScript and writing them back meant serialising
+`opening_themes`, which is jsonb, and the driver refused it.
+
+It only ever reads from a device account, one with no credential of its
+own. An account somebody has signed in to is theirs, and a sign in never
+harvests it.
+
+Tested against the real database on throwaway accounts: the answers move,
+every field carries, jsonb survives, nothing already there is overwritten,
+and a signed in account is never read from. All passing, and the accounts
+removed after.
+
+Not fixed here: entries written on the device account stay there. Moving a
+moment means moving its tags, its facts, its people and its embedding with
+every scope kept straight, and that is its own piece of work rather than
+something to bolt on. The introduction spoken during first run is such an
+entry, so it is still stranded.
+
+Would reverse it: nothing.
+
