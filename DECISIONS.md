@@ -6623,3 +6623,52 @@ question, the way to build it is to offer it once, accept no as an answer,
 and let them pick the hour. That is decision 295 with a different trigger,
 and it is a different thing from what 288 was.
 
+
+---
+
+### 297. The reflection is three parts, and the middle one can be missing
+Sep 2026, Claude, from the pattern loop prototype
+
+Decision: the Mirror returns `happened`, `meant`, `next` and `question`, and
+the app draws the first three under their own headings: what happened, what
+your mind may have made it mean, what happened next. `meant` and `next` are
+nullable and are meant to be null often. `mirror.v4` is the prompt.
+
+Why: this is the founder's own sentence for what the product is, from 15
+September. Happened, meant, responded. The prototype drew it as a screen and
+it is right. Separating the three is the whole move: it puts a fact and a
+reading in two different boxes and shows that only one of them is a fact,
+which is the thing a journal cannot do for somebody.
+
+Two of the three are restatement, and a line that summarises the entry is
+this product failing at the only thing it is for. That is survivable only
+because the value is in the seam rather than the prose. The labels do the
+work. So `happened` and `next` stay short and close to their words, and the
+moment either is elaborated we have built a summariser.
+
+The middle is the only generated claim and the only one that can do harm. It
+says what somebody's mind did, which they did not write down. The prototype
+only draws the happy path, where all three exist. A fixed template would
+force a model to invent one, and an invented sentence about a fourteen year
+old's interior is the worst output this product is capable of. So it is
+nullable, the prompt says twice that null is ordinary, and when it is null
+the screen shows what happened and asks the question, which is the whole of
+what it can honestly do.
+
+The question carries most of the value and none of the risk. "Do you
+actually know yet why she has not replied" names the gap between what
+happened and what it was taken to mean while asserting nothing about the
+person.
+
+In beat one this would not fit: it is one line, minimal context, built to
+land under three seconds. The Mirror already has the whole person and
+already runs straight after. That is where it goes, and no new call.
+
+`tension` and `underneath` still go out, filled from the three parts, because
+a build in somebody's pocket reads `underneath` and nothing else and a
+reflection with an empty line under its question reads as broken. They go
+when nobody is on such a build.
+
+Would reverse it: `meant` arriving on most entries, which would mean it is
+being invented rather than read. The number to watch is how often it is null.
+

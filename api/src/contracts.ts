@@ -110,7 +110,45 @@ export type SubmitResult = z.infer<typeof submitResult>
  * The Mirror. Structured output, validated before display or storage. Free
  * prose is rejected rather than stored.
  */
+/**
+ * What the Mirror must return. The three parts, and the question.
+ *
+ * happened, meant and next are the founder's own sentence for what this
+ * product is: what happened, what it was taken to mean, and what was done
+ * about it. Separating them is the whole move. It shows that only the first
+ * is a fact, and the second is the sentence somebody did not write
+ * themselves, which is the reason to open this instead of a journal.
+ *
+ * `meant` and `next` are nullable and they are meant to be null often. Most
+ * entries say what happened and never say what was concluded or what was
+ * done. A fixed three part template forces a model to invent the middle,
+ * and an invented claim about somebody's interior is the worst thing this
+ * product can produce. Decision 297.
+ *
+ * `happened` stays short and close to their words. It is scaffolding for
+ * the seam, not content: a line that summarises the entry is this product
+ * failing at the only thing it is for, and two thirds of this shape is
+ * restatement. What earns the screen is the labels and the question.
+ */
+export const mirrorWritten = z.object({
+  happened: z.string().min(1).max(300),
+  meant: z.string().max(300).nullable().default(null),
+  next: z.string().max(300).nullable().default(null),
+  question: z.string().min(1).max(200),
+  offered: z.string().max(200).optional(),
+})
+export type MirrorWritten = z.infer<typeof mirrorWritten>
+
 export const mirrorReflection = z.object({
+  /** The three parts. Decision 297. */
+  happened: z.string().max(300).optional(),
+  meant: z.string().max(300).nullable().optional(),
+  next: z.string().max(300).nullable().optional(),
+  /**
+   * What a build before decision 297 reads. Filled from the three parts on
+   * the way out so an app in somebody's pocket today still has a line under
+   * its question. Both go when nobody is on such a build.
+   */
   tension: z.string().min(1).max(400),
   underneath: z.string().min(1).max(400),
   question: z.string().min(1).max(200),

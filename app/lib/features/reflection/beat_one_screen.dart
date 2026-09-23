@@ -20,6 +20,9 @@ class BeatOneScreen extends StatefulWidget {
     required this.onDone,
     this.spokenSeconds,
     this.underneath,
+    this.happened,
+    this.meant,
+    this.next,
     this.question,
     this.loadingQuestion = false,
     this.fallback = false,
@@ -41,6 +44,20 @@ class BeatOneScreen extends StatefulWidget {
   /// question can arrive with nothing underneath it when the reading did
   /// not come in time.
   final String? underneath;
+
+  /// The three parts, under their own headings. What happened, what their
+  /// mind may have made it mean, what they did about it.
+  ///
+  /// The separation is the point: it puts a fact and a reading in two
+  /// different boxes and shows that only one of them is a fact. The middle
+  /// is the only generated claim and it is null often, on purpose, because
+  /// most entries never say what was concluded. When it is null the screen
+  /// shows what happened and asks the question, which is the whole of what
+  /// it can honestly do. Decision 297.
+  final String? happened;
+  final String? meant;
+  final String? next;
+
   final String? question;
   final bool loadingQuestion;
 
@@ -237,9 +254,31 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
                   ],
                   const SizedBox(height: 18),
                 ],
+                if (widget.happened != null) ...[
+                  const Label('what happened'),
+                  const SizedBox(height: 6),
+                  Text(widget.happened!, style: SoulType.secondary),
+                  const SizedBox(height: 14),
+                  if (widget.meant != null) ...[
+                    const Label('what your mind may have made it mean'),
+                    const SizedBox(height: 6),
+                    Text(widget.meant!, style: SoulType.lead),
+                    const SizedBox(height: 14),
+                  ],
+                  if (widget.next != null) ...[
+                    const Label('what happened next'),
+                    const SizedBox(height: 6),
+                    Text(widget.next!, style: SoulType.secondary),
+                    const SizedBox(height: 14),
+                  ],
+                ],
                 const Label('one question'),
                 const SizedBox(height: 8),
-                if (widget.underneath != null) ...[
+                // Before decision 297 the reading arrived as one line with
+                // no heading. A build talking to an older service still has
+                // that and nothing else, so it is drawn when the three
+                // parts are not there.
+                if (widget.happened == null && widget.underneath != null) ...[
                   Text(widget.underneath!, style: SoulType.secondary),
                   const SizedBox(height: 10),
                 ],

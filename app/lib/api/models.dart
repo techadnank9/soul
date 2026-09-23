@@ -40,6 +40,9 @@ class MirrorResult {
     this.fallback = false,
     this.tension,
     this.underneath,
+    this.happened,
+    this.meant,
+    this.next,
     this.offered,
     this.candidateId,
     this.proposal,
@@ -53,6 +56,16 @@ class MirrorResult {
 
   final String? tension;
   final String? underneath;
+
+  /// The three parts. What happened, what their mind may have made it mean,
+  /// and what they did about it. Only the first is a fact, which is what
+  /// separating them is for. meant and next are null often and on purpose:
+  /// most entries never say what was concluded or done. Decision 297.
+  ///
+  /// Null from a server before 297, where `underneath` carried the reading.
+  final String? happened;
+  final String? meant;
+  final String? next;
   final String question;
   final String? offered;
   final String? candidateId;
@@ -79,6 +92,9 @@ class MirrorResult {
     return MirrorResult(
       tension: json['tension'] as String?,
       underneath: json['underneath'] as String?,
+      happened: json['happened'] as String?,
+      meant: json['meant'] as String?,
+      next: json['next'] as String?,
       question: json['question'] as String,
       offered: json['offered'] as String?,
       candidateId: candidate?['candidateId'] as String?,

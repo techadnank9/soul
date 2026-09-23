@@ -4,7 +4,7 @@ import { call } from '../gateway/call.js'
 import { loadContext, renderContext } from '../memory/buildContext.js'
 import { renderTone } from '../services/tone/render.js'
 import { loadTone, type Tone } from '../services/tone/store.js'
-import { mirrorReflection, type MirrorReflection } from '../contracts.js'
+import { mirrorWritten, type MirrorReflection } from '../contracts.js'
 import type { Session } from '../session.js'
 
 /**
@@ -63,10 +63,25 @@ export async function mirror(
 
   const result = await call('mirror', {
     user: buildMirrorPrompt(history, entry.text, tone),
-    schema: mirrorReflection,
+    schema: mirrorWritten,
     session,
     entryId,
   })
 
-  return result.value
+  const { happened, meant, next, question, offered } = result.value
+
+  // The three parts go out as themselves, and the two old keys go out filled
+  // from them. A build in somebody's pocket today reads `underneath` and
+  // `question` and knows nothing about the rest, and a reflection that
+  // arrives with an empty line under its question reads as broken. Both old
+  // keys go when nobody is on such a build. Decision 297.
+  return {
+    happened,
+    meant,
+    next,
+    tension: happened,
+    underneath: meant ?? next ?? happened,
+    question,
+    ...(offered ? { offered } : {}),
+  } satisfies MirrorReflection
 }
