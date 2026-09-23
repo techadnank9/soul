@@ -553,10 +553,47 @@ export const copingWays = [
   'did it anyway',
 ] as const
 
+/**
+ * What they took it to mean. The second closed list, and the one the product
+ * exists for.
+ *
+ * `coping` is what they did. This is what they concluded, and it is where a
+ * pattern worth showing somebody usually lives: a person who avoids three
+ * different things has a habit, and a person who reads three different
+ * silences as their own fault has something they could actually change.
+ *
+ * Closed for the same reason coping is closed, and the reason is written in
+ * decision 259: free text never groups. Three entries that plainly said the
+ * same thing came back as three phrasings and grouped into three themes of
+ * one.
+ *
+ * Every line is a sentence somebody would say in their own head, in the
+ * first person, about one moment. Not a kind of person and not a word from a
+ * clinic. There is no word here for a distortion, a bias or a style of
+ * thinking, and none is ever to be added: naming the thought is the product,
+ * naming the thinker is the thing this product refuses to do.
+ */
+export const meaningsTaken = [
+  'it was my fault',
+  'they are angry with me',
+  'I am in trouble',
+  'they do not want me there',
+  'they will find out I cannot do it',
+  'nothing I do changes it',
+  'it is mine to fix',
+  'I could not say no',
+  'it is going to go wrong',
+  'everyone else is fine',
+  'it was not a big deal',
+  'it was not fair',
+] as const
+
 export const taggerResult = z.object({
   trigger: z.string().max(120).nullable(),
   feeling: z.string().max(120).nullable(),
   coping: z.enum(copingWays).nullable(),
+  /** What they took it to mean, one of the closed list, or null. */
+  meaning: z.enum(meaningsTaken).nullable().default(null),
   domain: z.string().max(120).nullable(),
   confidence: z.number().min(0).max(1),
   /// Which of the five ways of deciding this entry is plainly an instance

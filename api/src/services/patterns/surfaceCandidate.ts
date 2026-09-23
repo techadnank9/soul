@@ -1,5 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import { db, entries, patternCandidates } from '../../db.js'
+import { copingWays, meaningsTaken } from '../../contracts.js'
 import type { Session } from '../../session.js'
 
 /**
@@ -104,27 +105,31 @@ export async function surfaceCandidate(session: Session): Promise<Surfaced | nul
  * its own, which is what a later list of interpretations would give us.
  */
 function propose(theme: string, count: number): string {
-  const how = COPING.has(theme) ? `you ${theme}` : theme
   const many = count === 2 ? 'two moments' : `${words(count)} moments`
+  const tail = 'Does that feel connected, or am I missing it?'
 
-  return (
-    `In ${many} you wrote, what you did next looks like the same thing: ` +
-    `${how}. Does that feel connected, or am I missing it?`
-  )
+  if (MEANINGS.has(theme)) {
+    return (
+      `In ${many} you wrote, what you made of it looks like the same thing: ` +
+      `that ${theme}. ${tail}`
+    )
+  }
+
+  if (COPING.has(theme)) {
+    return (
+      `In ${many} you wrote, what you did next looks like the same thing: ` +
+      `you ${theme}. ${tail}`
+    )
+  }
+
+  // A theme from neither list, which should not happen and is not worth
+  // failing over. It reads as its own phrase and says nothing it cannot
+  // stand behind.
+  return `Something the same came up in ${many} you wrote: ${theme}. ${tail}`
 }
 
-const COPING = new Set([
-  'went quiet',
-  'said it directly',
-  'avoided it',
-  'put it off',
-  'agreed anyway',
-  'asked for help',
-  'pushed back',
-  'made it smaller',
-  'carried on',
-  'did it anyway',
-])
+const COPING: ReadonlySet<string> = new Set(copingWays)
+const MEANINGS: ReadonlySet<string> = new Set(meaningsTaken)
 
 function words(n: number): string {
   const said = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']

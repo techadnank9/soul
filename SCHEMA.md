@@ -186,8 +186,12 @@ The sentence the student chose to carry forward, in their words.
 ---
 
 ## tags
-`id`, `entry_id`, `student_id`, `trigger`, `feeling`, `coping`, `domain`,
-`confidence`, `tagger_version`, `created_at`
+`id`, `entry_id`, `student_id`, `trigger`, `feeling`, `coping`, `meaning`,
+`domain`, `confidence`, `tagger_version`, `created_at`
+
+`coping` and `meaning` are the two closed lists, and a pattern counts on
+either. What they did, and what they took it to mean. Both come from the
+tagger word for word and both are null more often than not. Decision 291.
 
 Written by the async tagger. Never shown to the student directly. Values
 describe situations, never traits. Low confidence tags must not support a

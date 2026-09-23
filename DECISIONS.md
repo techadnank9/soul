@@ -6341,3 +6341,44 @@ by the person they belong to.
 Would reverse it: nothing about showing the evidence. The three answers
 would reverse if maybe turns out to be where everything goes to die.
 
+
+---
+
+### 291. A pattern can be what they made of it, not only what they did
+Sep 2026, Claude, on the founder's call to make patterns better
+
+Decision: the tagger returns a second closed value, `meaning`, twelve
+sentences long, and `findCandidates` counts it exactly as it counts
+`coping`. A theme is one word from one of the two lists. The two share no
+words, so the theme alone says which list it came from.
+
+Why: `coping` is ten behaviours, and that was the whole space of what this
+product could notice. The pattern the founder pointed at in the design,
+"when I do not have an answer, I often assume I caused the problem", cannot
+be said in it. Checked against the two moments that design is built on:
+neither is an action on the coping list, both would tag null, and the
+flagship example of the loop would have found nothing here. Avoiding three
+different things is a habit. Reading three different silences as your own
+fault is something a person could act on, and the second is the reason
+somebody opens this instead of a journal.
+
+Closed, for the reason decision 259 records. Free text never groups.
+
+What is not on the list, and never will be: a word for a kind of thinking.
+No distortion, no bias, no style of thought. Every line is a sentence
+somebody would say in their own head about one moment. Naming the thought
+is the product. Naming the thinker is the thing this product refuses to do,
+and a list of thinking styles is how a product like this turns into one that
+tells a fourteen year old what is wrong with their mind.
+
+The tagger version moved with it, which is also what let every entry
+already in the table be read again for the new column.
+`scripts/backfill_meaning.ts` does that, one call per entry, writing only
+the new column and leaving the demo accounts alone.
+
+Would reverse it: meanings arriving so often that everything becomes a
+pattern, or the model reaching for one when the entry never said what they
+made of it. Null is meant to be the common answer and the prompt says so
+twice. The number to watch is how many entries come back with a meaning: if
+it is most of them, the list is being guessed rather than read.
+

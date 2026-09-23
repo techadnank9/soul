@@ -546,6 +546,8 @@ export const tags = pgTable(
     trigger: text('trigger'),
     feeling: text('feeling'),
     coping: text('coping'),
+    /** What they took it to mean. The second theme a pattern can form on. */
+    meaning: text('meaning'),
     domain: text('domain'),
     confidence: real('confidence').notNull(),
     taggerVersion: text('tagger_version').notNull(),
@@ -554,6 +556,7 @@ export const tags = pgTable(
   (t) => [
     index('tags_student_feeling_idx').on(t.studentId, t.feeling),
     index('tags_student_trigger_idx').on(t.studentId, t.trigger),
+    index('tags_student_meaning_idx').on(t.studentId, t.meaning),
     index('tags_entry_idx').on(t.entryId),
   ],
 )

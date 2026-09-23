@@ -143,6 +143,14 @@ nothing again" and "let it go", which group into three themes of one. The
 closed list is what lets the counting stay a group by. There is no day rule
 any more either. Decisions 258 and 259.
 
+There are two closed lists now, not one, and the query counts both the same
+way. `coping` is what they did and `meaning` is what they took it to mean,
+and the second is where the patterns worth showing somebody usually are.
+Avoiding three different things is a habit. Reading three different silences
+as your own fault is something a person could act on. Nothing on the meaning
+list names a kind of thinking and nothing ever will: it says what somebody
+took one moment to mean, never what sort of mind they have. Decision 291.
+
 **The verdict on a theme is a model call, and that is not a hole in the rule
 above.** Finding the theme and judging it are two questions. The finding stays
 in SQL so the entries behind a claim can always be shown. The judging runs in

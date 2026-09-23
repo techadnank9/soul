@@ -18,7 +18,12 @@ import type { Session } from '../../session.js'
  * Values describe situations, never traits. "Avoided a conflict", not
  * "avoidant". The prompt enforces it and the review in task 9 checks it.
  */
-export const TAGGER_VERSION = 'tagger-2026-08-a'
+/**
+ * Bumped for the meaning list, decision 291. The version is what stops an
+ * entry being tagged twice, so raising it is also what lets every entry
+ * already in the table be read again for the new column.
+ */
+export const TAGGER_VERSION = 'tagger-2026-09-b'
 
 export async function tagEntry(entryId: string, session: Session): Promise<void> {
   const rows = await db
@@ -79,6 +84,7 @@ export async function tagEntry(entryId: string, session: Session): Promise<void>
       trigger: result.value.trigger,
       feeling: result.value.feeling,
       coping: result.value.coping,
+      meaning: result.value.meaning,
       domain: result.value.domain,
       confidence: result.value.confidence,
       taggerVersion: TAGGER_VERSION,

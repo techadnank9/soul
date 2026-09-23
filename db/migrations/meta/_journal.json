@@ -232,6 +232,13 @@
       "when": 1789516800000,
       "tag": "0032_week_notes_and_sightings",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790000000000,
+      "tag": "0033_meaning",
+      "breakpoints": true
     }
   ]
 }
