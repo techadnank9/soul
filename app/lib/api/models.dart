@@ -648,6 +648,7 @@ class ConfirmedPattern {
     required this.id,
     required this.theme,
     required this.times,
+    required this.said,
     this.wording,
     this.standing,
     this.armed = false,
@@ -658,22 +659,24 @@ class ConfirmedPattern {
   final int times;
   final String? wording;
 
+  /// What goes on the screen: their wording when they have written one, and
+  /// a sentence built from the theme when they have not. The theme on its
+  /// own is a tag, and showing a tag under the words here is how I would put
+  /// it is the app calling a column a sentence.
+  final String said;
+
   /// still_true, changing, does_not_fit, or null until they say.
   final String? standing;
 
   /// Whether they asked to be told about it next time.
   final bool armed;
 
-  /// What goes on the screen. Their words when they have written them.
-  String get said => (wording != null && wording!.trim().isNotEmpty)
-      ? wording!
-      : theme;
-
   static ConfirmedPattern fromJson(Map<String, dynamic> json) =>
       ConfirmedPattern(
         id: json['id'] as String,
         theme: json['theme'] as String,
         times: (json['times'] as num?)?.toInt() ?? 0,
+        said: (json['said'] as String?) ?? (json['theme'] as String),
         wording: json['wording'] as String?,
         standing: json['standing'] as String?,
         armed: json['armed'] as bool? ?? false,

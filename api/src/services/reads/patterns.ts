@@ -1,4 +1,5 @@
 import { asStudent, type Session } from '../../session.js'
+import { copingWays, meaningsTaken } from '../../contracts.js'
 import { ISO_INSTANT, MIN_TAG_CONFIDENCE } from './rules.js'
 
 /**
@@ -57,6 +58,14 @@ export type Noticing = {
 export type Confirmed = {
   id: string
   theme: string
+  /**
+   * What the screen shows: their wording when they have written one, and a
+   * sentence built from the theme when they have not.
+   *
+   * The theme on its own is a tag. Showing "went quiet" under the words
+   * "here is how I would put it" is the app calling a column a sentence.
+   */
+  said: string
   /** Their own words for it, when they have written them. */
   wording: string | null
   /** Where they say it stands: still_true, changing, does_not_fit. */
@@ -113,6 +122,11 @@ export async function patterns(session: Session): Promise<PatternsView> {
       where student_id = ${session.studentId}
         and removed_at is null
       order by confirmed_at desc`
+
+    const written = confirmed.map((row) => ({
+      ...row,
+      said: row.wording?.trim() || asSentence(row.theme),
+    }))
 
     const sections = await tx<SectionRow[]>`
       with tagged as (
@@ -243,7 +257,7 @@ export async function patterns(session: Session): Promise<PatternsView> {
       limit 4`
 
     return {
-      confirmed,
+      confirmed: written,
       noticings: noticed,
       // Every entry the student has ever written, not this week's. This number
       // is the one thing on the screen that only goes up.
@@ -268,3 +282,21 @@ function withoutVerdict(rows: SectionRow[], verdict: SectionRow['verdict']): Pat
     .filter((row) => row.verdict === verdict)
     .map(({ theme, times, lastAt, line, source }) => ({ theme, times, lastAt, line, source }))
 }
+
+
+/**
+ * A theme, as a sentence somebody would say about themselves.
+ *
+ * The two closed lists read differently. A coping word is what they did, so
+ * it takes I in front of it. A meaning is already a clause in the first
+ * person, so it goes after what they took it to mean. Neither is a claim
+ * beyond what they confirmed.
+ */
+function asSentence(theme: string): string {
+  if (MEANINGS.has(theme)) return `I took it to mean ${theme}.`
+  if (COPING.has(theme)) return `I ${theme}.`
+  return theme
+}
+
+const COPING: ReadonlySet<string> = new Set(copingWays)
+const MEANINGS: ReadonlySet<string> = new Set(meaningsTaken)
