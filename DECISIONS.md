@@ -6432,3 +6432,50 @@ each row of the table above.
 
 Would reverse it: nothing. The promise was already made in the README.
 
+
+---
+
+### 293. The holes found while building the memory screen
+Sep 2026, Claude, on the founder's call to fix all of it
+
+Four things, found while wiring the screen for decision 292 and fixed
+together.
+
+**A moment can be deleted from the day it happened.** The memory screen
+reaches a moment through a fact that was read out of it, and most entries
+never produce one: of a hundred entries read again this week, three carried
+a meaning. So a person could open everything they had written and take back
+almost none of it. Tapping a moment on the day view now opens what they
+wrote, with the one thing that can be done to it. The route existed. Nothing
+reached it.
+
+**A candidate is no longer spent on being offered.**
+`surfaceCandidate` set the status to surfaced the moment it attached one to
+a reading, and only pending candidates are ever offered, so a candidate
+attached to a reading somebody closed was gone for good. Two of the three
+surfaced rows in production may never have been read by the person they
+belong to and there is no way now to tell which. The status stays pending
+until they answer. `surfaced_at` records that it has been put in front of
+them. A row carrying the old status still means what it meant then.
+
+**`/auth/demo` is gone.** An unauthenticated route on the live service that
+made an account, wrote a profile and seeded a week of entries into the
+database. Nothing in the app had ever called it: no hit for the word demo
+anywhere in `app/lib`. It was a first screen skip that stopped being used
+and stayed reachable by anybody who found the url.
+
+**`/auth/device` has a ceiling.** Twenty new accounts an hour per address.
+It is the one route that writes a row with nothing asked of the caller, and
+every account it makes carries a session that can call the routes that talk
+to a model. In memory rather than in a table: one web instance runs at a
+time, and a limiter that needs a table stops working the first time the
+table is slow. It resets on deploy, which is the right way for it to fail.
+
+Also removed: `baseline_answering.dart` and `baseline_more.dart`, twelve
+hundred lines that nothing imported, left from the first run before it was
+rebuilt in September.
+
+Would reverse it: the rate limit, if a school ever puts thirty phones
+through first run on one network in one hour. The number is a guess and the
+log line says when it refuses somebody.
+

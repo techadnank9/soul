@@ -4,7 +4,6 @@ import * as contracts from '../contracts.js'
 import { AppleTokenInvalid, verifyAppleIdentityToken } from '../auth/apple.js'
 import { AlreadyLinked, SignInRefused, signInWithApple } from '../auth/signIn.js'
 import { createAccount, issueSession } from '../auth/accounts.js'
-import { seedDemoWeek, ZONE, REGION } from '../services/demo/seed.js'
 import { db, students } from '../db.js'
 import { eq } from 'drizzle-orm'
 import { EmailRefused, startEmailSignIn, verifyEmailSignIn } from '../auth/email.js'
@@ -29,37 +28,55 @@ type Vars = { Variables: { session: Session } }
 
 export const auth = new Hono<Vars>()
 
-/** A new account for a phone that has never been seen. The session comes with it. */
+/**
+ * A new account for a phone that has never been seen. The session comes with
+ * it.
+ *
+ * Held to a rate per address, because this is the one route that makes rows
+ * with nothing asked of the caller: no session, no code, no Apple. Without a
+ * ceiling anybody who found the url could make accounts until the database
+ * was full, and every account they made carries a session that can call the
+ * routes that talk to a model.
+ *
+ * In memory, not in the database. One web instance runs at a time, so a map
+ * is the whole of what is needed, and a limiter that needs a table is a
+ * limiter that stops working the first time the table is slow. It resets on
+ * deploy, which is the right failure: a real first launch after a deploy is
+ * let through, and a flood has to start again.
+ *
+ * Decision 293.
+ */
+const NEW_ACCOUNTS_PER_HOUR = 20
+const anHour = 60 * 60 * 1000
+const madeBy = new Map<string, number[]>()
+
+function tooMany(who: string): boolean {
+  const now = Date.now()
+  const recent = (madeBy.get(who) ?? []).filter((at) => now - at < anHour)
+  recent.push(now)
+  madeBy.set(who, recent)
+
+  // The map only ever holds the last hour, so a busy day does not leave it
+  // holding every address that ever asked.
+  if (madeBy.size > 5000) {
+    for (const [key, times] of madeBy) {
+      if (times.every((at) => now - at >= anHour)) madeBy.delete(key)
+    }
+  }
+
+  return recent.length > NEW_ACCOUNTS_PER_HOUR
+}
+
 auth.post('/auth/device', async (c) => {
+  const who = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+
+  if (tooMany(who)) {
+    console.log(`account: refused, too many from ${who}`)
+    return c.json({ error: 'try later' }, 429)
+  }
+
   const account = await createAccount()
   console.log(`account: created ${account.id.slice(0, 8)}`)
-  return c.json(await issueSession(account))
-})
-
-/**
- * The demo skip on the first screen. A fresh account, filled with a week of
- * entries ending today, so whoever presses it lands on a home with something
- * in it. Each press is its own account, so nobody shares one.
- */
-auth.post('/auth/demo', async (c) => {
-  const account = await createAccount()
-  await db
-    .update(students)
-    .set({
-      displayName: 'Sam',
-      ageBand: '13_17',
-      gender: 'not_said',
-      region: REGION,
-      timezone: ZONE,
-      profileRecordedAt: new Date(),
-    })
-    .where(eq(students.id, account.id))
-  const count = await seedDemoWeek({
-    studentId: account.id,
-    schoolId: account.schoolId,
-    districtId: account.districtId,
-  })
-  console.log(`demo: account ${account.id.slice(0, 8)} with ${count} entries`)
   return c.json(await issueSession(account))
 })
 

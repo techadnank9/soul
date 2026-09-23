@@ -46,6 +46,7 @@ export async function surfaceCandidate(session: Session): Promise<Surfaced | nul
       id: patternCandidates.id,
       theme: patternCandidates.theme,
       supportingEntryIds: patternCandidates.supportingEntryIds,
+      surfacedAt: patternCandidates.surfacedAt,
     })
     .from(patternCandidates)
     .where(
@@ -80,9 +81,22 @@ export async function surfaceCandidate(session: Session): Promise<Surfaced | nul
     said: opening(entry.text),
   }))
 
+  // Offered, not answered. The status stays pending until the student says
+  // something about it.
+  //
+  // This used to set it to surfaced here, which meant a candidate was spent
+  // the moment it was attached to a reading, whether or not the person ever
+  // scrolled to it. Only pending candidates are ever offered, so anything
+  // attached to a reading somebody closed was gone for good. Two of the
+  // three surfaced rows in production may never have been read by the person
+  // they belong to, and there is no way now to find out which.
+  //
+  // `surfaced_at` records that it has been put in front of them at least
+  // once. The status a row carries from before this change still means what
+  // it meant then. Decision 293.
   await db
     .update(patternCandidates)
-    .set({ status: 'surfaced', surfacedAt: new Date() })
+    .set({ surfacedAt: row.surfacedAt ?? new Date() })
     .where(eq(patternCandidates.id, row.id))
 
   return {

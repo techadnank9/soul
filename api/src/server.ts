@@ -59,7 +59,6 @@ const noSession = new Set([
   '/health',
   '/jobs/drain',
   '/auth/device',
-  '/auth/demo',
   '/auth/email/start',
   '/auth/email/verify',
   '/auth/apple',

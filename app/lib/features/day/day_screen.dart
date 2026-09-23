@@ -165,6 +165,7 @@ class _DayScreenState extends State<DayScreen> {
               entry: day.entries[i],
               colour: colours[i],
               last: i == day.entries.length - 1,
+              onOpen: () => _openMoment(day.entries[i]),
             ),
           // Under the day, because a card asks what happens next about
           // something that is already up there in the user's own words.
@@ -286,6 +287,95 @@ class _DayScreenState extends State<DayScreen> {
     }
   }
 
+  /// A moment, opened. The words as they wrote them, and the one thing
+  /// that can be done to it from here.
+  ///
+  /// This is the only route to deleting most entries. What I hold reaches a
+  /// moment through a fact that was read out of it, and most entries never
+  /// produce one, so a person could otherwise see everything they had
+  /// written and take back almost none of it. Decision 292.
+  Future<void> _openMoment(DayEntry entry) async {
+    final gone = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: SoulColors.bg,
+      isScrollControlled: true,
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Label('what you wrote'),
+              const SizedBox(height: 10),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Text(entry.text, style: SoulType.field),
+                ),
+              ),
+              const SizedBox(height: 22),
+              SoulButton(
+                'Delete this moment',
+                kind: SoulButtonKind.ghost,
+                onPressed: () => Navigator.of(sheet).pop(true),
+              ),
+              SoulButton(
+                'Close',
+                onPressed: () => Navigator.of(sheet).pop(false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (gone != true || !mounted) return;
+    await _forget(entry);
+  }
+
+  Future<void> _forget(DayEntry entry) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        backgroundColor: SoulColors.bg,
+        title: Text('Delete this moment?', style: SoulType.lead),
+        content: Text(
+          'The moment goes, and so does anything I only knew because of it. '
+          'This cannot be undone.',
+          style: SoulType.secondary,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(false),
+            child: Text('Keep it', style: SoulType.secondary),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(true),
+            child: Text(
+              'Delete it',
+              style: SoulType.secondary.copyWith(color: SoulColors.clayDark),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (sure != true) return;
+
+    try {
+      await widget.api.forgetEntry(entry.id);
+      widget.api.event('entry_forgotten');
+    } catch (error) {
+      widget.api.event('entry_forget_failed', {
+        'error': error.runtimeType.toString(),
+        'status': error is SoulApiException ? error.status : null,
+      });
+    }
+    // Read again either way. A delete that half happened has to show what
+    // actually stands rather than what was asked for.
+    if (mounted) await _load();
+  }
+
   static String _countLine(int entries) =>
       entries == 1 ? 'one moment, in order' : '$entries moments, in order';
 
@@ -394,15 +484,25 @@ class _TimelineItem extends StatelessWidget {
     required this.entry,
     required this.colour,
     required this.last,
+    this.onOpen,
   });
 
   final DayEntry entry;
   final Color colour;
   final bool last;
 
+  /// Opens the moment, which is the only place a moment can be taken back
+  /// from. What I hold reaches the ones a fact was read out of, and most
+  /// entries never produce one, so without this a person could not delete
+  /// most of what they had written. Decision 292.
+  final VoidCallback? onOpen;
+
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpen,
+      child: IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -466,8 +566,9 @@ class _TimelineItem extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
