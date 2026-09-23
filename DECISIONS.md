@@ -6849,3 +6849,52 @@ Checked: six reply shapes through the tagger schema, including two with
 words off the list and one with nothing in it at all. All parse, the good
 reply is untouched, and an off list word nulls only its own field.
 
+
+---
+
+### 302. Datadog, with nothing a person wrote in it
+Sep 2026, Claude, on the founder's call
+
+Decision: `dd-trace` is in the api, started from `api/src/telemetry.ts`
+before anything else in the process, off unless `DD_API_KEY` is set. LLM
+Observability is on, under the ml app Soul, and every model call is a span
+written by hand in `gateway/call.ts`.
+
+What a span carries: the purpose, the model, the provider, the prompt
+version, the latency, the token counts, and whether it failed. What it does
+not carry: the prompt, the reply, the entry, the history, the person.
+
+That division is not a setting anybody has to remember. Datadog captures
+prompts and replies by instrumenting a vendor sdk, and this gateway has
+never used one: every call is a `fetch` to an https endpoint. There is
+nothing for it to hook, so nothing is captured unless it is written in by
+hand, and the only hand written span is the one above. Anybody adding a
+payload to it is undoing the reason this was allowed in at all, which is
+that a person can see and delete everything held about them and a prompt in
+a third party's trace store is a thing they cannot reach.
+
+Agentless, because Render runs one container per service with no sidecar for
+an Agent to live in. Confirmed working: spans reach
+`llmobs-intake.datadoghq.com` with ml_app Soul, named by purpose, and the
+encoded payload was read to check that no prompt is in it.
+
+Two things found while wiring it.
+
+The worker was naming every span. `startTelemetry` was called at the top of
+`jobs/runner.ts`, and es imports run before the statements around them, so
+the server importing `tick` for the drain route initialised the tracer as
+soul-worker before the server's own call ran. Every span from the api went
+out under the wrong service. It is now called only when the runner is the
+process.
+
+APM traces do not reach Datadog. The tracer still posts them to an agent on
+localhost, which nothing on Render is listening on, so the http and
+postgres spans are encoded and dropped. Only LLM Observability has an
+agentless intake here. Reaching APM means running a Datadog Agent as its own
+Render service and pointing `DD_TRACE_AGENT_URL` at it, which is another
+service and another bill, and is not done.
+
+Would reverse it: a payload appearing on one of these spans, which would
+make Datadog a holder of what somebody wrote and a name in every district
+agreement.
+

@@ -1,3 +1,10 @@
+// Datadog, before anything else in the process: the tracer patches http,
+// postgres and fetch as they load and cannot patch what is already in
+// memory. Off without DD_API_KEY. See telemetry.ts for what it may see.
+import { startTelemetry } from './telemetry.js'
+
+startTelemetry('soul-api')
+
 import * as Sentry from '@sentry/node'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'

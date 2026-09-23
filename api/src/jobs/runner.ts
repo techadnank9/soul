@@ -1,3 +1,14 @@
+// Datadog, before anything else in the process: the tracer patches http,
+// postgres and fetch as they load and cannot patch what is already in
+// memory. Off without DD_API_KEY. See telemetry.ts for what it may see.
+import { startTelemetry } from '../telemetry.js'
+
+// Only when this file is the process, not when the server imports it for
+// `tick`. ES imports run before the statements around them, so an
+// unconditional call here beat the server's own and every span from the api
+// went out named soul-worker.
+if (process.argv[1]?.includes('runner')) startTelemetry('soul-worker')
+
 import { sql } from '../db.js'
 import * as Sentry from '@sentry/node'
 import { env } from '../env.js'

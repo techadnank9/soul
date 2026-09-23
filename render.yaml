@@ -43,6 +43,15 @@ services:
         sync: false
       - key: SOUL_REVIEW_CODE
         sync: false
+      # Datadog, agentless, because Render runs no sidecar for an Agent to
+      # live in. The key is asked for in the dashboard and is not in this
+      # file. What the tracer may see is in api/src/telemetry.ts and the
+      # short version is: no prompts, no replies, no entry text. Decision
+      # 302.
+      - key: DD_API_KEY
+        sync: false
+      - key: DD_SITE
+        value: datadoghq.com
 
   - type: worker
     name: soul-worker
@@ -62,3 +71,7 @@ services:
         sync: false
       - key: SENTRY_DSN
         value: https://a2473c98efd8c05fbb8570017b1a669b@o4512024433393664.ingest.us.sentry.io/4512024454430720
+      - key: DD_API_KEY
+        sync: false
+      - key: DD_SITE
+        value: datadoghq.com

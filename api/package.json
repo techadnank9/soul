@@ -20,6 +20,7 @@
     "@hono/node-server": "^1.19.5",
     "@sentry/node": "^10.73.0",
     "@soul/db": "*",
+    "dd-trace": "^6.16.0",
     "drizzle-orm": "^0.44.6",
     "hono": "^4.9.10",
     "postgres": "^3.4.7",

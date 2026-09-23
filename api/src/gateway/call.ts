@@ -1,6 +1,7 @@
 import type { ZodType } from 'zod'
 import { db, generations, EMBEDDING_DIMENSIONS } from '../db.js'
 import { env } from '../env.js'
+import { recordModelCall, recordModelFailure } from '../telemetry.js'
 import type { Session } from '../session.js'
 import { activePrompt, type Purpose } from './prompts.js'
 import {
@@ -529,6 +530,22 @@ export async function call<T>(
         throw new GatewayError('empty reply')
       }
 
+      // The same call, as a span Datadog can group and chart. Purpose, model,
+      // provider, tokens, latency. Not the prompt and not the reply: those
+      // are the person's words and their history, and a payload in a third
+      // party's trace store is a thing they cannot reach or delete. Decision
+      // 302, and telemetry.ts says why this is written by hand rather than
+      // captured.
+      recordModelCall({
+        purpose,
+        provider,
+        model: settings.model[provider],
+        promptVersion: prompt.version,
+        latencyMs,
+        inputTokens: reply.inputTokens,
+        outputTokens: reply.outputTokens,
+      })
+
       // Written for every call. This is how you tell whether a prompt change
       // helped, and it is the only record that a given student saw a given
       // version of a given model.
@@ -560,6 +577,7 @@ export async function call<T>(
     }
   }
 
+  recordModelFailure(purpose, failures.join('; '))
   throw new GatewayError(`every provider failed for ${purpose}. ${failures.join('; ')}`)
 }
 
