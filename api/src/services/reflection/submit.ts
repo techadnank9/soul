@@ -7,6 +7,7 @@ import { linkTone, loadTone } from '../tone/store.js'
 import { weatherAnswered } from '../weather/now.js'
 import type { Session } from '../../session.js'
 import type { SubmitEntry, SubmitResult } from '../../contracts.js'
+import { withWorkflow } from '../../telemetry.js'
 
 /**
  * The orchestrator. This is the path that matters, and the order is the point.
@@ -22,6 +23,22 @@ import type { SubmitEntry, SubmitResult } from '../../contracts.js'
  * they can be skipped. This function does not call the tagger. It enqueues it.
  */
 export async function submit(
+  session: Session,
+  input: SubmitEntry,
+): Promise<SubmitResult> {
+  return withWorkflow(
+    'submit_entry',
+    { input_mode: input.inputMode, from_weather: String(Boolean(input.fromWeather)) },
+    () => run(session, input),
+  )
+}
+
+/**
+ * The orchestrator itself. Wrapped above so the safety call and beat one sit
+ * inside one trace: what a person waited for, rather than two unrelated
+ * spans. Decision 302.
+ */
+async function run(
   session: Session,
   input: SubmitEntry,
 ): Promise<SubmitResult> {

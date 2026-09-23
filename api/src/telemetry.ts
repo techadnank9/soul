@@ -72,7 +72,7 @@ export function startTelemetry(service: string): void {
     logInjection: true,
 
     llmobs: {
-      mlApp: 'Soul',
+      mlApp: 'soul',
       agentlessEnabled: true,
     },
   })
@@ -108,7 +108,7 @@ export function recordModelCall(call: {
   if (!process.env.DD_API_KEY) return
 
   try {
-    const llmobs = (tracer as unknown as { llmobs?: LlmObs }).llmobs
+    const llmobs = obs()
     if (!llmobs) return
 
     llmobs.trace(
@@ -153,7 +153,46 @@ export function recordModelFailure(purpose: string, why: string): void {
   }
 }
 
+/**
+ * A whole piece of work, with the model calls inside it.
+ *
+ * Without this every call is its own trace with no parent, so Datadog shows
+ * a list of spans and nothing about what they were for. Submitting one entry
+ * runs the safety classifier and then beat one, and the useful question is
+ * how long that took a person to wait for, not how long one of them took.
+ * The jobs are the same: tagging an entry books six more, and a trace is
+ * where you see which of them is the slow one.
+ *
+ * `workflow` is the LLM Observability kind for exactly this. Decision 302.
+ */
+export function withWorkflow<T>(
+  name: string,
+  tags: Record<string, string>,
+  work: () => Promise<T>,
+): Promise<T> {
+  const llmobs = obs()
+  if (!llmobs) return work()
+
+  try {
+    return llmobs.trace({ kind: 'workflow', name }, (span: unknown) => {
+      try {
+        llmobs.annotate(span, { tags })
+      } catch {
+        // A tag is never the reason the work does not run.
+      }
+      return work()
+    }) as Promise<T>
+  } catch {
+    return work()
+  }
+}
+
+function obs(): LlmObs | null {
+  if (!process.env.DD_API_KEY) return null
+  return (tracer as unknown as { llmobs?: LlmObs }).llmobs ?? null
+}
+
 type LlmObs = {
-  trace: (options: Record<string, unknown>, fn: (span: unknown) => void) => void
+  trace: (options: Record<string, unknown>, fn: (span: unknown) => unknown) => unknown
   annotate: (span: unknown, data: Record<string, unknown>) => void
 }

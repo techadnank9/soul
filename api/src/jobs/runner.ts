@@ -1,7 +1,7 @@
 // Datadog, before anything else in the process: the tracer patches http,
 // postgres and fetch as they load and cannot patch what is already in
 // memory. Off without DD_API_KEY. See telemetry.ts for what it may see.
-import { startTelemetry } from '../telemetry.js'
+import { startTelemetry, withWorkflow } from '../telemetry.js'
 
 // Only when this file is the process, not when the server imports it for
 // `tick`. ES imports run before the statements around them, so an
@@ -114,7 +114,22 @@ function studentOf(job: Job): Session {
   }
 }
 
+/**
+ * One job, as one trace, so the model calls it makes hang under it.
+ *
+ * Tagging an entry books six more jobs and each of those calls a model.
+ * Without a span around the job, Datadog shows six unrelated calls and no
+ * way to see which job is the slow one. Decision 302.
+ */
 async function run(job: Job): Promise<void> {
+  return withWorkflow(
+    'job',
+    { job_type: job.type, attempt: String(job.attempts + 1) },
+    () => doJob(job),
+  )
+}
+
+async function doJob(job: Job): Promise<void> {
   const payload = JSON.parse(job.payload) as Record<string, string>
 
   switch (job.type) {

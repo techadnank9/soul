@@ -6898,3 +6898,27 @@ Would reverse it: a payload appearing on one of these spans, which would
 make Datadog a holder of what somebody wrote and a name in every district
 agreement.
 
+
+---
+
+### 303. A trace is a piece of work, not a loose model call
+Sep 2026, Claude
+
+Decision: `withWorkflow` in `telemetry.ts`, wrapped around `submit` and
+around every job in the runner. The model calls inside them become children
+rather than traces of their own.
+
+Why: with only the llm spans, Datadog showed a list of calls with no parent
+and nothing about what any of them was for. The questions worth asking are
+about the work, not the call. How long did a person wait between pressing
+send and reading a line, which is safety plus beat one. Which of the six
+jobs an entry books is the slow one, which is the difference between the
+tagger being slow and the whole pipeline being slow.
+
+The tags on those spans are the input mode, whether it came from the card on
+home, the job type and which attempt it is. Nothing about the person beyond
+what already goes to Sentry, and nothing they wrote.
+
+The ml app is `soul`, lower case, matching what is already in Datadog rather
+than adding a second application beside it.
+
