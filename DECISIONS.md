@@ -6765,3 +6765,45 @@ entry, so it is still stranded.
 
 Would reverse it: nothing.
 
+
+---
+
+### 300. A moment is a card, a page, and theirs to change
+Sep 2026, Claude, on the founder's call
+
+Decision: the day shows each moment as a card with the first four lines of
+it. Tapping one opens the moment as its own page, where the words can be
+changed and the moment can be deleted. `PATCH /entries/:id` rewords one.
+
+Why the card: a day of long moments was a single wall of text with no way to
+see where one ended and the next began. Nothing is cut away. The card is the
+overview and the whole of it is one tap further in.
+
+Why a page rather than the sheet it replaces: a sheet cannot hold an editor,
+and it gave a moment less room than the card about the moment. A person
+opening what they wrote should get the screen, not a drawer.
+
+Why editing at all: they said it in thirty seconds or typed it walking, and
+it came out wrong or carried a name they would rather it did not. The entry
+is theirs, and until now the only thing they could do to a sentence they
+regretted was delete the whole moment.
+
+What happens to what was read out of the old words: the tags are deleted and
+the tagger is booked again, and the embedding goes the same way. A vector of
+a sentence that is no longer there is how an entry from April is retrieved
+months later for a reason that stopped being true.
+
+What does not happen: beat one and the reading are not written again. They
+were an answer to what was said at the time, and rewriting them would put
+words in the app's mouth about a moment it never saw. The line somebody was
+given stays the line they were given.
+
+The known gap: facts already extracted keep the sentence they were read
+from. That is right for a record and wrong for a correction, and the answer
+is probably to retire the facts standing on this entry alone and let the
+extractor run again. Not written yet.
+
+Checked on the simulator against the real service: two moments as cards,
+one opened, text changed, saved. The entry holds the new words, its tags and
+its embedding are gone, and tag_entry and embed_entry are pending.
+

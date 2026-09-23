@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/client.dart';
 import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
+import 'moment_screen.dart';
 import '../../theme/widgets.dart';
 import 'cue_card.dart';
 
@@ -287,93 +288,23 @@ class _DayScreenState extends State<DayScreen> {
     }
   }
 
-  /// A moment, opened. The words as they wrote them, and the one thing
-  /// that can be done to it from here.
+  /// A moment, opened as its own page.
   ///
-  /// This is the only route to deleting most entries. What I hold reaches a
-  /// moment through a fact that was read out of it, and most entries never
-  /// produce one, so a person could otherwise see everything they had
-  /// written and take back almost none of it. Decision 292.
+  /// The day shows a card with the first of it, and this is where the whole
+  /// of it lives, with the two things they can do to it. It used to be a
+  /// sheet with the words and a delete, which could not hold an editor and
+  /// gave a moment less room than a card about a moment. Decision 300.
   Future<void> _openMoment(DayEntry entry) async {
-    final gone = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: SoulColors.bg,
-      isScrollControlled: true,
-      builder: (sheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Label('what you wrote'),
-              const SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Text(entry.text, style: SoulType.field),
-                ),
-              ),
-              const SizedBox(height: 22),
-              SoulButton(
-                'Delete this moment',
-                kind: SoulButtonKind.ghost,
-                onPressed: () => Navigator.of(sheet).pop(true),
-              ),
-              SoulButton(
-                'Close',
-                onPressed: () => Navigator.of(sheet).pop(false),
-              ),
-            ],
-          ),
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => MomentScreen(
+          api: widget.api,
+          entry: entry,
+          onBack: () => Navigator.of(page).pop(),
+          onChanged: _load,
         ),
       ),
     );
-
-    if (gone != true || !mounted) return;
-    await _forget(entry);
-  }
-
-  Future<void> _forget(DayEntry entry) async {
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        backgroundColor: SoulColors.bg,
-        title: Text('Delete this moment?', style: SoulType.lead),
-        content: Text(
-          'The moment goes, and so does anything I only knew because of it. '
-          'This cannot be undone.',
-          style: SoulType.secondary,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(false),
-            child: Text('Keep it', style: SoulType.secondary),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialog).pop(true),
-            child: Text(
-              'Delete it',
-              style: SoulType.secondary.copyWith(color: SoulColors.clayDark),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (sure != true) return;
-
-    try {
-      await widget.api.forgetEntry(entry.id);
-      widget.api.event('entry_forgotten');
-    } catch (error) {
-      widget.api.event('entry_forget_failed', {
-        'error': error.runtimeType.toString(),
-        'status': error is SoulApiException ? error.status : null,
-      });
-    }
-    // Read again either way. A delete that half happened has to show what
-    // actually stands rather than what was asked for.
-    if (mounted) await _load();
   }
 
   static String _countLine(int entries) =>
@@ -530,44 +461,54 @@ class _TimelineItem extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: last ? 0 : 15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // All of it. These are the user's own words and cutting
-                  // them off at a line count would be the app deciding which
-                  // part mattered.
-                  Text(entry.text, style: SoulType.field),
-                  if (entry.feeling != null) ...[
-                    const SizedBox(height: 4),
-                    Label(entry.feeling!),
-                  ],
-                  if (entry.trigger != null) ...[
-                    const SizedBox(height: 7),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: SoulColors.clayLight,
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Text(
-                        entry.trigger!,
-                        style: const TextStyle(
-                          fontFamily: SoulType.sans,
-                          fontSize: 11,
-                          color: SoulColors.clayDark,
+              padding: EdgeInsets.only(bottom: last ? 0 : 14),
+              child: SoulCard(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // The first of it, not all of it. A day of long moments
+                    // was one wall of text with no way to see where one
+                    // ended. The card is the overview and the page behind it
+                    // holds the whole of a moment: nothing is cut away, it
+                    // is one tap further in. Decision 300.
+                    Text(
+                      entry.text,
+                      style: SoulType.field,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (entry.feeling != null) ...[
+                      const SizedBox(height: 6),
+                      Label(entry.feeling!),
+                    ],
+                    if (entry.trigger != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SoulColors.clayLight,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Text(
+                          entry.trigger!,
+                          style: const TextStyle(
+                            fontFamily: SoulType.sans,
+                            fontSize: 11,
+                            color: SoulColors.clayDark,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-            ),
-          ],
+          ),
+        ],
         ),
       ),
     );

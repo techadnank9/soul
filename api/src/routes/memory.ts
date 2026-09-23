@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { heldFacts, rewordFact, dropFact } from '../services/memory/held.js'
 import { forgetEntry } from '../services/memory/forget.js'
+import { rewordEntry } from '../services/memory/reword.js'
 import type { Session } from '../session.js'
 
 type Vars = { Variables: { session: Session } }
@@ -42,6 +43,25 @@ memory.delete('/memory/facts/:id', async (c) => {
     await dropFact(c.get('session'), c.req.param('id'))
     return c.json({ ok: true })
   } catch {
+    return c.json({ error: 'not found' }, 404)
+  }
+})
+
+/** The words of a moment, changed by the person who wrote them. */
+memory.patch('/entries/:id', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const text = (body as { text?: unknown } | null)?.text
+
+  if (typeof text !== 'string' || !text.trim()) {
+    return c.json({ error: 'a moment needs words' }, 400)
+  }
+
+  try {
+    await rewordEntry(c.get('session'), c.req.param('id'), text)
+    return c.json({ ok: true })
+  } catch (error) {
+    const why = (error as Error).message
+    if (why === 'too long') return c.json({ error: why }, 400)
     return c.json({ error: 'not found' }, 404)
   }
 })

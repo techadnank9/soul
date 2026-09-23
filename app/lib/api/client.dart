@@ -244,6 +244,12 @@ class SoulApi {
     await _delete('/memory/facts/$id');
   }
 
+  /// The words of a moment, changed by the person who wrote them. What was
+  /// read out of the old words is read again on the server.
+  Future<void> rewordEntry(String id, String text) async {
+    await _patch('/entries/$id', {'text': text});
+  }
+
   /// A moment taken back, and everything that was only ever true because of
   /// it. See services/memory/forget.ts for what goes with it.
   Future<void> forgetEntry(String id) async {
