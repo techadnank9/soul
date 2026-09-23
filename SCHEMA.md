@@ -276,8 +276,8 @@ interesting data in the system.
 `surfaced_at`, `status`
 
 Produced by the nightly SQL sweep. `status`: pending, surfaced, confirmed,
-rejected. Cannot exist without at least three supporting entry ids on three
-distinct days.
+rejected. Cannot exist without at least two supporting entry ids. The day
+rule went in decision 258 and the third entry in decision 289.
 
 ## confirmed_patterns
 `id`, `student_id`, `theme`, `supporting_entry_ids[]`, `confirmed_at`,
@@ -452,12 +452,12 @@ somebody appears.
 
 ## The query that finds a pattern
 
-Roughly: group tags by theme for one student, count distinct entries and
-distinct days, keep rows where both are at least three, exclude anything in
-`pattern_rejections`, return with the supporting entry ids attached.
+Roughly: group tags by theme for one student, count distinct entries, keep
+rows with at least two, exclude anything in `pattern_rejections`, return with
+the supporting entry ids attached.
 
-It is a query on purpose. When the app tells a student this is the third time,
-we can show exactly which three entries and why.
+It is a query on purpose. When the app says it saw something similar in two
+moments, we can show exactly which two and why.
 
 ---
 

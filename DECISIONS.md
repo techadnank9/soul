@@ -6239,3 +6239,46 @@ see, which is the measure that matters and the one to watch. A question
 nobody wants is worse than no question, because it takes the reminders
 somebody did want down with it when the permission goes.
 
+
+---
+
+### 289. Two moments, not three, because the person is the test
+Sep 2026, Claude, on the founder's call
+
+Decision: `MIN_ENTRIES` in `services/patterns/findCandidates.ts` is 2. A
+theme seen in two entries can be offered back. Invariant 8 now reads two
+supporting entry ids rather than three.
+
+Why, in the founder's words: the person gets the option, so it can be
+accurate. The count was only ever standing in for confidence. A third
+entry is a worse test of whether something is true of somebody's life than
+asking them is, and asking them is what this product does. Nothing is
+written as confirmed without their yes, and a no still closes it for good.
+
+What three was actually buying was fewer questions, and it charged a month
+of writing for them. In sixty days of real use, eighteen entries have been
+written by seven people and two of them account for eleven. Nobody has ever
+reached three entries on one coping, so the loop the product is built
+around has never once run for a real person. A threshold nobody crosses
+protects nothing.
+
+What this does not change, and what actually holds the line:
+
+The finding is still SQL, so the exact moments behind a claim can always be
+shown. Two moments, two dates, both readable, is the whole of the evidence
+offered.
+
+The student still answers. Yes, not sure, or no. Not sure parks it as an
+open question that returns only if the same thing shows up again. No is
+recorded and never offered a second time.
+
+What it does change is how often somebody is asked, and that is the risk to
+watch. Two is a noisier signal than three, so more candidates will surface
+per person. The protection is not the threshold, it is the answering: a
+guess that misses costs one tap and is gone for good. If the funnel shows
+people dismissing more than they confirm, the number to look at first is
+how often a candidate is surfaced, not this one.
+
+Would reverse it: people answering no more often than yes over a real
+cohort, which would say the guesses are not good enough to be asked at two.
+

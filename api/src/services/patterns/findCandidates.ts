@@ -7,9 +7,15 @@ import { sql } from '../../db.js'
  * student this is the third time, we can show exactly which three entries and
  * why. An LLM step would take that away, so do not improve this into one.
  *
- * The threshold: the same theme across at least three entries. Low confidence
+ * The threshold: the same theme across at least two entries. Low confidence
  * tags do not count toward it, and anything the student has already rejected
  * is excluded for good.
+
+ * It was three until decision 289. The count was never the thing protecting
+ * anybody: the student's own yes, no or not sure is, and a third entry is a
+ * worse test of whether something is true about their life than asking them
+ * is. What three bought was fewer questions, and it charged a month of
+ * writing for them.
  *
  * It used to also require three distinct calendar days. That is gone, on the
  * founder's call, and he is right about it. Midnight is not a real boundary:
@@ -28,7 +34,7 @@ import { sql } from '../../db.js'
  * grouping on it put every entry in a group of one and no pattern has ever
  * formed from real writing. Decision 259.
  */
-const MIN_ENTRIES = 3
+const MIN_ENTRIES = 2
 const MIN_CONFIDENCE = 0.6
 
 export type Candidate = {

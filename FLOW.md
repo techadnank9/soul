@@ -452,7 +452,7 @@ services/reflection/mirror.ts
 ...student answers...
 
 services/patterns/answer.ts    → one entry point, three answers
-     fits         → confirmed_patterns row, needs three supporting entries
+     fits         → confirmed_patterns row, needs two supporting entries
      not the same → pattern_rejections row, never offered again
      later        → back to pending, offered again another time
 ```
@@ -856,12 +856,14 @@ improves.
 6. Prompt text and crisis wording come from the database.
 7. The tagger never runs on the request path.
 8. Nothing is written to `confirmed_patterns` without a student confirmation and
-   at least three supporting entry ids.
+   at least two supporting entry ids.
 
-   The three entries no longer have to fall on three separate days, and the
-   theme they share is the coping rather than the trigger. What the rule
-   protects is unchanged: a claim is still a group by that the exact entries
-   behind it can be shown for. Decisions 258 and 259.
+   The entries no longer have to fall on separate days, the theme they share
+   is the coping rather than the trigger, and the count is two rather than
+   three. What the rule protects is unchanged, and it was never the number:
+   a claim is still a group by that the exact entries behind it can be shown
+   for, and it is still the student's own answer that decides whether it is
+   true of them. Decisions 258, 259 and 289.
 
    Note what this no longer covers. `pattern_verdicts` is written without any
    confirmation and says plainly whether a theme is worth keeping or worth

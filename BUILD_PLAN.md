@@ -209,11 +209,11 @@ Done when: a brand new account looks intentional rather than broken.
 
 ## Task 12 — Pattern candidates and confirmation
 
-Screens 9 and 10. A query, not a model call: same theme across three separate
-entries on separate days, or nothing is proposed. Candidates surface as a
-question inside a later reflection. Confirmations and rejections both stored.
+Screens 9 and 10. A query, not a model call: same theme across at least two
+entries, or nothing is proposed. Candidates surface as a question inside a
+later reflection. Confirmations and rejections both stored.
 
-Done when: no pattern can be surfaced without the three supporting entries being
+Done when: no pattern can be surfaced without its supporting entries being
 retrievable and displayable.
 
 ---
