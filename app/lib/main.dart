@@ -18,6 +18,7 @@ import 'features/shell/app_shell.dart';
 import 'features/onboarding/first_run.dart';
 import 'features/onboarding/intent_screen.dart';
 import 'features/onboarding/sign_in_screen.dart';
+import 'features/memory/memory_screen.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
 import 'features/reflection/breathing_wait.dart';
@@ -89,8 +90,22 @@ Future<void> main() async {
 /// This exists so screens can be looked at side by side during design review.
 /// It reads an environment variable rather than a compiled constant so one
 /// build can show any of them.
+/// Opening one screen on its own, to look at it.
+///
+/// A build define rather than an environment variable. The variable never
+/// worked: `simctl launch` passes `SIMCTL_CHILD_` prefixed values to the
+/// process, and a Flutter app on iOS does not see them in
+/// `Platform.environment`, so the switch below has been unreachable since it
+/// was written. The define is read at build time and is there.
+///
+/// Both are read, the define first, so anything that did set the variable
+/// still works.
+const _screenAsked = String.fromEnvironment('SOUL_SCREEN');
+
 Widget? _requestedScreen() {
-  final name = Platform.environment['SOUL_SCREEN'];
+  final name = _screenAsked.isNotEmpty
+      ? _screenAsked
+      : Platform.environment['SOUL_SCREEN'];
   if (name == null || name.isEmpty) return null;
 
   final api = SoulApi.fromEnvironment();
@@ -107,6 +122,7 @@ Widget? _requestedScreen() {
     'capture' => CaptureScreen(onSubmitted: (_, {spoken = false, toneId}) {}),
     'home' => const Home(),
     'day' => DayScreen(api: api, date: todayOnDevice(), onBack: nothing),
+    'memory' => MemoryScreen(api: api, onBack: nothing),
     'patterns' => PatternsScreen(api: api),
     _ => null,
   };
