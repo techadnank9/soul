@@ -53,6 +53,19 @@ flutter build ipa --flavor soul \
   --dart-define="POSTHOG_KEY=${POSTHOG_KEY:-}"
 # The dart define above is optional now: a release build defaults to Render.
 
+# A copy where Xcode looks, so the Organizer shows this build.
+#
+# `flutter build ipa` archives into the project at build/ios/archive, and
+# Xcode's Organizer only reads ~/Library/Developer/Xcode/Archives. So every
+# build made by this script was invisible in Xcode, and the last archive the
+# Organizer knew about was from September the third. Somebody looking there
+# to check a build had gone to Apple would conclude it had not.
+#
+# The copy is what makes it visible. The upload below is still what sends it.
+library="$HOME/Library/Developer/Xcode/Archives/$(date +%Y-%m-%d)"
+mkdir -p "$library"
+cp -R build/ios/archive/Soul.xcarchive "$library/Soul $name ($next).xcarchive" 2>/dev/null || true
+
 echo "uploading to App Store Connect"
 xcodebuild -exportArchive \
   -archivePath build/ios/archive/Soul.xcarchive \
