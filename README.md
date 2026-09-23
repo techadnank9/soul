@@ -1,13 +1,13 @@
 # Soul
 
-A reflection app for students. A student speaks for thirty seconds about
+A reflection app for people. A person speaks for thirty seconds about
 something that just happened. The app reflects it back in one line, offers to
 look closer, and asks what they might do about it. Days later it asks how that
-went. Over months, the things that keep returning become patterns the student
+went. Over months, the things that keep returning become patterns the person
 themselves confirms.
 
 It is not therapy, not a diagnosis, and not a chatbot you can talk to
-indefinitely. Every path in the product ends with the student acting, deciding,
+indefinitely. Every path in the product ends with the person acting, deciding,
 or talking to a human.
 
 ## Why it exists
@@ -19,17 +19,17 @@ the two minutes in the middle. That is the space this product occupies.
 ## What makes it different
 
 Most reflection tools store what you wrote. This one also records what you did
-and how it turned out. A student says they will talk to their teacher by Friday;
+and how it turned out. A person says they will talk to their teacher by Friday;
 on Friday the app asks whether they did. That produces patterns built on
-behaviour rather than on text, which is both more useful to the student and
+behaviour rather than on text, which is both more useful to the person and
 harder for anyone else to reproduce.
 
 Everything the app says about a person traces back to specific entries that
-student can see and delete. Nothing becomes a pattern until they agree it is one.
+person can see and delete. Nothing becomes a pattern until they agree it is one.
 
 ## Who it is for
 
-Students in schools, including under 13. The product is sold to districts, which
+Anybody, including under 13. The product is sold to districts, which
 means school consent, per district data agreements, an audit trail, and a
 written escalation path when something serious appears. Those constraints shape
 the architecture more than any feature does.
@@ -45,7 +45,7 @@ Three layers of memory feed every response:
   same experience is described in different words
 
 Two model calls, not one. A short fast call that lands in under three seconds,
-and a fuller reflection only if the student asks for it. A safety classifier
+and a fuller reflection only if the person asks for it. A safety classifier
 runs before either, blocking, on every entry.
 
 ## Stack
@@ -69,16 +69,16 @@ runs before either, blocking, on every entry.
 ## Rules the code has to hold
 
 1. No response is generated before the safety classifier returns.
-2. Nothing leaves for a third party before consent is confirmed for that student.
-3. Every row is scoped to one student in one district, enforced in the database.
+2. Nothing leaves for a third party before consent is confirmed for that person.
+3. Every row is scoped to one person in one district, enforced in the database.
 4. A pattern is never asserted. It is proposed as a question, and stored only
-   when the student confirms it. Rejections are stored too.
+   when the person confirms it. Rejections are stored too.
 5. Tags describe a situation, never a trait. "Avoided a conflict", not
    "avoidant".
 6. Safety thresholds and prompt text live in the database, not in the app
    binary, so they can be changed without a store release. There is no crisis
    screen: the classifier records, it never stops a reflection, decision 276.
-7. No third party analytics or crash SDKs in the student app.
+7. No third party analytics or crash SDKs in the person app.
 8. Audio is never persisted. The words are the record, and they land in the
    typing box as they are said so nothing is submitted that was not on the
    screen first.
@@ -116,7 +116,7 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 
 | Task | State |
 | --- | --- |
-| 0 Two experiments | **Not done.** Needs real devices and forty recordings of real students. Nothing here substitutes for it. |
+| 0 Two experiments | **Not done.** Needs real devices and forty recordings of real people. Nothing here substitutes for it. |
 | 1 Schema | Done. Twenty five tables, row level security forced on every one, tenancy tests passing against the live database. |
 | 2 API skeleton | Done. |
 | 3 Transcription | Built and proven with real speech. Audio is deleted after every attempt. |
@@ -130,7 +130,7 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | 11 Home with empty states | Done, day one version first. The greeting and the date, the seven days ending today, and a ring filled from the baseline answers until there is a week of their own. |
 | Profile tab | Fourth destination. Reads and writes every held field. |
 | 12 Pattern candidates | Query built. Not yet seen with real tags behind it. |
-| 13 Day view | Built on the student's own entries. Days list, then one day. Cards come as a pile, one at a time, and can be put off with maybe later. |
+| 13 Day view | Built on the person's own entries. Days list, then one day. Cards come as a pile, one at a time, and can be put off with maybe later. |
 | Cue cards | A yes or no question about something they said is coming up, with a box. |
 | Reflections | Good and bad patterns, one line each, opening on the entries behind them. |
 | People | Everyone they write about, with a profile the model writes. |
@@ -141,9 +141,9 @@ The loop runs end to end on real models, against a real database, on an iPhone.
 | Hosting | **Not done, and deliberately.** See below. |
 
 What is real: all of it. The sample file is deleted, every screen reads the
-student's own rows, and nothing in the app is invented content any more.
+person's own rows, and nothing in the app is invented content any more.
 
-What has never been tested on a real student: all of it. Task 0 and task 7 are
+What has never been tested on a real person: all of it. Task 0 and task 7 are
 both still open, and the eval directory that would answer task 7 is still
 empty.
 
@@ -187,7 +187,7 @@ itself once something is chosen.
 The profile is a first name, an age band, a gender and a location. There is no
 surname and no birthdate. The age band is a wheel that starts on 18 to 24. The
 gender is one of three. The where question is a world map, continent then
-country, with the phone asked first: a student who shares their location has
+country, with the phone asked first: a person who shares their location has
 their exact coordinates stored, and one who taps a country then picks a state
 and a city, with a search at each step. The country and state decide which of
 sixteen regions is stored, and the city, state and country are kept as words. Either way the timezone is derived on the server and never sent by
@@ -215,7 +215,7 @@ export DATABASE_URL="postgres://$(whoami)@localhost:5432/soul"
 
 npm install
 npm run db:migrate                  # schema, then row level security
-npm run seed                        # prompts, then the two test students
+npm run seed                        # prompts, then the two test people
 npm run db:test                     # the tenancy test
 npm start -w @soul/api
 ```
@@ -305,7 +305,7 @@ Store Connect holds one version with a list of builds under it.
 ## Running it somewhere real
 
 A laptop is not a deployment. When it sleeps the API stops answering and, worse,
-the job runner stops: check backs never fire on the day a student named, the
+the job runner stops: check backs never fire on the day a person named, the
 nightly sweep never books its next night, and entries are never tagged. None of
 that recovers by itself.
 
@@ -336,14 +336,14 @@ curl -X POST https://your-api/jobs/drain \
 
 `POST /jobs/drain` runs up to twenty five jobs and stops early when the queue is
 empty, so a quiet minute costs one query. It has no session, because a scheduler
-is not a student. It carries a shared secret instead, and with
+is not a person. It carries a shared secret instead, and with
 `SOUL_JOBS_SECRET` unset it refuses every caller rather than running jobs for
 anybody who finds the URL.
 
 Supabase can schedule this itself. `pg_cron` and `pg_net` are both available on
 the project and `pg_cron` runs to the minute, which is far better than the once
 a day most free platform crons offer. That matters: a queue drained daily means
-a student waits a day for the tags everything downstream is built on.
+a person waits a day for the tags everything downstream is built on.
 
 What Supabase cannot do is host the API. Its only compute is Edge Functions,
 which are Deno, and this is a Node service with npm workspaces and Node imports.

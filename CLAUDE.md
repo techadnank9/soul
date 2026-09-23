@@ -5,7 +5,7 @@ then DECISIONS.md, then FLOW.md, then CONTEXT.md.
 
 ## What this is
 
-Soul, a reflection app for anybody. It began as a product for students in
+Soul, a reflection app for anybody. It began as a product for people in
 schools, including under 13, and the database, the consent gate and the
 district tables still say student because they were built for that. Since
 decisions 196 and 201 a phone gets an account on first launch, using the app
@@ -14,19 +14,19 @@ one. A person speaks for thirty seconds, gets one short line back, and can go
 deeper if they want. From the first entry, the returning tab offers at most
 two things the app may be noticing, hedged, for them to say yes, no or not
 sure to. Over months, recurring themes are offered back as patterns the
-student confirms or rejects, and the ones that keep returning are sorted into
+person confirms or rejects, and the ones that keep returning are sorted into
 what is doing them good and what is costing them, with one sentence under each
 saying to keep it or to stop it.
 
 That last part is new and it reversed two rules this repository used to state
 flatly. The product used to give no advice and to assert nothing about a
-student. It now does both, on the patterns screen and nowhere else. It was a
+person. It now does both, on the patterns screen and nowhere else. It was a
 founder decision taken deliberately against the clinical guidance, it is
 written out in CONTEXT.md under what changed in August 2026, and it is not
 something to hedge back into a hypothesis because the old wording reads
 stricter.
 
-The loop runs end to end. A student can speak or type, the entry passes the
+The loop runs end to end. A person can speak or type, the entry passes the
 consent gate and the safety classifier, a real model writes beat one, the Mirror
 runs on request, and decisions are stored. BUILD_PLAN.md has the task list and
 README.md has the current state of each one.
@@ -34,7 +34,7 @@ README.md has the current state of each one.
 Two things are worth knowing before you touch anything:
 
 **Task 0 was never done.** The keyboard test on real devices and the forty clip
-transcription comparison both need hardware and real students. Decisions 010 and
+transcription comparison both need hardware and real people. Decisions 010 and
 017 rest on them and are still unverified.
 
 **Task 7 has not started.** It is the one the plan says decides whether the
@@ -48,7 +48,7 @@ product works, and no amount of code substitutes for it.
 | FLOW.md | Execution paths, call order, invariants |
 | CONTEXT.md | Clinical constraints and the voice rules |
 | SCHEMA.md | The data model |
-| docs/memory.md | The memory layer: facts, consolidation, the graph, and why it lives in our Postgres |
+| docs/memory.md | Memory and patterns, end to end: what is stored, how it is written and read, how a pattern forms, how any of it is forgotten. Read it before touching the tagger, the patterns, the facts or the context builder |
 | BUILD_PLAN.md | Ordered tasks with done conditions |
 | docs/screens.html | The original ten screens, open in a browser |
 | docs/architecture.svg | System architecture |
@@ -69,8 +69,19 @@ than none.
 not in comments, not in documentation. Rewrite the sentence instead. This
 applies to em dashes and en dashes too.
 
+**There are no students. There are people.** Nothing a person reads, and
+nothing a model is told, calls anybody a student: not the app, not the
+prompts, not these documents. The word survives in three places and only
+three. The database columns and the `students` table, which would take a
+migration across every table and every policy to rename. The identifiers
+built on them, `student_id`, `asStudent`, `soul_student`, `app.student_id`.
+And the decision log, which is a record of what was decided when and is
+never rewritten. New code should not add a fourth place. When the schema is
+eventually renamed, the columns and those identifiers go with it and this
+paragraph goes too.
+
 **Write in the product voice.** CONTEXT.md has the rules and examples. Anything
-a student sees goes through them. Short, specific, no reassurance, no jargon,
+a person sees goes through them. Short, specific, no reassurance, no jargon,
 no emotion labels, no exclamation marks, no emoji, and no advice anywhere
 except the one sentence under a good or a bad pattern, which is allowed to say
 keep this or stop this and nothing more.
@@ -121,7 +132,7 @@ on it. Five questions, and they should answer without opening the diff:
 2. Which function is now doing something it was not doing before?
 3. Can the safety classifier still not be skipped? Show the path.
 4. What does this change put into the model prompt that was not there before?
-5. If this is wrong at 2am for one student, what breaks and what still works?
+5. If this is wrong at 2am for one person, what breaks and what still works?
 
 If they cannot answer, do not merge. Explain the change until they can.
 
@@ -132,7 +143,7 @@ should know the whole person, and it does, on the Mirror call. Beat one stays
 minimal on purpose because latency and specificity beat context there.
 
 **Pattern detection is a SQL query, not a model call.** So we can always show a
-student the exact entries behind a claim. Do not "improve" it into an LLM step.
+person the exact entries behind a claim. Do not "improve" it into an LLM step.
 Which themes exist and which entries are behind them is still SQL and stays
 SQL.
 
@@ -155,7 +166,7 @@ took one moment to mean, never what sort of mind they have. Decision 291.
 above.** Finding the theme and judging it are two questions. The finding stays
 in SQL so the entries behind a claim can always be shown. The judging runs in
 `services/verdicts`, in the night, over themes with at least two entries, and
-never on the request path. Where the student's own outcomes have already said
+never on the request path. Where the person's own outcomes have already said
 lighter or worse, the model is told that verdict and writes only the sentence,
 so it cannot contradict them.
 

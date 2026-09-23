@@ -1,6 +1,6 @@
 # Schema
 
-Postgres. Drizzle for definitions and migrations. Every table carries student,
+Postgres. Drizzle for definitions and migrations. Every table carries person,
 school and district identifiers and is protected by row level security.
 
 Twenty four tables. This document and `db/src/schema.ts` are kept in step; the
@@ -10,11 +10,11 @@ schema file is the one the database is built from.
 
 Three columns appear on nearly every table: `student_id`, `school_id`,
 `district_id`. There is one district today. They exist anyway, because adding
-them later means a migration on live student data.
+them later means a migration on live person data.
 
-Row level security policies scope every read and write to the session's student.
+Row level security policies scope every read and write to the session's person.
 Application code is not the only guard. Test it by trying to read another
-student's row and failing.
+person's row and failing.
 
 ---
 
@@ -23,7 +23,7 @@ student's row and failing.
 `choice_index`, `created_at`
 
 The ten question baseline from first run. One row per answered question, unique
-on student and question within a version, so answering again replaces rather
+on person and question within a version, so answering again replaces rather
 than duplicates. Nothing is scored and nothing is shown back. `set_version`
 exists because the question set will change and old answers must not be read as
 answers to new questions.
@@ -39,7 +39,7 @@ Skipped questions have no row. Absence is the record of a skip.
 ## schools
 `id`, `district_id`, `name`, `created_at`
 
-## students
+## people
 `id`, `school_id`, `district_id`, `external_ref`, `year_group`,
 `apple_user_id`, `display_name`, `age_band`, `gender`, `region`, `timezone`,
 `latitude`, `longitude`, `profile_recorded_at`, `consent_recorded_at`,
@@ -52,14 +52,14 @@ account that predates it. Set null when that entry goes.
 No surnames, no birthdates. `external_ref` is the rostering identifier. Keep
 identifying information in the rostering system, not here.
 
-`apple_user_id` is the Apple subject, written the first time the student signs
-in on a device and null until then. Rostering creates the student, signing in
+`apple_user_id` is the Apple subject, written the first time the person signs
+in on a device and null until then. Rostering creates the person, signing in
 only attaches an account to a row that already exists. Apple issues a different
 subject to every developer account, so the value joins against nothing outside
 this database. It is unique, and it is written once: a row that already carries
 one is never repointed at a second account.
 
-The profile columns are what the student gives at first run, and every one of
+The profile columns are what the person gives at first run, and every one of
 them is nullable because every question is skippable. `display_name` is a first
 name for the app to call them and nothing more. `age_band` is a band, not a
 date, and the bands reach adulthood rather than stopping at eighteen.
@@ -68,11 +68,11 @@ date, and the bands reach adulthood rather than stopping at eighteen.
 coordinates, and `timezone` follows from it on the server, never sent by the
 client.
 
-`latitude` and `longitude` are exact coordinates, present only if the student
+`latitude` and `longitude` are exact coordinates, present only if the person
 shared their location, and they are the most sensitive pair of columns here.
 Nothing in the product needs them: the region and the hour a check back fires
 work identically from the picker. They are held because the founder asked for
-them, they are shown back to the student on the profile tab, and clearing them
+them, they are shown back to the person on the profile tab, and clearing them
 there clears the columns. See decisions 056, 057, 060 and 061.
 
 `place` is the neighbourhood, city and state the coordinates resolved to on
@@ -155,7 +155,7 @@ One row per signed in device. Only the sha256 hash of the token is stored, so
 this table read in full still lets nobody in. The token is returned once and
 after that it exists on the device and nowhere else.
 
-The school and the district sit alongside the student because a row is the
+The school and the district sit alongside the person because a row is the
 answer to who is asking and that answer should not need a join. `revoked_at` is
 set rather than the row deleted, so a district asking when a device stopped
 being trusted still has something to read. Sessions expire in a hundred and
@@ -164,7 +164,7 @@ eighty days.
 No policy and no grant for `soul_student`. The lookup happens before the role
 becomes `soul_student`, so the request path never needs to read this table, and
 leaving it readable would put every device's token hash within reach of a
-student who already has a token of their own. See decision 063.
+person who already has a token of their own. See decision 063.
 
 ---
 
@@ -174,14 +174,14 @@ student who already has a token of their own. See decision 063.
 
 `text` is its own column, never inside a JSON blob, so it can be encrypted later
 without a rewrite. `input_mode` is voice or typed. `transcript_confirmed`
-records that the student saw the transcript and sent it.
+records that the person saw the transcript and sent it.
 
 No audio is stored. Ever. How it sounded is a `voice_tones` row.
 
 ## kept_lines
 `id`, `entry_id`, `student_id`, `text`, `created_at`
 
-The sentence the student chose to carry forward, in their words.
+The sentence the person chose to carry forward, in their words.
 
 ---
 
@@ -193,7 +193,7 @@ The sentence the student chose to carry forward, in their words.
 either. What they did, and what they took it to mean. Both come from the
 tagger word for word and both are null more often than not. Decision 291.
 
-Written by the async tagger. Never shown to the student directly. Values
+Written by the async tagger. Never shown to the person directly. Values
 describe situations, never traits. Low confidence tags must not support a
 pattern claim.
 
@@ -212,11 +212,11 @@ would fail on the rows already there.
 How a spoken entry sounded. One row per spoken entry, none for a typed one.
 Written on the transcribe path before the entry exists, because the audio is
 gone the moment the transcript returns, so `entry_id` is null until the
-student sends and the row is deleted if they discard. `emotion` and `intent`
+person sends and the row is deleted if they discard. `emotion` and `intent`
 are fixed vocabularies so they can be counted. `sounded` is one sentence about
 the recording, never the person. The prosody columns are measured from the
 transcriber's word timings and are not opinions. Nothing here is shown to the
-student yet. No audio is stored.
+person yet. No audio is stored.
 
 ## entry_embeddings
 `entry_id`, `student_id`, `school_id`, `district_id`, `embedding vector(1536)`,
@@ -234,7 +234,7 @@ beat one.
 `object`, `sentence`, `entry_ids[]`, `valid_from`, `valid_to`, `learned_at`,
 `retired_at`, `confidence`, `tier`, `embedding vector(1536)`, `created_at`
 
-What a student has said is so, one row per thing, with the time it held.
+What a person has said is so, one row per thing, with the time it held.
 Written by the `extract_facts` job after the tagger, from the entry's own
 words. `sentence` is the fact as they would say it back and is what the Mirror
 reads. Every fact is a situation, never a trait.
@@ -261,7 +261,7 @@ record and the vector is one of two ways to find it.
 `id`, `entry_id`, `student_id`, `offered_text`, `chosen_text`, `horizon`,
 `status`, `created_at`
 
-`offered_text` is what the Mirror suggested. `chosen_text` is what the student
+`offered_text` is what the Mirror suggested. `chosen_text` is what the person
 actually wrote. Two columns, never merged. The gap between them is the most
 interesting data in the system.
 
@@ -287,7 +287,7 @@ rule went in decision 258 and the third entry in decision 289.
 `id`, `student_id`, `theme`, `supporting_entry_ids[]`, `confirmed_at`,
 `reminder_armed`, `removed_at`
 
-Only the student creates these, by confirming. `reminder_armed` is opt in, per
+Only the person creates these, by confirming. `reminder_armed` is opt in, per
 pattern. `removed_at` supports this is not me.
 
 ## pattern_rejections
@@ -322,7 +322,7 @@ change helped.
 `id`, `purpose`, `version`, `text`, `active`, `created_at`
 
 Prompt text, crisis wording and thresholds live here, not in the app binary.
-Flutter has no over the air updates and the words a student sees during a crisis
+Flutter has no over the air updates and the words a person sees during a crisis
 cannot wait on a store review.
 
 ## jobs
@@ -346,7 +346,7 @@ rights and will ask who viewed what.
 `prompt_version`, `model_version`, `answered_at`, `deferred_until`,
 `created_at`
 
-A question about something the student said is coming up, answerable yes or no,
+A question about something the person said is coming up, answerable yes or no,
 with a box under it. Written by a background job after tagging, never on the
 request path, and only from entries the classifier cleared.
 
@@ -396,7 +396,7 @@ these, so a filled tile can always show the moments behind it. Decision 279.
 `id`, `student_id`, `school_id`, `district_id`, `theme`, `verdict`, `source`,
 `line`, `supporting`, `prompt_version`, `model_version`, `created_at`
 
-Whether a theme is doing this student good or costing them, and the sentence
+Whether a theme is doing this person good or costing them, and the sentence
 they read under it. `source` says who decided: `outcomes` when their own check
 back answers did, `model` when nothing had been answered and the model judged
 it from the entries. Their answer always wins.
@@ -412,21 +412,21 @@ was said about them and when.
 `first_seen_at`, `last_seen_at`, `prompt_version`, `model_version`,
 `profiled_mentions`, `created_at`
 
-The people a student writes about. This table holds records about somebody who
+The people a person writes about. This table holds records about somebody who
 is not a user of this product, did not agree to be described, and cannot read
 or delete what is in it. That was decided deliberately and the shape is what
 makes it defensible.
 
-`name` is what the student calls them and nothing more. No surname, no contact
+`name` is what the person calls them and nothing more. No surname, no contact
 detail, nothing that would find this person anywhere else. `reach` is the
-student's own note about how they would get hold of them.
+person's own note about how they would get hold of them.
 
-`relation` and `profile` are written by the model from this student's entries
+`relation` and `profile` are written by the model from this person's entries
 and describe what happens between the two of them, never what the other person
-is like. The three `is_theirs` flags mark a field the student edited, and a
+is like. The three `is_theirs` flags mark a field the person edited, and a
 later profile run never writes over one.
 
-Unique on student and name, so one name is one person until the student says
+Unique on person and name, so one name is one person until the person says
 otherwise.
 
 ---
@@ -436,7 +436,7 @@ otherwise.
 `said`, `created_at`
 
 Where a person was mentioned, and the sentence they were mentioned in. `said`
-is what the profile is written from. What a student reads back is the whole
+is what the profile is written from. What a person reads back is the whole
 entry, because one of their sentences lifted out of what they were saying reads
 like evidence.
 
@@ -456,7 +456,7 @@ somebody appears.
 
 ## The query that finds a pattern
 
-Roughly: group tags by theme for one student, count distinct entries, keep
+Roughly: group tags by theme for one person, count distinct entries, keep
 rows with at least two, exclude anything in `pattern_rejections`, return with
 the supporting entry ids attached.
 
@@ -473,11 +473,11 @@ questions about this product and some of them may already know who we are.
 
 They are unlike every other table in this file and the difference is the point.
 
-They carry no student, school or district column, because these people are none
+They carry no person, school or district column, because these people are none
 of those things. They have no consent recorded here and they never agreed to
 anything about this app.
 
-Row level security is forced on both and the student role has no policy and no
+Row level security is forced on both and the person role has no policy and no
 grant on either, so the request path cannot read them at all. That is stricter
 than `prompts` and the same intent as decision 027. Trying it as `soul_student`
 returns permission denied rather than an empty result.

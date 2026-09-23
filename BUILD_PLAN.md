@@ -8,7 +8,7 @@ Do not start a task without being asked.
 
 **Current state is in README.md.** The short version: tasks 1 through 6 and 8
 through 13 are built, task 0 was never done, and task 7 has not started. The
-order was not followed. Task 0 needs hardware and real students, and the rest
+order was not followed. Task 0 needs hardware and real people, and the rest
 was built around it rather than after it. That is a real gap, not a completed
 step, and decisions 010 and 017 still rest on it.
 
@@ -23,23 +23,23 @@ scrolling card with a text field inside it and a serif at 17 points. Type into i
 on a real iPhone and a real Android. This is the single most likely place the app
 feels broken, and it is cheap to find out now.
 
-**0b. The transcription comparison.** Record forty clips from students in the
+**0b. The transcription comparison.** Record forty clips from people in the
 real age range and the real environment, noisy corridors included. Run each
 through ElevenLabs Scribe and through Whisper. Correct both by hand. Count meaning
 changes, not word errors.
 
 This matters more than it sounds. Published research puts word error rates for
 child speech far above adult speech, and worse again in classrooms, and worst for
-students from non English speaking homes. What is sent is the permanent record
+people from non English speaking homes. What is sent is the permanent record
 and the input to the safety classifier, which is why it is on the screen and
 correctable before it goes.
 
 Done when: text entry feels right on both platforms, and you have a measured
-meaning change rate for both providers on real student audio.
+meaning change rate for both providers on real person audio.
 
 **Still open.** Neither half has been done. The keyboard has only been typed
 into on a simulator, which uses a hardware keyboard and cannot show what the
-software one does to the layout. No student audio has been recorded or compared,
+software one does to the layout. No person audio has been recorded or compared,
 and the machine used for development has no microphone at all.
 
 ---
@@ -50,25 +50,25 @@ See SCHEMA.md. Fourteen tables.
 
 Rules baked in from the start, because they are expensive to retrofit:
 
-- Every row carries student, school and district identifiers, even though there
+- Every row carries person, school and district identifiers, even though there
   is one of each today
 - Row level security policies on every table, tested by trying to read another
-  student's row and failing
+  person's row and failing
 - Entry text in its own column, not inside a JSON blob, so it can be encrypted
   later without a rewrite
 - Safety flags are their own records with a status field, not a boolean
 - audit_log is written to from day one even though nobody reads it yet
 - prompt_version and model_version columns on every generated row
 
-Done when: migrations run clean, and a query as student A returns nothing
-belonging to student B.
+Done when: migrations run clean, and a query as person A returns nothing
+belonging to person B.
 
 ---
 
 ## Task 2 — The API skeleton
 
 TypeScript service, one endpoint that accepts an entry and returns a stub
-string. Session resolves student, school and district. Zod schemas shared with
+string. Session resolves person, school and district. Zod schemas shared with
 the client contract.
 
 Done when: the Flutter app can post an entry and get a response back.
@@ -88,11 +88,11 @@ that was not on the screen first and a misheard word can be fixed by hand.
 This started as a confirm step with send or discard and no way to correct
 anything. Decision 203 replaced it.
 
-Typing is an equal path on the same screen, not a fallback, because the students
+Typing is an equal path on the same screen, not a fallback, because the people
 recognised worst are disproportionately those from non English speaking homes.
 
 Done when: audio is provably absent from storage and backups after a submission,
-and a student can discard a bad transcript.
+and a person can discard a bad transcript.
 
 ---
 
@@ -103,11 +103,11 @@ model call, blocking, on the write path. Stores risk level, categories,
 classifier version and action taken, on every entry, hit or miss.
 
 Bias the threshold toward false positives. A wrongly flagged entry costs a
-student one screen. A missed one costs much more, and the transcript it reads may
+person one screen. A missed one costs much more, and the transcript it reads may
 be imperfect.
 
 Write the human help screen now too, including the option to reach someone the
-student already knows.
+person already knows.
 
 Done when: a test entry containing distress returns the help screen instead of a
 reflection, and the flag is recorded.
@@ -117,7 +117,7 @@ reflection, and the flag is recorded.
 ## Task 5 — Consent gate
 
 Sits in front of any outbound call, transcription and models both. Confirms
-school consent covers third party processing for this student. Without it the
+school consent covers third party processing for this person. Without it the
 entry is stored unprocessed and nothing goes out.
 
 Done when: with consent revoked, an entry saves but no external call is made.
@@ -169,7 +169,7 @@ Structured output validated against a schema before display or storage. Tension,
 what sits underneath, one question, all phrased so they can be rejected.
 
 Then the decision field. Store two things separately: what the Mirror offered,
-and what the student actually chose.
+and what the person actually chose.
 
 Done when: the Mirror returns valid structured output on 20 out of 20 test
 entries, with no diagnosis or advice in any of them.
@@ -179,7 +179,7 @@ entries, with no diagnosis or advice in any of them.
 ## Task 9 — Tagging, invisible
 
 Async worker. Extracts trigger, feeling, what they did next, plus a confidence
-score. Nothing shown to the student.
+score. Nothing shown to the person.
 
 Then hand tag 50 entries yourself and compare. This is the only way to know
 whether the layer everything downstream depends on is any good.
@@ -191,7 +191,7 @@ pattern built on them.
 
 ## Task 10 — Check backs and outcomes
 
-Screen 8. A durable job scheduled for the day the student named, surviving
+Screen 8. A durable job scheduled for the day the person named, surviving
 deploys. Neutral wording. Outcome stored either way, including ignored.
 
 Done when: a job scheduled for three days out fires after a redeploy.
@@ -231,7 +231,7 @@ that reason.
   binary
 - Every generated row records prompt version and model version
 - The eval fixture set from task 7 is rerun on every prompt change
-- No third party analytics or crash SDKs in the student app
+- No third party analytics or crash SDKs in the person app
 - Every unprompted decision gets logged in DECISIONS.md
 
 ## Not in this plan
@@ -247,4 +247,4 @@ SOC 2 and district contracting. All deferred, see docs/staff-roles-later.md.
 
 2. **Under 13.** Sofia's consultation covered ages 16 to 18. Nobody has reviewed
    this product for younger children, and the escalation policy, what gets
-   reported to whom and how the student is told, has no written answer yet.
+   reported to whom and how the person is told, has no written answer yet.

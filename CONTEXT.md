@@ -1,20 +1,20 @@
 # Context and mental model
 
 What anyone working on this needs to hold in their head. Read this before
-writing product copy, prompts, or anything a student will see.
+writing product copy, prompts, or anything a person will see.
 
 ---
 
 ## The mental model in one paragraph
 
-A student has just had something happen. They open the app while still in it and
+A person has just had something happen. They open the app while still in it and
 speak for thirty seconds. The app says one true thing back about what they said,
 fast. If they want more, it offers a fuller reflection: the tension it noticed,
 what might sit underneath, one question. It asks whether there is something they
 might do. Days later it asks how that went. Over months, things that keep
-returning are offered back as possible patterns, which the student confirms or
+returning are offered back as possible patterns, which the person confirms or
 rejects. Things that keep returning are now also judged: the app says which of
-them are doing the student good and which are costing them, one sentence each,
+them are doing the person good and which are costing them, one sentence each,
 keep this or stop this. It still never tells anyone who they are.
 
 ## What it is not
@@ -24,7 +24,7 @@ indefinitely. If a build decision makes it more like any of those, it is the
 wrong decision.
 
 Not a coach either, with one exception that the next section writes out in
-full. The app now tells a student to keep one repeating thing and to stop
+full. The app now tells a person to keep one repeating thing and to stop
 another. It does that on the patterns screen and nowhere else, about themes it
 can show them the entries for, and it does not otherwise plan, prompt, set
 goals or follow up.
@@ -33,12 +33,12 @@ goals or follow up.
 
 ## What changed in August 2026, and that somebody chose it
 
-The product used to refuse to judge a student. It offered patterns and never
+The product used to refuse to judge a person. It offered patterns and never
 asserted them, it gave no advice, and every observation was hedged so it could
 be rejected. That is no longer what it does.
 
 The patterns screen now has two sections, good and bad. A theme in one of them
-carries a sentence the student reads: what this is doing for them and to keep
+carries a sentence the person reads: what this is doing for them and to keep
 it, or what it is costing them and that it is worth stopping. Where their own
 check back answers have already said whether something left them lighter or
 worse, that answer decides it and the app does not argue with it. Where they
@@ -75,16 +75,16 @@ number anywhere on that screen and no word from a clinic on it either.
 **No praise that sounds like a sticker.** A good line says what the thing does
 for them, which is the only praise that carries information.
 
-**No verdict without grounds.** A theme the student's outcomes have not
+**No verdict without grounds.** A theme the person's outcomes have not
 answered and the model could not judge is shown in neither section and stays
 what it was, a thing that keeps returning.
 
-**The student's answer beats ours.** Wherever they have said how something
+**The person's answer beats ours.** Wherever they have said how something
 went, that is the verdict, and a model verdict is replaced by it.
 
 **Everywhere else is unchanged.** The first response still gives no advice, the
 Mirror still gives none, and a pattern candidate is still confirmed or rejected
-by the student before it becomes theirs.
+by the person before it becomes theirs.
 
 ---
 
@@ -173,8 +173,8 @@ alliance when a clinician then has to undo it.
 > Overruled in August 2026 by the founder, for the one sentence under a good or
 > a bad pattern, which says keep this or stop this. The rest of it stands: the
 > app still never names a diagnosis, never says what a therapist should do, and
-> never tells a student what kind of person they are. The risk Sofia names here
-> is exactly why the verdict is bounded to a situation the student can be shown
+> never tells a person what kind of person they are. The risk Sofia names here
+> is exactly why the verdict is bounded to a situation the person can be shown
 > the entries for. See the section above.
 
 **Do not offer false reassurance.** Especially in a moment of distress.
@@ -188,7 +188,7 @@ or self diagnosis output presented as fact.
 ### On young people specifically
 
 This part was written about ages sixteen to eighteen. Treat it as directional
-for younger students and get it reviewed properly.
+for younger people and get it reviewed properly.
 
 Confidentiality shapes everything. How a young person perceives what stays
 private strongly determines what they are willing to say. A clear framework
@@ -211,7 +211,7 @@ escalate conflict.
 
 ## People who are not users
 
-The app keeps a record of the people a student writes about: the name they use
+The app keeps a record of the people a person writes about: the name they use
 for them, every entry they come up in, and a description the model writes of
 what happens between the two of them.
 
@@ -220,7 +220,7 @@ most of them are children, and none of them can read or delete what is held
 about them. That was decided deliberately, against the advice recorded in the
 decision log. What makes it defensible is the shape rather than the intention:
 
-The name is what the student calls them and nothing more. Mum is mum. No
+The name is what the person calls them and nothing more. Mum is mum. No
 surname, no contact detail, nothing that would find that person anywhere else.
 
 The description says what happened between them, never what the other person is
@@ -237,10 +237,10 @@ is right. The first describes a child. The second describes what happened. The
 prompt in prompts/person_profile.v1.md holds that line and nothing in the code
 can check it, so that file is the guardrail.
 
-The test for any sentence here: would the student be ashamed if that person
+The test for any sentence here: would the person be ashamed if that person
 read it over their shoulder. If yes, it is the wrong sentence.
 
-Anything the student writes over the model's words is theirs and is never
+Anything the person writes over the model's words is theirs and is never
 written over again. Anything they delete is gone, and their own entries stay
 where they are.
 
@@ -248,7 +248,7 @@ where they are.
 
 ## The voice
 
-Everything a student reads is written in the same voice. It is closer to a
+Everything a person reads is written in the same voice. It is closer to a
 thoughtful adult who knows them than to an assistant.
 
 ### Rules
@@ -257,7 +257,7 @@ thoughtful adult who knows them than to an assistant.
 we write. Rewrite the sentence instead.
 
 **Use their words.** The best line the app can say is one that quotes something
-specific the student just said. If a sentence could be pasted into a different
+specific the person just said. If a sentence could be pasted into a different
 person's entry unchanged, it has failed.
 
 **Reflect, do not reassure.** "You wrote the email and you didn't send it" is
@@ -281,7 +281,7 @@ first line should lower pressure, not add to it.
 **No advice, except one sentence on the patterns screen.** No "have you
 considered", no "you should", no next steps we invented. The exception is the
 line under a good or a bad pattern, which is allowed to say keep this or stop
-this, and is still not allowed to invent a step the student never named.
+this, and is still not allowed to invent a step the person never named.
 
 **Situations, never traits.** "Going quiet when you are not credited", not
 "conflict avoidant".
@@ -325,7 +325,7 @@ Reassurance we have no grounds for.
 
 ## On transcription
 
-The student speaks, the words come back as they are speaking, and the audio
+The person speaks, the words come back as they are speaking, and the audio
 is deleted immediately. It is never stored.
 
 The words land in the same box they would have typed in, so they read them as
@@ -336,13 +336,13 @@ record and still the text a safety classifier reads, and it is still never
 sent without having been on the screen. Decision 203.
 
 Recognition on children's voices is materially worse than on adults, worse again
-in noisy rooms, and worst for students from non English speaking homes. Typing is
+in noisy rooms, and worst for people from non English speaking homes. Typing is
 an equal path on the same screen for that reason, not a fallback, and the same
 box serving both is what makes correcting a misheard word cost nothing.
 
 ## The compliance shape, briefly
 
-Selling to schools with students under 13 means school consent under the
+Selling to schools with people under 13 means school consent under the
 educational purpose exception, per district data agreements, COPPA obligations
 including a written retention policy and information security program, and a
 published crisis protocol required by California and New York law. The crisis
@@ -364,17 +364,17 @@ A ten year old is a different developmental stage with a different consent
 framework.
 
 **Escalation.** What gets reported to the school, to whom, how fast, and how the
-student is told about it before they write anything. There is no written answer
-yet, and it is the decision that determines whether students trust this at all.
+person is told about it before they write anything. There is no written answer
+yet, and it is the decision that determines whether people trust this at all.
 
-**What a counsellor sees.** A flag and a timestamp, or the student's actual
-words. Every capability given to an adult makes the promise to the student
+**What a counsellor sees.** A flag and a timestamp, or the person's actual
+words. Every capability given to an adult makes the promise to the person
 smaller.
 
-**A student with no consent on file is never classified.** The consent gate
+**A person with no consent on file is never classified.** The consent gate
 sits in front of every outbound call, and the safety classifier is an outbound
-call, so an entry from a student whose consent is missing is stored and never
+call, so an entry from a person whose consent is missing is stored and never
 read by anything. No flag exists, so nothing surfaces to anyone. This affects
-new, unrostered and transferring students, who are not obviously the safest
+new, unrostered and transferring people, who are not obviously the safest
 group to leave unread. Found by running the submit path, see decision 042.
-There is no answer yet and it needs one before any student uses this.
+There is no answer yet and it needs one before any person uses this.

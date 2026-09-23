@@ -6479,3 +6479,43 @@ Would reverse it: the rate limit, if a school ever puts thirty phones
 through first run on one network in one hour. The number is a guess and the
 log line says when it refuses somebody.
 
+
+---
+
+### 294. There are no students, there are people
+Sep 2026, Claude, on the founder's call
+
+Decision: nothing a person reads and nothing a model is told calls anybody a
+student. Eight live prompts were rewritten and seeded as new versions:
+safety v2, tagger v6, cue_cards v2, pattern_verdict v2, people v3,
+person_profile v2, voice_tone v2, facts v2. Every document in the repository
+was rewritten the same way, and CLAUDE.md now carries the rule.
+
+Why: the product began as something sold to districts for people in schools
+and stopped being only that at decisions 196 and 201. The word was still in
+the prompts, which is the place it does real work: safety was told it was
+reading "one entry written by a school student", and a model told who
+somebody is answers as though that were true of them.
+
+Two prompts needed more than the word swapped. `people` and
+`person_profile` are about the people somebody named, so replacing student
+with person made one word mean two things in the same sentence. The one
+writing is now the one writing, and a person is somebody they named.
+
+Where it survives, and why it is not a half finished job:
+
+The `students` table and every `student_id` column, because renaming them is
+a migration across twenty tables, every row level security policy, the
+`soul_student` role and the `app.student_id` session variable, and the app
+is in front of App Review while this is being written. It is worth doing and
+it is worth doing on its own, with the schema, the queries and the policies
+moving together.
+
+The identifiers built on those columns: `asStudent`, `SOUL_STUDENT`, and the
+two fixture accounts `student_with_consent` and `student_no_consent`.
+
+This decision log, which records what was decided and when and is never
+rewritten to match a later view.
+
+Would reverse it: nothing.
+

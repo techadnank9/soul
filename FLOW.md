@@ -14,16 +14,16 @@ There are only twelve ways anything starts running.
 
 | Entry point | Trigger | File |
 | --- | --- | --- |
-| Student taps the mic, then taps stop | Human | `app/lib/features/capture/capture_screen.dart` |
-| Student taps send on what is in the box | Human | `app/lib/features/capture/capture_screen.dart` |
-| Student finishes the profile | Human | `app/lib/features/onboarding/profile_screen.dart` |
-| Student edits their profile | Human | `app/lib/features/profile/profile_tab.dart` |
-| Student answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
-| Student taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
-| Student opens a day | Human | `app/lib/features/shell/app_shell.dart`, from home or the Days list |
-| Student opens home | Human | `app/lib/features/home/home_screen.dart`, `GET /home`, decision 279 |
-| Student deletes their account | Human | `app/lib/features/profile/profile_tab.dart`, `DELETE /account`, `services/account/delete.ts`, decision 281 |
-| Student answers or puts off a card | Human | `app/lib/features/day/cue_card.dart` |
+| Person taps the mic, then taps stop | Human | `app/lib/features/capture/capture_screen.dart` |
+| Person taps send on what is in the box | Human | `app/lib/features/capture/capture_screen.dart` |
+| Person finishes the profile | Human | `app/lib/features/onboarding/profile_screen.dart` |
+| Person edits their profile | Human | `app/lib/features/profile/profile_tab.dart` |
+| Person answers the baseline | Human | `app/lib/features/onboarding/baseline_screen.dart` |
+| Person taps look closer | Human | `app/lib/features/mirror/mirror_screen.dart` |
+| Person opens a day | Human | `app/lib/features/shell/app_shell.dart`, from home or the Days list |
+| Person opens home | Human | `app/lib/features/home/home_screen.dart`, `GET /home`, decision 279 |
+| Person deletes their account | Human | `app/lib/features/profile/profile_tab.dart`, `DELETE /account`, `services/account/delete.ts`, decision 281 |
+| Person answers or puts off a card | Human | `app/lib/features/day/cue_card.dart` |
 | A scheduled job fires | Time | `api/src/jobs/runner.ts` |
 | Nightly pattern sweep | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
 | Nightly consolidation | Time | `api/src/jobs/runner.ts`, booked by `enqueue.ts` |
@@ -36,7 +36,7 @@ differently.
 `npm run worker` runs `tick()` in a loop forever, which suits a host that stays
 up. `POST /jobs/drain` runs the same `tick()` a bounded number of times when
 something with a clock asks it to, which suits a host that does not. It is the
-only route with no student on it, and it carries a shared secret instead. With
+only route with no person on it, and it carries a shared secret instead. With
 no secret configured it refuses everybody.
 
 ---
@@ -205,15 +205,15 @@ screens and the contradiction this paragraph used to sit under.
 
 The profile tab is the same endpoint from the other direction. It reads
 `GET /profile`, shows every field held, and writes one field at a time. A field
-sent as null empties it, which is how a student takes an answer back.
+sent as null empties it, which is how a person takes an answer back.
 
-Both first run posts are fire and forget on purpose. A student should never wait on a
+Both first run posts are fire and forget on purpose. A person should never wait on a
 question that is a baseline for later rather than a result for now. The cost is
 that a profile given with no connection is lost, and there is no retry.
 
 ---
 
-## Flow 1: a student submits a reflection
+## Flow 1: a person submits a reflection
 
 This is the path that matters. Read it in order.
 
@@ -243,7 +243,7 @@ capture_screen.dart
   └─ POST /entries, carrying toneId for a spoken entry
        │
 api/src/routes/entries.ts            ← HTTP boundary, zod validation only
-  └─ resolveSession()                 → student, school, district
+  └─ resolveSession()                 → person, school, district
   └─ services/reflection/submit.ts    ← the orchestrator, read this one
        │
        ├─ 1. consent/gate.ts
@@ -253,7 +253,7 @@ api/src/routes/entries.ts            ← HTTP boundary, zod validation only
        ├─ 2. entries/store.ts
        │     insert entry, return entryId
        │     services/tone/store.ts linkTone(toneId, entryId)
-       │        spoken entries only, scoped to the student and to rows not
+       │        spoken entries only, scoped to the person and to rows not
        │        yet linked. A guessed id links nothing. Then loadTone()
        │     Storage comes before classification because a safety_flags row
        │     carries entry_id and cannot be written for an entry that does not
@@ -289,7 +289,7 @@ has measured it yet.
 
 ---
 
-## Flow 2: the student asks to look closer
+## Flow 2: the person asks to look closer
 
 ```
 mirror_screen.dart
@@ -331,7 +331,7 @@ The app waits thirty seconds for that answer, then draws the fallback card
 itself and keeps the request running; a late reflected answer replaces the
 card only if the person has not touched it. One retry is offered.
 
-`buildContext` is a pure function: student and entry in, prompt string out.
+`buildContext` is a pure function: person and entry in, prompt string out.
 Everything about memory quality lives there. It is the first place to look when
 a response feels wrong, and it must stay testable and loggable.
 
@@ -345,13 +345,13 @@ current entry and how it sounded, nothing more, and that is deliberate.
 ## Flow 3: the decision and its outcome
 
 ```
-mirror_screen.dart, student types what they might do
+mirror_screen.dart, person types what they might do
   └─ POST /decisions
        │
 services/decisions/create.ts
   ├─ stores BOTH:
   │     offered_text   ← what the Mirror suggested
-  │     chosen_text    ← what the student actually wrote
+  │     chosen_text    ← what the person actually wrote
   ├─ jobs/enqueue.ts → schedule('check_back', { decisionId }, at: horizon)
   └─ done
 
@@ -415,13 +415,13 @@ jobs/runner.ts fires extract_facts
        └─ insert facts row, tier 0, valid_from = the entry's time
 ```
 
-Runs after the student has already seen their response, so tagging quality never
+Runs after the person has already seen their response, so tagging quality never
 costs latency. Low confidence tags must not be allowed to support a pattern
 claim downstream.
 
 The facts step is booked by the tagger rather than run inside it, so an entry
 is never left untagged because a fact could not be written. Everything a fact
-says is a situation in the student's words, never a trait, under the same
+says is a situation in the person's words, never a trait, under the same
 rule the tagger runs under.
 
 ---
@@ -444,12 +444,12 @@ jobs/pattern_sweep_one, booked by the tagger, the same query for one person
        ├─ excludes anything in pattern_rejections
        └─ insert pattern_candidates with supporting_entry_ids
 
-...next time the student reflects...
+...next time the person reflects...
 
 services/reflection/mirror.ts
   └─ patterns/surfaceCandidate.ts     ← attaches the question to the Mirror
 
-...student answers...
+...person answers...
 
 services/patterns/answer.ts    → one entry point, three answers
      fits         → confirmed_patterns row, needs two supporting entries
@@ -583,7 +583,7 @@ reversed it deliberately.
 
 A day shows one unanswered card at a time. The edges of the ones behind it
 show that there are more, and a line says how many. Answering brings the next
-forward, and the answered ones stay listed underneath so a student can see
+forward, and the answered ones stay listed underneath so a person can see
 what they were asked and what they said.
 
 ```
@@ -607,11 +607,11 @@ day_screen.dart
 
 Consent is recorded by the district at rostering and read by
 `consent/gate.ts`. `routes/consent.ts` records it, reads it and writes an audit
-row. No student has ever seen a consent screen, per decision 048.
+row. No person has ever seen a consent screen, per decision 048.
 
 The sign in screen at the end of first run is a different thing and should not
 be mistaken for it. It records an agreement to the terms and the privacy
-policy, in the app, from the student. Whether a school product should be asking
+policy, in the app, from the person. Whether a school product should be asking
 a child for that at all is open, and it is written up in the decision log.
 
 ---
@@ -620,7 +620,7 @@ a child for that at all is open, and it is written up in the decision log.
 
 Everything above this line writes. These four read, and until they existed the
 client could only send. Every screen showed fixed strings from a sample file,
-which is why a student on their first day was shown somebody else's week.
+which is why a person on their first day was shown somebody else's week.
 
 ```
 GET /week       → services/reads/week.ts        the ring, the count, seven days,
@@ -734,14 +734,14 @@ path that uses it, and decision 026 always said it should.
 Days and weeks are cut by the student's own timezone, from `students.timezone`,
 falling back to UTC. An entry written late on Sunday evening in Los Angeles is
 on Sunday. The seed script learned this the hard way by writing Los Angeles
-times into a London student and sliding half the week.
+times into a London person and sliding half the week.
 
-No path takes a student id. There is no id to get wrong.
+No path takes a person id. There is no id to get wrong.
 
 The write side is a different shape and worth stating plainly. It runs on the
 pooled handle rather than inside `asStudent`, so row level security is not
 scoping it and the where clause is. Anywhere a write takes an id from the
-request, that id is matched against the session's student as well. Decision 188
+request, that id is matched against the session's person as well. Decision 188
 is the three places where it was not, and what that allowed.
 
 ---
@@ -759,7 +759,7 @@ extract_facts    what the entry says is so, closing what it contradicts
 extract_reminders
                  anything they said they would do at a time they named, and
                  nothing at all for almost every entry
-person_profile   what happens between the student and somebody, once that
+person_profile   what happens between the person and somebody, once that
                  person has come up twice
 noticings        what the app may be noticing, from the first entry on, two
                  at most, hedged, answered yes, no or not sure
@@ -816,7 +816,7 @@ deterministic code or a background job.
 | Purpose | Where | Blocking | What happens if it is wrong |
 | --- | --- | --- | --- |
 | `safety` | Flow 1, step 2 | Yes | The most serious failure in the system |
-| `beat_one` | Flow 1, step 4 | Yes | Response reads generic, student does not return |
+| `beat_one` | Flow 1, step 4 | Yes | Response reads generic, person does not return |
 | `mirror` | Flow 2, step 2 | Yes | Rejected by the schema, or reads as advice |
 | `tagger` | Flow 4 | No | Patterns downstream are noise |
 | `facts` | Flow 4 | No | The Mirror is told something they did not say |
@@ -825,7 +825,7 @@ deterministic code or a background job.
 | `consolidate` | Flow 7 | No | The Mirror is told a pattern across weeks that the facts do not carry |
 
 Pattern detection is **not** on this list. It is a database query. That is
-deliberate, so we can always show a student the exact entries behind any claim.
+deliberate, so we can always show a person the exact entries behind any claim.
 
 ---
 
@@ -841,7 +841,7 @@ able to answer all five without opening the diff:
 2. Which function is now doing something it was not doing before?
 3. Can the safety classifier still not be skipped? Show the path.
 4. What does this change put into the model prompt that was not there before?
-5. If this is wrong at 2am for one student, what breaks and what still works?
+5. If this is wrong at 2am for one person, what breaks and what still works?
 
 If you cannot answer, you do not understand the change well enough to own it at
 2am. Do not merge it.
@@ -855,30 +855,30 @@ improves.
 
 1. No generation before `classify()` returns. The tone call on the transcribe
    path is a classification of the audio, not a generation: nothing it
-   returns is shown to a student, and the words still pass `classify()`
+   returns is shown to a person, and the words still pass `classify()`
    before anything is written back.
 2. No outbound model call before `checkConsent()` passes.
-3. Every query carries student, school and district. Row level security enforces
+3. Every query carries person, school and district. Row level security enforces
    it; application code does not get to be the only guard.
 4. `parseStructured()` rejects rather than storing free prose.
 5. Every generation writes `prompt_version` and `model_version`.
 6. Prompt text and crisis wording come from the database.
 7. The tagger never runs on the request path.
-8. Nothing is written to `confirmed_patterns` without a student confirmation and
+8. Nothing is written to `confirmed_patterns` without a person confirmation and
    at least two supporting entry ids.
 
    The entries no longer have to fall on separate days, the theme they share
    is the coping rather than the trigger, and the count is two rather than
    three. What the rule protects is unchanged, and it was never the number:
    a claim is still a group by that the exact entries behind it can be shown
-   for, and it is still the student's own answer that decides whether it is
+   for, and it is still the person's own answer that decides whether it is
    true of them. Decisions 258, 259 and 289.
 
    Note what this no longer covers. `pattern_verdicts` is written without any
    confirmation and says plainly whether a theme is worth keeping or worth
    stopping. That is a founder decision taken against the earlier clinical
    guidance, on purpose, and it is written up in CONTEXT.md and the decision
-   log. The student's own outcomes still outrank it.
+   log. The person's own outcomes still outrank it.
 9. Audio is never persisted. It is deleted the moment a transcript returns.
    What is kept about a recording is a `voice_tones` row: a fixed vocabulary
    word for emotion and one for intent, one sentence, and numbers measured
@@ -896,9 +896,9 @@ improves.
     Using the app is the agreement, per decision 201. Until it is recorded
     nothing leaves, and what was written before it is released through the
     classifier afterwards, never around it.
-13. A card is only ever about something the student named themselves, and a
+13. A card is only ever about something the person named themselves, and a
     person only ever exists because they named them. Neither is invented, and
     an empty answer is the common one.
 14. Anything the app holds about a person can be edited, merged into another
-    and deleted by the student who wrote it. The entries stay theirs either
+    and deleted by the person who wrote it. The entries stay theirs either
     way.

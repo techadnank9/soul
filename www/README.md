@@ -13,7 +13,7 @@ vercel.json     headers and caching
 ## The screenshots are real
 
 Every image in `screens/` came off a booted simulator running this repo's
-Flutter client against a local API, with the demo student from
+Flutter client against a local API, with the demo person from
 `npm run seed:demo`. The sentences under the themes in `returning-theme.png`
 were written by the pattern verdict job, not by hand. If a screen changes,
 retake the shot rather than editing the picture, and keep the file name
