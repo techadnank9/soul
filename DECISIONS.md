@@ -6672,3 +6672,45 @@ when nobody is on such a build.
 Would reverse it: `meant` arriving on most entries, which would mean it is
 being invented rather than read. The number to watch is how often it is null.
 
+
+---
+
+### 298. A pattern they confirmed is theirs to word, to judge, and to take down
+Sep 2026, Claude, from the pattern loop prototype
+
+Decision: confirmed patterns appear on the Returning tab under Confirmed by
+you, and opening one gives their own wording, where they say it stands, the
+moments behind it, and a way to take it down. Two columns on
+`confirmed_patterns`: `wording` and `standing`. Routes are
+`PATCH /patterns/:id`, `DELETE /patterns/:id` and
+`GET /patterns/:id/moments`.
+
+Why this was urgent rather than nice: a confirmed pattern was written to the
+table, fed into the context builder, and shown on no screen anywhere. A
+person could be asked whether something about themselves fits, say yes, and
+watch it vanish. The one thing on that tab they put there themselves was the
+one thing they could not see.
+
+**The wording is theirs.** What is stored as the theme is a word from a
+closed list, which is what the counting and the exclusion run on, and it
+reads like a tag because it is one. The wording sits beside it, is what the
+screen shows, and changing it changes what they read from then on. The theme
+stays untouched, because free text where the counting happens is decision
+259 all over again.
+
+**The standing is theirs.** Still true, changing, or does not fit any more.
+A model already writes a verdict at night about whether a theme is doing
+somebody good or costing them, and FLOW.md already says their own outcomes
+outrank it. This makes that rule direct instead of implied: where they have
+said where it stands, the screen says so and says that it stands whatever we
+would have said. It is not a reversal of the founder decision to let the app
+judge. It is the same precedence, written where a person can reach it.
+
+**Taken down, not deleted.** `removed_at` was always there for this. The
+moments behind it stay theirs, because they wrote them, and only our claim
+about them is gone.
+
+Would reverse it: nothing. The one to watch is whether people reword
+patterns at all. If nobody does, the wording we write is close enough and
+the editor is dead weight.
+

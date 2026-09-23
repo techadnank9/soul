@@ -3,6 +3,7 @@ import '../../api/client.dart';
 import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
+import 'confirmed_pattern_screen.dart';
 import 'reflection_screen.dart';
 
 /// Screen 10. What keeps coming back, and what it is doing to the user.
@@ -124,6 +125,21 @@ class _PatternsScreenState extends State<PatternsScreen> {
       ),
     );
     if (mounted) await _load();
+  }
+
+  /// One pattern they confirmed, opened. Their words, where it stands, the
+  /// moments behind it, and a way to take it down. Decision 298.
+  Future<void> _openPattern(ConfirmedPattern pattern) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => ConfirmedPatternScreen(
+          api: widget.api,
+          pattern: pattern,
+          onBack: () => Navigator.of(page).pop(),
+        ),
+      ),
+    );
+    await _load();
   }
 
   @override
@@ -258,7 +274,24 @@ class _PatternsScreenState extends State<PatternsScreen> {
       ),
       const SizedBox(height: 22),
 
-      // What the app may be noticing, first, because on most days it is the
+      // What they have said yes to, first, because it is the only thing on
+      // this screen they put there themselves. Until decision 298 it was
+      // written down and shown nowhere.
+      if (patterns.confirmed.isNotEmpty)
+        ..._section(
+          heading: 'Confirmed by you',
+          mark: SoulColors.clayDark,
+          settled: true,
+          rows: [
+            for (final pattern in patterns.confirmed)
+              _ConfirmedRow(
+                pattern: pattern,
+                onOpen: () => _openPattern(pattern),
+              ),
+          ],
+        ),
+
+      // What the app may be noticing, then, because on most days it is the
       // only thing here with a sentence in it. Open ones carry the three
       // answers as equals. Decision 275.
       if (patterns.noticings.isNotEmpty)
@@ -641,3 +674,53 @@ class _Row extends StatelessWidget {
     );
   }
 }
+
+
+/// One confirmed pattern on the list. Their words, how many moments are
+/// behind it, and where they say it stands.
+class _ConfirmedRow extends StatelessWidget {
+  const _ConfirmedRow({required this.pattern, required this.onOpen});
+
+  final ConfirmedPattern pattern;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final standing = standingWord(pattern.standing);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpen,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Label(
+                    pattern.times == 1
+                        ? 'seen in one moment'
+                        : 'seen in ${pattern.times} moments',
+                  ),
+                ),
+                if (standing != null) Label(standing),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(pattern.said, style: SoulType.lead),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// How a standing reads on the screen. Null when they have not said.
+String? standingWord(String? standing) => switch (standing) {
+      'still_true' => 'still true',
+      'changing' => 'changing',
+      'does_not_fit' => 'does not fit',
+      _ => null,
+    };

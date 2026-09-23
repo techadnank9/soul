@@ -48,8 +48,27 @@ export type Noticing = {
   entries: number
 }
 
+/**
+ * A pattern they said fits, which until now was written down and then never
+ * shown anywhere. It fed the context builder and appeared on no screen, so
+ * somebody could say yes to something about themselves and watch it vanish.
+ * Decision 298.
+ */
+export type Confirmed = {
+  id: string
+  theme: string
+  /** Their own words for it, when they have written them. */
+  wording: string | null
+  /** Where they say it stands: still_true, changing, does_not_fit. */
+  standing: string | null
+  /** How many moments are behind it. */
+  times: number
+  armed: boolean
+}
+
 export type PatternsView = {
   reflections: number
+  confirmed: Confirmed[]
   noticings: Noticing[]
   good: PatternSection[]
   bad: PatternSection[]
@@ -82,6 +101,19 @@ export async function patterns(session: Session): Promise<PatternsView> {
      * sentence, because the one failure worth avoiding here is a line that
      * says keep going sitting under a heading that says this is costing you.
      */
+    const confirmed = await tx<Confirmed[]>`
+      select
+        id,
+        theme,
+        wording,
+        standing,
+        cardinality(supporting_entry_ids)::int as times,
+        reminder_armed as armed
+      from confirmed_patterns
+      where student_id = ${session.studentId}
+        and removed_at is null
+      order by confirmed_at desc`
+
     const sections = await tx<SectionRow[]>`
       with tagged as (
         /**
@@ -211,6 +243,7 @@ export async function patterns(session: Session): Promise<PatternsView> {
       limit 4`
 
     return {
+      confirmed,
       noticings: noticed,
       // Every entry the student has ever written, not this week's. This number
       // is the one thing on the screen that only goes up.

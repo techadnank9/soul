@@ -583,6 +583,7 @@ class DayEntry {
 class PatternsView {
   const PatternsView({
     required this.reflections,
+    this.confirmed = const [],
     required this.noticings,
     required this.good,
     required this.bad,
@@ -591,6 +592,11 @@ class PatternsView {
 
   /// Every entry this user has ever written.
   final int reflections;
+
+  /// Patterns they said fit. Until decision 298 these were written down and
+  /// shown nowhere, so somebody could say yes to something about themselves
+  /// and watch it disappear.
+  final List<ConfirmedPattern> confirmed;
 
   /// What the app may be noticing, from the first entry on. Open ones are
   /// answered on the tab; confirmed and unsure ones stay with the answer.
@@ -610,6 +616,10 @@ class PatternsView {
 
   static PatternsView fromJson(Map<String, dynamic> json) => PatternsView(
         reflections: json['reflections'] as int,
+        confirmed: [
+          for (final p in (json['confirmed'] as List<dynamic>? ?? []))
+            ConfirmedPattern.fromJson(p as Map<String, dynamic>),
+        ],
         noticings: [
           for (final noticing in (json['noticings'] as List<dynamic>? ?? []))
             Noticing.fromJson(noticing as Map<String, dynamic>),
@@ -629,6 +639,45 @@ class PatternsView {
         for (final theme in (group as List<dynamic>? ?? []))
           JudgedTheme.fromJson(theme as Map<String, dynamic>),
       ];
+}
+
+/// A pattern they confirmed. The theme is the word the counting runs on and
+/// the wording is theirs, when they have written it. Decision 298.
+class ConfirmedPattern {
+  const ConfirmedPattern({
+    required this.id,
+    required this.theme,
+    required this.times,
+    this.wording,
+    this.standing,
+    this.armed = false,
+  });
+
+  final String id;
+  final String theme;
+  final int times;
+  final String? wording;
+
+  /// still_true, changing, does_not_fit, or null until they say.
+  final String? standing;
+
+  /// Whether they asked to be told about it next time.
+  final bool armed;
+
+  /// What goes on the screen. Their words when they have written them.
+  String get said => (wording != null && wording!.trim().isNotEmpty)
+      ? wording!
+      : theme;
+
+  static ConfirmedPattern fromJson(Map<String, dynamic> json) =>
+      ConfirmedPattern(
+        id: json['id'] as String,
+        theme: json['theme'] as String,
+        times: (json['times'] as num?)?.toInt() ?? 0,
+        wording: json['wording'] as String?,
+        standing: json['standing'] as String?,
+        armed: json['armed'] as bool? ?? false,
+      );
 }
 
 /// Something the app may be noticing, offered so it can be refused.

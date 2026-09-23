@@ -250,6 +250,30 @@ class SoulApi {
     await _delete('/entries/$id');
   }
 
+  /// Their own words for a pattern, and where they say it stands. Decision
+  /// 298. The theme itself is not editable: it is what the counting runs on.
+  Future<void> rewordPattern(String id, String wording) async {
+    await _patch('/patterns/$id', {'wording': wording});
+  }
+
+  Future<void> setPatternStanding(String id, String standing) async {
+    await _patch('/patterns/$id', {'standing': standing});
+  }
+
+  /// Taken down by the person it is about. The moments stay theirs.
+  Future<void> takeDownPattern(String id) async {
+    await _delete('/patterns/$id');
+  }
+
+  /// The moments behind a confirmed pattern, in their own words.
+  Future<List<PatternMoment>> patternMoments(String id) async {
+    final json = await _get('/patterns/$id/moments');
+    return [
+      for (final moment in (json['moments'] as List? ?? []))
+        PatternMoment.fromJson(moment as Map<String, dynamic>),
+    ];
+  }
+
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>
       _send('PATCH', path, body);
 

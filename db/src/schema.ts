@@ -820,6 +820,19 @@ export const confirmedPatterns = pgTable(
     districtId: uuid('district_id').notNull().references(() => districts.id),
     theme: text('theme').notNull(),
     supportingEntryIds: uuid('supporting_entry_ids').array().notNull(),
+
+    /**
+     * Their own words for it, when they have written them. The theme is a
+     * word from a closed list and is what the counting runs on; this is what
+     * a person reads. Null until they change it. Decision 298.
+     */
+    wording: text('wording'),
+
+    /**
+     * Where they say it is now: still_true, changing, or does_not_fit. Set
+     * by the person, not by us. Null until they say. Decision 298.
+     */
+    standing: text('standing'),
     confirmedAt: timestamp('confirmed_at', { withTimezone: true }).notNull().defaultNow(),
     reminderArmed: boolean('reminder_armed').notNull().default(false),
     removedAt: timestamp('removed_at', { withTimezone: true }),
