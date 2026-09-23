@@ -688,6 +688,15 @@ GET /weather    → services/weather/now.ts      where to look, and whether
                                                day on the person, so it
                                                stands until then and stands
                                                down after. Decision 233
+GET /memory     → routes/memory.ts             everything held about them, in
+                                               their own register, each with
+                                               the moments it was read out
+                                               of. PATCH /memory/facts/:id
+                                               rewords one, DELETE takes it
+                                               away, and DELETE /entries/:id
+                                               takes a moment back with
+                                               everything that stood on it
+                                               alone. Decision 292.
 GET /nudges     → routes/nudges.ts             the evening question, a month
                                                of lines and the hour to ask
                                                them at. No dates: the phone

@@ -4,6 +4,7 @@ import '../../data/analytics.dart';
 import '../../data/device_location.dart';
 import '../../data/device_weather.dart';
 import '../../data/session_store.dart';
+import '../memory/memory_screen.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../capture/capture_screen.dart';
@@ -417,6 +418,30 @@ class _ProfileTabState extends State<ProfileTab> {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        // What the app holds, opened from here rather than from the bar.
+        // Everything on that screen traces back to a moment, and every one
+        // of them can be reworded or taken away. Decision 292.
+        const Label('what I hold'),
+        const SizedBox(height: 10),
+        SoulCard(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Everything I hold about you, read out of what you wrote. '
+                'Change the wording of any of it, or take it away.',
+                style: SoulType.secondary,
+              ),
+              const SizedBox(height: 14),
+              SoulButton(
+                'Open it',
+                onPressed: () => _openMemory(context),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         // An account this phone reached without signing in is one log out
         // away from being unreachable, and everything written on it goes
@@ -527,6 +552,22 @@ class _ProfileTabState extends State<ProfileTab> {
 
   /// Asks once, plainly, and then removes everything. The phone is left
   /// where a log out leaves it, at first run, with nothing held.
+  /// Everything held about them, and the two things they can do to it.
+  ///
+  /// Reloads the profile on the way back, because dropping a fact or
+  /// deleting a moment can change what this screen is showing.
+  Future<void> _openMemory(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (page) => MemoryScreen(
+          api: widget.api,
+          onBack: () => Navigator.of(page).pop(),
+        ),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
   Future<void> _deleteAccount(BuildContext context) async {
     final sure = await showModalBottomSheet<bool>(
       context: context,

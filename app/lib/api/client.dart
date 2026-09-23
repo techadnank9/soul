@@ -234,6 +234,33 @@ class SoulApi {
     );
   }
 
+  /// What the app holds about this person, in their own register, with the
+  /// moments behind each one.
+  Future<List<HeldFact>> memory() async {
+    final json = await _get('/memory');
+    return [
+      for (final fact in (json['facts'] as List? ?? []))
+        HeldFact.fromJson(fact as Map<String, dynamic>),
+    ];
+  }
+
+  /// Their wording over ours. The sentence is the only part they change: the
+  /// rest is what the counting runs on.
+  Future<void> rewordFact(String id, String sentence) async {
+    await _patch('/memory/facts/$id', {'sentence': sentence});
+  }
+
+  /// Dropped by the person it is about. The moments behind it stay theirs.
+  Future<void> dropFact(String id) async {
+    await _delete('/memory/facts/$id');
+  }
+
+  /// A moment taken back, and everything that was only ever true because of
+  /// it. See services/memory/forget.ts for what goes with it.
+  Future<void> forgetEntry(String id) async {
+    await _delete('/entries/$id');
+  }
+
   Future<Map<String, dynamic>> _patch(String path, Object? body) =>
       _send('PATCH', path, body);
 

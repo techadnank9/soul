@@ -985,3 +985,32 @@ class NudgePlan {
   final int hour;
   final List<String> lines;
 }
+
+/// One thing the app holds about somebody, as it would say it back, with the
+/// moments it was read out of.
+///
+/// The sentence is theirs to change. The moments are theirs to delete, and
+/// deleting one takes with it everything that stood on it alone.
+class HeldFact {
+  const HeldFact({
+    required this.id,
+    required this.sentence,
+    required this.since,
+    required this.moments,
+  });
+
+  final String id;
+  final String sentence;
+  final DateTime since;
+  final List<PatternMoment> moments;
+
+  static HeldFact fromJson(Map<String, dynamic> json) => HeldFact(
+        id: json['id'] as String,
+        sentence: json['sentence'] as String,
+        since: DateTime.parse(json['since'] as String).toLocal(),
+        moments: [
+          for (final moment in (json['moments'] as List? ?? []))
+            PatternMoment.fromJson(moment as Map<String, dynamic>),
+        ],
+      );
+}
