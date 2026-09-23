@@ -6382,3 +6382,53 @@ made of it. Null is meant to be the common answer and the prompt says so
 twice. The number to watch is how many entries come back with a meaning: if
 it is most of them, the list is being guessed rather than read.
 
+
+---
+
+### 292. A moment can be taken back, and everything that stood on it goes
+Sep 2026, Claude, on the founder's call
+
+Decision: `DELETE /entries/:id` exists, and it is a cascade, in one
+transaction, in `services/memory/forget.ts`. `GET /memory` lists what the
+app holds about somebody in their own words with the moments behind each
+one. `PATCH /memory/facts/:id` rewords a fact and
+`DELETE /memory/facts/:id` drops it.
+
+Why: README.md says everything the app says about a person traces back to
+specific entries that person can see and delete. The second half was not
+true. There was no way to delete one entry at all, only the whole account,
+and everything derived from an entry outlived the entry anyway. A fact read
+out of a moment somebody took back would have gone on being quoted into the
+Mirror for months. docs/memory.md has had this listed as unwritten since
+the memory layer was built.
+
+What a delete now does:
+
+  a fact standing on that entry alone      retired
+  a fact standing on it and others         loses the entry, keeps holding
+  a pattern candidate                      loses the entry, and goes when it
+                                           drops under two
+  a pattern they confirmed                 loses the entry, and is taken
+                                           down when it drops under two
+  tags, embedding, cards, people, the
+  decisions and their outcomes, the
+  safety row, the generations, the tone    gone with it
+
+Retired rather than deleted for the facts, because `retired_at` already
+means a fact the system stopped trusting, nothing loads one, and the row is
+what makes the next question about why something vanished answerable. A
+person who wants the rows themselves gone has account deletion, decision
+281.
+
+Only the sentence is editable on a fact. Subject, predicate and object are
+what the counting and the contradiction check run on, and typing over those
+would put free text back where the closed shape has to be. The sentence is
+what a person reads and what the Mirror is told, so rewording it changes
+what the app says about them, which is what they were asking for.
+
+Tested against the real database on a throwaway account that was created,
+checked and deleted inside the run: nine assertions, all passing, covering
+each row of the table above.
+
+Would reverse it: nothing. The promise was already made in the README.
+

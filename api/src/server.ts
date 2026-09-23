@@ -36,6 +36,7 @@ import { speech } from './routes/speech.js'
 import { welcome } from './routes/welcome.js'
 import { weather } from './routes/weather.js'
 import { nudges } from './routes/nudges.js'
+import { memory } from './routes/memory.js'
 
 type Vars = { Variables: { session: Session } }
 
@@ -98,6 +99,7 @@ app.route('/', speech)
 app.route('/', welcome)
 app.route('/', weather)
 app.route('/', nudges)
+app.route('/', memory)
 
 app.onError((error, c) => {
   console.error(`${c.req.method} ${c.req.path} failed:`, error)
