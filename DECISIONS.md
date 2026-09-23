@@ -6255,12 +6255,23 @@ entry is a worse test of whether something is true of somebody's life than
 asking them is, and asking them is what this product does. Nothing is
 written as confirmed without their yes, and a no still closes it for good.
 
-What three was actually buying was fewer questions, and it charged a month
-of writing for them. In sixty days of real use, eighteen entries have been
-written by seven people and two of them account for eleven. Nobody has ever
-reached three entries on one coping, so the loop the product is built
-around has never once run for a real person. A threshold nobody crosses
-protects nothing.
+What three was buying was fewer questions, and it charged a month of
+writing for them.
+
+What it is worth on today's data, counted rather than assumed, because the
+first version of this entry asserted the opposite and was wrong. Twenty six
+real accounts have written anything. Two of them have any theme repeating at
+all: one with five themes at five, five, five, five and two moments, and one
+with a single theme at three. Five real themes already reached three, so the
+loop has run end to end for a real person once, candidate to surfaced to
+confirmed. Dropping to two adds exactly one theme, on that same account, and
+nothing for anybody else. The hundred and twenty three pending candidates in
+the table are on the seeded demo accounts, not on people.
+
+So this is not what unblocks the loop and it was wrong to say it was. The
+bottleneck is that almost nobody writes enough for anything to repeat. What
+two changes is the bar for the next person who writes four to six entries:
+under three they waited, under two they are asked.
 
 What this does not change, and what actually holds the line:
 
