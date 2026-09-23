@@ -43,6 +43,7 @@ class MirrorResult {
     this.offered,
     this.candidateId,
     this.proposal,
+    this.moments = const [],
   });
 
   /// The question the server asks when it could not read closer, or the
@@ -56,6 +57,12 @@ class MirrorResult {
   final String? offered;
   final String? candidateId;
   final String? proposal;
+
+  /// The moments behind the proposal, in the person's own words, with the
+  /// dates they wrote them. The evidence for the claim, so a yes is answered
+  /// against what they actually wrote rather than against a sentence about
+  /// them. Empty from a server that predates decision 290.
+  final List<PatternMoment> moments;
 
   /// Whether this reading brought a pattern to confirm.
   bool get cameUpBefore => candidateId != null && proposal != null;
@@ -76,8 +83,33 @@ class MirrorResult {
       offered: json['offered'] as String?,
       candidateId: candidate?['candidateId'] as String?,
       proposal: candidate?['proposal'] as String?,
+      moments: [
+        for (final moment in (candidate?['moments'] as List? ?? []))
+          PatternMoment.fromJson(moment as Map<String, dynamic>),
+      ],
     );
   }
+}
+
+/// One moment behind a proposed pattern: when they wrote it and what they
+/// said, as they said it. Never a summary of the entry, because a paraphrase
+/// standing where the evidence should be is not evidence.
+class PatternMoment {
+  const PatternMoment({
+    required this.entryId,
+    required this.at,
+    required this.said,
+  });
+
+  final String entryId;
+  final DateTime at;
+  final String said;
+
+  static PatternMoment fromJson(Map<String, dynamic> json) => PatternMoment(
+        entryId: json['entryId'] as String,
+        at: DateTime.parse(json['at'] as String).toLocal(),
+        said: json['said'] as String,
+      );
 }
 
 /// GET /week. The shape of the user's current week.

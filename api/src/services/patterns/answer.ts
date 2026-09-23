@@ -7,7 +7,7 @@ import type { Session } from '../../session.js'
  *
  * A rejection is not a failure. It is training signal, and it stops us
  * offering the same wrong idea twice. Nothing is written to confirmed_patterns
- * without a student confirmation and at least three supporting entry ids.
+ * without a student confirmation and at least two supporting entry ids.
  */
 /**
  * Every read and every write here is scoped to the student as well as the id.
@@ -49,8 +49,13 @@ export async function answerCandidate(
   }
 
   if (input.answer === 'fits') {
-    if (candidate.supporting.length < 3) {
-      throw new Error('a pattern needs at least three supporting entries')
+    // Two, matching the sweep. This said three until decision 289 lowered the
+    // threshold, which left the two ends disagreeing: a two moment candidate
+    // could be found and offered, and then threw on the way in when the
+    // student said yes. The number lives in both places and has to move in
+    // both.
+    if (candidate.supporting.length < 2) {
+      throw new Error('a pattern needs at least two supporting entries')
     }
 
     await db.insert(confirmedPatterns).values({

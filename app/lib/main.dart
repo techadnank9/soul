@@ -574,6 +574,9 @@ class _SessionState extends State<Session> {
           question: _mirror?.question,
           fallback: _mirror?.fallback ?? false,
           proposal: _mirror?.cameUpBefore == true ? _mirror?.proposal : null,
+          moments: _mirror?.cameUpBefore == true
+              ? (_mirror?.moments ?? const [])
+              : const [],
           onPatternAnswer: _answerPattern,
           onTouched: () => _touched = true,
           onLookAgain: _lookedAgain ? null : _lookAgain,

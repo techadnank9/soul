@@ -115,10 +115,29 @@ export const mirrorReflection = z.object({
   underneath: z.string().min(1).max(400),
   question: z.string().min(1).max(200),
   offered: z.string().max(200).optional(),
+  /**
+   * The offer, when one is waiting. Not part of the reflection and never
+   * rendered inside it: the breakdown is the whole of what a moment gets
+   * back, and this is a separate thing the app asks afterwards.
+   *
+   * The moments are the student's own words with their dates, so the yes or
+   * no is answered against what they actually wrote rather than against a
+   * sentence about them. Decision 290.
+   */
   patternCandidate: z
     .object({
       candidateId: z.string().uuid(),
       proposal: z.string().min(1).max(400),
+      moments: z
+        .array(
+          z.object({
+            entryId: z.string().uuid(),
+            at: z.string(),
+            said: z.string().min(1).max(200),
+          }),
+        )
+        .max(3)
+        .default([]),
     })
     .optional(),
 })

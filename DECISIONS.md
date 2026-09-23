@@ -6293,3 +6293,51 @@ how often a candidate is surfaced, not this one.
 Would reverse it: people answering no more often than yes over a real
 cohort, which would say the guesses are not good enough to be asked at two.
 
+
+---
+
+### 290. A pattern is offered with the moments it came from
+Sep 2026, Claude, from the pattern loop prototype
+
+Decision: the proposal carries the entries behind it. Up to three, oldest
+first, each with the date it was written and the student's own opening
+words. The answer is three: yes that fits, maybe not sure, no that is not
+it.
+
+Why: finding a pattern is a SQL group by precisely so the exact entries
+behind a claim can always be shown, and until now they never were. The
+student was handed one sentence about themselves and asked to agree or
+disagree with it. That is agreement on a feeling. Reading two things you
+wrote yourself, on two dates, and then saying yes is confirmation, and it
+is the only version of this that makes a yes worth storing.
+
+The moments are their words, never a summary. A model writing a line about
+each entry would put a paraphrase where the evidence belongs, and a
+paraphrase is not evidence. The opening of the entry is cut at a sentence
+where there is one.
+
+The proposal sentence changed too. It read "this feels close to something
+you have written before, around went quiet", which emptied a column into
+the middle of a sentence. It now says how many moments and what the student
+did in them, and every word on the tagger's coping list is already
+something a person would say about what they did, so no mapping is needed.
+A theme that is not on that list reads as its own phrase, which is what a
+later list of interpretations gives us.
+
+Maybe is a real answer now rather than a missing one. It maps to later,
+which puts the candidate back to pending to be asked another time. That is
+not yet the prototype's maybe, which returns only if the same thing shows
+up again, and the copy says what the app actually does rather than what it
+will do. Making maybe mean only if it grows needs the sweep to compare the
+evidence it finds against the evidence already stored, and that is the next
+piece.
+
+Not done here, and both worth knowing: the offer still rides inside the
+Mirror rather than standing on its own as its own question, and a candidate
+is marked surfaced the moment it is attached, before anybody has seen it.
+Two of the three surfaced candidates in production may never have been read
+by the person they belong to.
+
+Would reverse it: nothing about showing the evidence. The three answers
+would reverse if maybe turns out to be where everything goes to die.
+

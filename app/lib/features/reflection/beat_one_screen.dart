@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../api/models.dart';
 import '../../theme/soul_theme.dart';
 import '../../theme/widgets.dart';
 import '../capture/speech_field.dart';
@@ -23,6 +24,7 @@ class BeatOneScreen extends StatefulWidget {
     this.loadingQuestion = false,
     this.fallback = false,
     this.proposal,
+    this.moments = const [],
     this.onPatternAnswer,
     this.onTouched,
     this.onLookAgain,
@@ -50,7 +52,13 @@ class BeatOneScreen extends StatefulWidget {
   /// before. Null when nothing did.
   final String? proposal;
 
-  /// The answer to the proposal, as the server names it: fits or
+  /// The moments the proposal was drawn from, with their dates, in the
+  /// person's own words. They are the evidence, and without them the answer
+  /// below is agreement with a sentence about themselves rather than a
+  /// judgement about two things they wrote. Decision 290.
+  final List<PatternMoment> moments;
+
+  /// The answer to the proposal, as the server names it: fits, later or
   /// not_the_same.
   final ValueChanged<String>? onPatternAnswer;
 
@@ -126,6 +134,15 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
     setState(() => _answer = answer);
   }
 
+  /// The day they wrote it, as a person would say it.
+  static String _on(DateTime at) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${at.day} ${months[at.month - 1]}';
+  }
+
   void _answerPattern(String answer) {
     setState(() => _patternAnswered = true);
     widget.onPatternAnswer?.call(answer);
@@ -182,15 +199,37 @@ class _BeatOneScreenState extends State<BeatOneScreen> {
                     proposal,
                     style: SoulType.lead.copyWith(color: SoulColors.clayDark),
                   ),
+                  if (widget.moments.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    for (final moment in widget.moments) ...[
+                      Text(
+                        _on(moment.at),
+                        style: SoulType.muted.copyWith(
+                          color: SoulColors.clayDark.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(moment.said, style: SoulType.secondary),
+                      const SizedBox(height: 10),
+                    ],
+                  ],
                   if (!_patternAnswered) ...[
-                    const SizedBox(height: 14),
-                    Row(
+                    const SizedBox(height: 4),
+                    // Three answers, not two. Not sure is its own thing: it
+                    // means the guess landed badly or at the wrong moment,
+                    // and reading it as a no throws away a guess that may
+                    // have been right.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        _Pill('It fits',
+                        _Pill('Yes, that fits',
                             on: false,
                             onTap: () => _answerPattern('fits')),
-                        const SizedBox(width: 8),
-                        _Pill('Not the same',
+                        _Pill('Maybe, not sure',
+                            on: false,
+                            onTap: () => _answerPattern('later')),
+                        _Pill('No, that is not it',
                             on: false,
                             onTap: () => _answerPattern('not_the_same')),
                       ],
