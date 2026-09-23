@@ -181,23 +181,47 @@ class _PatternsScreenState extends State<PatternsScreen> {
       return Screen(
         body: [
           const SizedBox(height: 40),
-          const Text('Nothing to say yet', style: SoulType.heading),
+          const Text(
+            'Still learning what returns in your life.',
+            style: SoulType.heading,
+          ),
           const SizedBox(height: 14),
           const Text(
-            'This is where what the app may be noticing shows up, from your '
-            'first entry on, for you to say yes or no to. Later, the things '
-            'that keep happening appear here too, with the moments behind '
-            'them and one sentence on whether each is doing you good or '
-            'costing you.',
+            'A few real moments will tell us more than a label would. Two or '
+            'three is usually enough before anything starts to rhyme.',
             style: SoulType.secondary,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Nothing appears here until you confirm it.',
+            style: SoulType.muted,
           ),
           const SizedBox(height: 12),
           Label(_from(patterns.reflections)),
           const SizedBox(height: 26),
+          const Label('in the meantime'),
+          const SizedBox(height: 10),
+          const Text(
+            'Tell me one thing that happened today, even if it seemed small.',
+            style: SoulType.lead,
+          ),
+          const SizedBox(height: 16),
           SoulButton(
-            'Say what just happened',
+            'Add a moment',
             kind: SoulButtonKind.filled,
             onPressed: widget.onCapture,
+          ),
+          const SizedBox(height: 30),
+          const Label('what will live here'),
+          const SizedBox(height: 10),
+          const Text(
+            'Patterns you have confirmed, in your own wording.',
+            style: SoulType.secondary,
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Questions I am still holding, unconfirmed.',
+            style: SoulType.secondary,
           ),
         ],
       );

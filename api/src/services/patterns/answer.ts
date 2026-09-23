@@ -27,7 +27,7 @@ function mine(candidateId: string, session: Session) {
 export async function answerCandidate(
   session: Session,
   input: { candidateId: string; answer: 'fits' | 'not_the_same' | 'later'; reason?: string },
-): Promise<void> {
+): Promise<{ patternId?: string }> {
   const rows = await db
     .select({
       theme: patternCandidates.theme,
@@ -45,7 +45,7 @@ export async function answerCandidate(
       .update(patternCandidates)
       .set({ status: 'pending', surfacedAt: null })
       .where(mine(input.candidateId, session))
-    return
+    return {}
   }
 
   if (input.answer === 'fits') {
@@ -58,19 +58,25 @@ export async function answerCandidate(
       throw new Error('a pattern needs at least two supporting entries')
     }
 
-    await db.insert(confirmedPatterns).values({
-      studentId: session.studentId,
-      schoolId: session.schoolId,
-      districtId: session.districtId,
-      theme: candidate.theme,
-      supportingEntryIds: candidate.supporting,
-    })
+    // The id goes back, so the app can offer to ring about this one next
+    // time. Nothing is armed here: that is a second thing they choose, and
+    // they choose the hour as well. Decision 295.
+    const [written] = await db
+      .insert(confirmedPatterns)
+      .values({
+        studentId: session.studentId,
+        schoolId: session.schoolId,
+        districtId: session.districtId,
+        theme: candidate.theme,
+        supportingEntryIds: candidate.supporting,
+      })
+      .returning({ id: confirmedPatterns.id })
 
     await db
       .update(patternCandidates)
       .set({ status: 'confirmed' })
       .where(mine(input.candidateId, session))
-    return
+    return { patternId: written?.id }
   }
 
   await db.insert(patternRejections).values({
@@ -85,4 +91,5 @@ export async function answerCandidate(
     .update(patternCandidates)
     .set({ status: 'rejected' })
     .where(mine(input.candidateId, session))
+  return {}
 }

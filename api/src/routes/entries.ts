@@ -5,6 +5,7 @@ import { lookCloser } from '../services/reflection/mirror.js'
 import { createDecision } from '../services/decisions/create.js'
 import { recordOutcome } from '../services/decisions/recordOutcome.js'
 import { answerCandidate } from '../services/patterns/answer.js'
+import { armPatternReminder } from '../services/patterns/remind.js'
 import { answerNoticing } from '../services/noticings/answer.js'
 import type { Session } from '../session.js'
 
@@ -57,10 +58,38 @@ entries.post('/noticings/answer', async (c) => {
   return c.json({ ok: true })
 })
 
+/**
+ * A confirmed pattern, and an hour they picked to be told about it. Decision
+ * 295. `services/patterns/remind.ts` says why it is written as a reminder.
+ */
+entries.post('/patterns/:id/remind', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const at = (body as { at?: unknown } | null)?.at
+
+  if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) {
+    return c.json({ error: 'a time is needed' }, 400)
+  }
+
+  try {
+    const { said } = await armPatternReminder(
+      c.get('session'),
+      c.req.param('id'),
+      new Date(at),
+    )
+    return c.json({ ok: true, said })
+  } catch (error) {
+    const why = (error as Error).message
+    if (why === 'that time has gone') return c.json({ error: why }, 400)
+    return c.json({ error: 'not found' }, 404)
+  }
+})
+
 entries.post('/patterns/answer', async (c) => {
   const parsed = contracts.answerCandidate.safeParse(await c.req.json())
   if (!parsed.success) return c.json({ error: 'invalid answer' }, 400)
 
-  await answerCandidate(c.get('session'), parsed.data)
-  return c.json({ ok: true })
+  const answered = await answerCandidate(c.get('session'), parsed.data)
+  // The pattern id comes back on a yes, so the app can offer the reminder
+  // without a second read. Absent on the other two answers.
+  return c.json({ ok: true, ...answered })
 })

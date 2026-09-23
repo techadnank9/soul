@@ -662,10 +662,22 @@ class SoulApi {
     });
   }
 
-  Future<void> answerPattern(String candidateId, String answer) async {
-    await _post('/patterns/answer', {
+  /// Their answer to a proposed pattern. Returns the confirmed pattern's id
+  /// on a yes, so the app can offer to ring about it, and null otherwise.
+  Future<String?> answerPattern(String candidateId, String answer) async {
+    final json = await _post('/patterns/answer', {
       'candidateId': candidateId,
       'answer': answer,
+    });
+    return json['patternId'] as String?;
+  }
+
+  /// An hour they picked to be told about this pattern. It is written as a
+  /// reminder, so the phone books it locally the same way it books a time
+  /// somebody named out loud. Decision 295.
+  Future<void> remindAboutPattern(String patternId, DateTime at) async {
+    await _post('/patterns/$patternId/remind', {
+      'at': at.toUtc().toIso8601String(),
     });
   }
 }

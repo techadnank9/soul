@@ -19,6 +19,7 @@ import 'features/onboarding/first_run.dart';
 import 'features/onboarding/intent_screen.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/memory/memory_screen.dart';
+import 'features/patterns/remind_sheet.dart';
 import 'features/patterns/patterns_screen.dart';
 import 'features/reflection/beat_one_screen.dart';
 import 'features/reflection/breathing_wait.dart';
@@ -529,15 +530,40 @@ class _SessionState extends State<Session> {
   /// The answer to a pattern the reading brought back. Sent and not waited
   /// on: the card has already said noted, and a lost answer is asked again
   /// another day.
-  void _answerPattern(String answer) {
+  Future<void> _answerPattern(String answer) async {
     final candidateId = _mirror?.candidateId;
     if (candidateId == null) return;
     _api.event('pattern_answered', {'answer': answer});
-    _api.answerPattern(candidateId, answer).catchError((Object error) {
+
+    String? patternId;
+    try {
+      patternId = await _api.answerPattern(candidateId, answer);
+    } catch (error) {
       _api.event('pattern_answer_failed', {
         'status': error is SoulApiException ? error.status : null,
       });
-    });
+      return;
+    }
+
+    // They said it fits, so the one offer this app makes about a
+    // notification is made here and nowhere else: an hour they choose, for a
+    // pattern they confirmed. Decision 295.
+    if (patternId == null || !mounted) return;
+    await _offerReminder(patternId);
+  }
+
+  Future<void> _offerReminder(String patternId) async {
+    final at = await askWhenToRemind(context);
+    if (at == null || !mounted) return;
+
+    try {
+      await _api.remindAboutPattern(patternId, at);
+      _api.event('pattern_reminder_set');
+    } catch (error) {
+      _api.event('pattern_reminder_failed', {
+        'status': error is SoulApiException ? error.status : null,
+      });
+    }
   }
 
   /// Done. What they wrote is held as a decision when there is anything to

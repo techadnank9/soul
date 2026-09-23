@@ -6519,3 +6519,46 @@ rewritten to match a later view.
 
 Would reverse it: nothing.
 
+
+---
+
+### 295. The reminder is one the person asked for, about a pattern they confirmed
+Sep 2026, Claude, on the founder's call, from the pattern loop prototype
+
+Decision: straight after somebody confirms a pattern, and at no other
+moment, the app offers to say something about it next time and lets them
+pick the hour. `POST /patterns/:id/remind` writes it, and it is written into
+`reminders`, the table that already holds the times somebody named out loud.
+
+Why that table: the phone reads it and books a local notification for each
+row. No push, no device token, nothing about anybody told to a notification
+service. A pattern reminder is the same kind of thing as a reminder they
+spoke, so it is the same row and it needs no new plumbing on the phone at
+all.
+
+Why it is offered there and nowhere else: a confirmation is the one moment
+the person has just said yes to something about themselves. Asking then is
+asking about a thing they have agreed exists. Asking at any other time is
+the app deciding somebody needs a notification.
+
+What it does not do. It does not watch for the moment, because the app
+cannot know when the thing is about to happen and pretending otherwise is a
+lie told by an interface. It keeps no streak and no count. It says nothing
+about the person beyond the theme they confirmed, in their own words,
+because a lock screen is read by whoever is near the phone. Doing nothing is
+a real answer and it is the one on the left.
+
+It is anchored to the newest moment behind the pattern, so deleting that
+moment takes the reminder with it. Somebody who takes back the moment has
+taken back the thing the reminder is about.
+
+This sits against decision 288, the evening question the app books for
+itself. Both are live and they disagree about who decides when a phone
+rings. 288 says the app may ask on a day nothing was written. This says the
+person picks. The prototype argues for this one and I think it is right,
+but 288 was a founder instruction and reversing it is a founder decision,
+not mine. What would settle it: the funnel. If the evening question is
+turned off more often than this one is set, 288 goes.
+
+Would reverse it: nothing about this. 288 is the open question.
+
