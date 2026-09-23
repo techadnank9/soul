@@ -6807,3 +6807,45 @@ Checked on the simulator against the real service: two moments as cards,
 one opened, text changed, saved. The entry holds the new words, its tags and
 its embedding are gone, and tag_entry and embed_entry are pending.
 
+
+---
+
+### 301. What Sentry said about the first day of build 15
+Sep 2026, Claude
+
+Two flaws, both found by reading the errors from the day the founder spent
+on build 15, and both the same shape: one thing going wrong costing far more
+than itself.
+
+**Deleting a moment left its work in the queue.** A moment deleted minutes
+after it was written still had the tagger, the cards, the people and the
+facts waiting. Every one of them woke, found no entry, and threw. The cue
+card job got as far as writing a `generations` row and failed on the foreign
+key, which is what reached Sentry. Introduced by decision 292 and found the
+first day somebody used it. `forgetEntry` now deletes the pending jobs that
+name the entry, inside the same transaction. A job already claimed is left
+alone: it is mid flight, and the handlers read the entry and stop when it is
+not there.
+
+**The tagger threw on a key the model left out.** `trigger: expected string,
+received undefined`. The field was nullable but not optional, so a reply
+that simply omitted it failed whole. The cost was never the trigger: it was
+the coping and the meaning too, so the entry counted toward no pattern, and
+the four jobs the tagger books never ran. Every field is nullish with a null
+default now, so an omitted key reads as null.
+
+A word off a closed list costs only itself as well. `coping` and `meaning`
+catch to null rather than failing the reply. The lists stay closed and
+nothing off them is ever stored, which is what the counting depends on. What
+changed is that a model reaching for a word that is not there no longer
+takes the rest of the entry with it.
+
+This is the third time this exact shape has been fixed: decision 285 for a
+fact whose object was a dash, and now twice here. The rule worth remembering
+is that a reply is a list of things that can each be wrong on their own, and
+a schema that fails whole turns one bad field into a lost entry.
+
+Checked: six reply shapes through the tagger schema, including two with
+words off the list and one with nothing in it at all. All parse, the good
+reply is untouched, and an off list word nulls only its own field.
+

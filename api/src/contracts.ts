@@ -626,14 +626,33 @@ export const meaningsTaken = [
   'it was not fair',
 ] as const
 
+/**
+ * What the tagger must return.
+ *
+ * Every field is nullish rather than nullable: a key the model left out
+ * reads as null instead of failing the whole reply. It threw on a real
+ * entry with `trigger: expected string, received undefined`, and the cost
+ * of that is not the trigger. It is the coping and the meaning too, so the
+ * entry is never counted toward a pattern, and the four jobs the tagger
+ * books never run. A model that omits a key it had nothing for is being
+ * reasonable. Decision 301.
+ */
 export const taggerResult = z.object({
-  trigger: z.string().max(120).nullable(),
-  feeling: z.string().max(120).nullable(),
-  coping: z.enum(copingWays).nullable(),
+  trigger: z.string().max(120).nullish().default(null),
+  feeling: z.string().max(120).nullish().default(null),
+  /**
+   * A word off the list reads as null rather than failing the reply.
+   *
+   * The list stays closed: nothing off it is ever stored, and the counting
+   * is unchanged. What changes is the cost of a model reaching for a word
+   * that is not there. It used to lose the trigger, the feeling, the meaning
+   * and the four jobs the tagger books as well.
+   */
+  coping: z.enum(copingWays).nullish().catch(null).default(null),
   /** What they took it to mean, one of the closed list, or null. */
-  meaning: z.enum(meaningsTaken).nullable().default(null),
-  domain: z.string().max(120).nullable(),
-  confidence: z.number().min(0).max(1),
+  meaning: z.enum(meaningsTaken).nullish().catch(null).default(null),
+  domain: z.string().max(120).nullish().default(null),
+  confidence: z.number().min(0).max(1).default(0.5),
   /// Which of the five ways of deciding this entry is plainly an instance
   /// of, when the tagger was told them. Empty for most entries. Decision 279.
   shows: z.array(z.string().max(40)).max(5).default([]),

@@ -103,6 +103,20 @@ export async function forgetEntry(entryId: string, session: Session): Promise<vo
     await tx`delete from tags where entry_id = ${entryId}::uuid`
     await tx`delete from entry_embeddings where entry_id = ${entryId}::uuid`
 
+    // The work booked about it. A moment deleted minutes after it was
+    // written still had its tagger, its cards, its people and its facts
+    // waiting in the queue, and every one of them woke up, found no entry,
+    // and threw. The cue card job got as far as writing a generations row
+    // and failed on the foreign key, which is what put it in Sentry.
+    //
+    // Matched on the payload text, which is how the id is stored. A job
+    // already claimed by the worker is left alone: it is mid flight, and the
+    // handlers that read the entry find nothing and stop. Decision 301.
+    await tx`
+      delete from jobs
+      where status = 'pending'
+        and payload like ${'%' + entryId + '%'}`
+
     // The entry last. The tone row and the section sightings carry their own
     // cascade and go with it.
     await tx`
