@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { forgivingList } from '../../contracts.js'
 
 /** Every dash, including the two that are not on a keyboard. */
 const DASH = /[-–—]/
@@ -16,9 +17,8 @@ const DASH = /[-–—]/
 export const noticingsResult = z
   .object({
     kept: z.array(z.number().int().min(1)).max(2),
-    noticings: z
-      .array(
-        z.object({
+    noticings: forgivingList(
+      z.object({
           line: z
             .string()
             .trim()
@@ -27,10 +27,10 @@ export const noticingsResult = z
             .refine((text) => !DASH.test(text), 'a dash reached copy a person reads')
             .refine((text) => !/[!]/.test(text), 'an exclamation mark reached copy a person reads'),
           lean: z.enum(['good', 'bad', 'open']),
-          entries: z.array(z.number().int().min(1)).min(1).max(12),
-        }),
-      )
-      .max(2),
+        entries: z.array(z.number().int().min(1)).min(1).max(12),
+      }),
+      2,
+    ),
   })
   .refine((v) => v.kept.length + v.noticings.length <= 2, {
     message: 'two noticings at most, kept and new together',

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { forgivingList } from '../../contracts.js'
 
 /**
  * The shape the model must return for cue cards. Free prose is rejected
@@ -91,7 +92,7 @@ export const cueCardsResult = z.object({
    * here would put the old cap back in the one place nobody would look for
    * it, and would refuse the third card rather than the thin one.
    */
-  cards: z.array(card),
+  cards: forgivingList(card, 12),
 })
 
 export type CueCardsResult = z.infer<typeof cueCardsResult>

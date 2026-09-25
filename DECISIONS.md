@@ -6922,3 +6922,42 @@ what already goes to Sentry, and nothing they wrote.
 The ml app is `soul`, lower case, matching what is already in Datadog rather
 than adding a second application beside it.
 
+
+---
+
+### 304. Every list from a model is forgiving, once, everywhere
+Sep 2026, Claude
+
+Decision: `forgivingList` in contracts.ts, and every list parsed from a
+model reply goes through it. An item that does not hold is dropped and the
+rest of the list is kept. The item schemas are unchanged, so nothing reaches
+the database that would not have reached it before.
+
+Applied to: reminders, safety categories, consolidate observations,
+noticings, week notes, people, cue cards, and facts, which had its own copy
+of this and now shares the one.
+
+Why now: Sentry showed `reminders.0.at: Invalid string` on the service. A
+model returned one reminder with a time in the wrong shape and the whole
+reply was refused, so nothing was booked, including the reminders that were
+fine.
+
+That is the fourth time. A fact whose object was a dash, decision 285. A
+tagger key the model left out, and a coping word off the closed list,
+decision 301, where I wrote the rule down and then fixed one schema. Now a
+reminder time. Writing the rule and applying it once is not applying it.
+
+The rule, for the fifth time it comes up: a model reply is a list of things
+that can each be wrong on their own. A schema that fails whole turns one bad
+item into a lost entry, a lost reminder, six jobs that never run. The cost
+is never the item.
+
+Checked: eight shapes through the seven schemas, each with one good item and
+one bad. Every one keeps the good and drops the bad, and a clean reply is
+untouched.
+
+Still open from the same Sentry read, and not fixed here: `facts` timed out
+against its hundred and twenty second limit today, on the current release.
+It is one occurrence and the facts call averages twenty two seconds, so it
+is worth watching in Datadog rather than guessing at now.
+

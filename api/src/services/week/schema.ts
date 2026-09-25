@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { forgivingList } from '../../contracts.js'
 
 /** Every dash, including the two that are not on a keyboard. */
 const DASH = /[-–—]/
@@ -10,18 +11,16 @@ const DASH = /[-–—]/
  * dash on the screen they open every day.
  */
 export const weekNotesResult = z.object({
-  lines: z
-    .array(
-      z
-        .string()
-        .trim()
-        .min(1)
-        .max(220)
-        .refine((text) => !DASH.test(text), 'a dash reached copy a person reads')
-        .refine((text) => !/!/.test(text), 'an exclamation mark reached copy a person reads'),
-    )
-    .min(1)
-    .max(3),
+  lines: forgivingList(
+    z
+      .string()
+      .trim()
+      .min(1)
+      .max(220)
+      .refine((text) => !DASH.test(text), 'a dash reached copy a person reads')
+      .refine((text) => !/!/.test(text), 'an exclamation mark reached copy a person reads'),
+    3,
+  ),
 })
 
 export type WeekNotesResult = z.infer<typeof weekNotesResult>

@@ -627,6 +627,31 @@ export const meaningsTaken = [
 ] as const
 
 /**
+ * A list from a model, where one bad item costs only itself.
+ *
+ * Every list a model returns is a list of things that can each be wrong on
+ * their own. A schema that fails whole turns one malformed item into a lost
+ * reply, and the cost is never the item: it is the entry that is never
+ * tagged, the reminder never booked, the six jobs that never run.
+ *
+ * This has now been the cause four times. A fact whose object was a dash
+ * (285), a tagger key the model omitted and a word off a closed list (301),
+ * and a reminder with a malformed time (304). Rather than a fifth patch,
+ * every list parsed from a model goes through here.
+ *
+ * It does not soften what an item has to be. The item schema is unchanged,
+ * so nothing reaches the database that would not have reached it before.
+ * What changes is how far one bad item reaches.
+ */
+export function forgivingList<T extends z.ZodTypeAny>(item: T, max: number) {
+  return z.preprocess(
+    (value) =>
+      Array.isArray(value) ? value.filter((row) => item.safeParse(row).success) : value,
+    z.array(item).max(max),
+  )
+}
+
+/**
  * What the tagger must return.
  *
  * Every field is nullish rather than nullable: a key the model left out
@@ -661,7 +686,7 @@ export const taggerResult = z.object({
 /** What the safety classifier must return. */
 export const safetyResult = z.object({
   riskLevel: z.enum(['none', 'low', 'medium', 'high']),
-  categories: z.array(z.string().max(60)).max(8),
+  categories: forgivingList(z.string().max(60), 8),
 })
 
 /**
@@ -685,14 +710,13 @@ const NO_DASH = /^[^-‐-―−]*$/
  * somebody describing their day.
  */
 export const remindersResult = z.object({
-  reminders: z
-    .array(
-      z.object({
-        at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/),
-        said: z.string().trim().min(1).max(200),
-      }),
-    )
-    .max(4),
+  reminders: forgivingList(
+    z.object({
+      at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/),
+      said: z.string().trim().min(1).max(200),
+    }),
+    4,
+  ),
 })
 export type RemindersResult = z.infer<typeof remindersResult>
 
@@ -737,13 +761,7 @@ const factItem = z.object({
  * is allowed to take with it. Decision 285.
  */
 export const factsResult = z.object({
-  facts: z.preprocess(
-    (value) =>
-      Array.isArray(value)
-        ? value.filter((item) => factItem.safeParse(item).success)
-        : value,
-    z.array(factItem).max(8),
-  ),
+  facts: forgivingList(factItem, 8),
 })
 export type FactsResult = z.infer<typeof factsResult>
 
@@ -757,18 +775,17 @@ export type FactsResult = z.infer<typeof factsResult>
  * fact: a situation in the person's words, and no dashes.
  */
 export const consolidateResult = z.object({
-  observations: z
-    .array(
-      z.object({
-        subject: z.string().trim().min(1).max(60).regex(NO_DASH),
-        predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
-        object: z.string().trim().min(1).max(160).regex(NO_DASH),
-        sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
-        drawnFrom: z.array(z.number().int().positive()).min(2).max(40),
-        confidence: z.number().min(0).max(1),
-      }),
-    )
-    .max(3),
+  observations: forgivingList(
+    z.object({
+      subject: z.string().trim().min(1).max(60).regex(NO_DASH),
+      predicate: z.string().trim().min(1).max(60).regex(NO_DASH),
+      object: z.string().trim().min(1).max(160).regex(NO_DASH),
+      sentence: z.string().trim().min(1).max(240).regex(NO_DASH),
+      drawnFrom: z.array(z.number().int().positive()).min(2).max(40),
+      confidence: z.number().min(0).max(1),
+    }),
+    3,
+  ),
 })
 export type ConsolidateResult = z.infer<typeof consolidateResult>
 

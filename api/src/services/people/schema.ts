@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { forgivingList } from '../../contracts.js'
 
 /**
  * What the two people calls must return. Anything else is refused rather than
@@ -9,14 +10,13 @@ import { z } from 'zod'
 const NO_DASH = /^[^-‐-―−]*$/
 
 export const peopleResult = z.object({
-  people: z
-    .array(
-      z.object({
-        name: z.string().trim().min(1).max(30).regex(NO_DASH),
-        said: z.string().trim().min(1).max(600),
-      }),
-    )
-    .max(8),
+  people: forgivingList(
+    z.object({
+      name: z.string().trim().min(1).max(30).regex(NO_DASH),
+      said: z.string().trim().min(1).max(600),
+    }),
+    8,
+  ),
 })
 
 export type PeopleResult = z.infer<typeof peopleResult>
